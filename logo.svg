@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Outer seal square -->
+  <rect x="2" y="2" width="60" height="60" rx="7" fill="#BE2F18"/>
+  <!-- Inner border -->
+  <rect x="7" y="7" width="50" height="50" rx="4" fill="none" stroke="rgba(242,237,228,0.45)" stroke-width="1.5"/>
+  <!-- CO monogram -->
+  <text x="32" y="38" font-family="Georgia,'Noto Serif SC',serif" font-size="26" font-weight="700" fill="#F2EDE4" text-anchor="middle" letter-spacing="1">CO</text>
+  <!-- Subtle dot accents -->
+  <circle cx="19" cy="54" r="1.5" fill="rgba(242,237,228,0.3)"/>
+  <circle cx="32" cy="54" r="1.5" fill="rgba(242,237,228,0.3)"/>
+  <circle cx="45" cy="54" r="1.5" fill="rgba(242,237,228,0.3)"/>
+</svg>

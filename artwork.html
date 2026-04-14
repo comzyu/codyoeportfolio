@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>codyoe</title>
+<link rel="icon" type="image/png" href="images/logo_horse.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Serif+SC:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --paper:#F2EDE4;--paper2:#E8E2D8;--ink:#0E0C09;--ink2:#2C2820;
+  --red:#BE2F18;--red-glow:rgba(190,47,24,0.12);--muted:#7A7468;
+  --border:rgba(14,12,9,0.10);--border2:rgba(14,12,9,0.20);
+  --ease-smooth:cubic-bezier(.32,.72,0,1);
+}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
+a,button{cursor:none;}
+::selection{background:var(--red);color:var(--paper);}
+.grain{position:fixed;inset:-150px;width:calc(100%+300px);height:calc(100%+300px);opacity:0.022;pointer-events:none;z-index:8500;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");background-size:180px;animation:grain 8s steps(12) infinite;}
+@keyframes grain{0%,100%{transform:translate(0,0)}10%{transform:translate(-2%,-2%)}20%{transform:translate(2%,1%)}30%{transform:translate(-1%,3%)}40%{transform:translate(3%,-1%)}50%{transform:translate(-2%,2%)}60%{transform:translate(1%,-3%)}70%{transform:translate(-3%,1%)}80%{transform:translate(2%,-2%)}90%{transform:translate(-1%,3%)}}
+
+/* SEAL CURSOR */
+#seal{position:fixed;z-index:9999;pointer-events:none;width:48px;height:48px;transform:translate(-50%,-50%);transition:transform 0.1s var(--ease-smooth);will-change:left,top;}
+#seal.stamping{transform:translate(-50%,-50%) scale(0.82);}
+#seal.hovering #sr{fill:var(--red);}
+#seal.hovering #sc{fill:var(--paper);}
+#seal #sr{fill:none;stroke:var(--red);stroke-width:2.5;transition:fill 0.2s var(--ease-smooth);}
+#seal #si{fill:none;stroke:var(--red);stroke-width:0.8;opacity:0.45;transition:fill 0.2s;}
+#seal #sc{fill:var(--red);transition:fill 0.2s;font-family:'Noto Serif SC',serif;}
+.stamp-splat{position:fixed;pointer-events:none;z-index:9990;width:48px;height:48px;transform:translate(-50%,-50%);opacity:0;}
+.stamp-splat rect{fill:var(--red);}
+.stamp-splat text{fill:var(--paper);font-family:'Noto Serif SC',serif;}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 36px;background:rgba(242,237,228,0.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);box-shadow:0 1px 20px rgba(14,12,9,0.04);
+}
+.nav-logo{font-family:'Dela Gothic One',sans-serif;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:0.05em;transition:opacity 0.2s;display:flex;align-items:center;gap:10px;}
+.nav-logo:hover{opacity:0.7;}
+.nav-logo .r{color:var(--red);}
+.nav-logo-mark-wrap{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;}
+.nav-logo-mark{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;}
+.nav-mid{display:flex;gap:28px;list-style:none;}
+.nav-mid a{
+  font-size:0.58rem;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;opacity:0.35;transition:opacity 0.25s,color 0.25s;position:relative;
+}
+.nav-mid a::after{content:'';position:absolute;left:0;bottom:-4px;width:100%;height:1.5px;background:var(--red);transform:scaleX(0);transition:transform 0.3s var(--ease-smooth);transform-origin:left;}
+.nav-mid a:hover,.nav-mid a.act{opacity:1;color:var(--red);}
+.nav-mid a:hover::after,.nav-mid a.act::after{transform:scaleX(1);}
+.nav-back{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.25s;}
+.nav-back:hover{color:var(--ink);}
+
+/* PAGE HEADER */
+.ph{padding:120px 28px 56px;border-bottom:1.5px solid var(--border2);position:relative;overflow:hidden;}
+.ph-bg-text{font-family:'Dela Gothic One',sans-serif;font-size:clamp(8rem,22vw,18rem);line-height:0.85;color:transparent;-webkit-text-stroke:1px rgba(14,12,9,0.04);position:absolute;right:20px;bottom:-15px;pointer-events:none;user-select:none;letter-spacing:-0.02em;}
+.ph-cn{font-family:'Noto Serif SC',serif;font-size:0.6rem;color:var(--red);letter-spacing:0.06em;margin-bottom:14px;opacity:0.65;}
+.ph-title{font-family:'Dela Gothic One',sans-serif;font-size:clamp(4rem,12vw,10rem);line-height:0.88;letter-spacing:0.01em;margin-bottom:20px;}
+.ph-title .r{color:var(--red);}
+.ph-title .out{-webkit-text-stroke:2.5px var(--ink);color:transparent;}
+.ph-desc{font-size:0.82rem;color:var(--muted);max-width:500px;line-height:1.9;}
+
+/* TABS */
+.tab-form{border-bottom:1.5px solid var(--border2);padding:12px 28px;display:flex;align-items:center;gap:0;overflow-x:auto;}
+.tab-form::-webkit-scrollbar{display:none;}
+.tab-lbl{font-size:0.46rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-right:18px;border-right:1px solid var(--border2);margin-right:14px;white-space:nowrap;}
+.tab-lbl span{font-family:'Noto Serif SC',serif;font-size:0.5rem;opacity:0.55;display:block;}
+.ttab{
+  display:flex;align-items:center;gap:7px;padding:7px 18px;
+  font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;
+  color:var(--muted);background:transparent;border:none;border-right:1px solid var(--border);
+  transition:all 0.25s var(--ease-smooth);white-space:nowrap;cursor:none;
+}
+.ttab:last-child{border-right:none;}
+.ttab .cb{width:10px;height:10px;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.25s var(--ease-smooth);}
+.ttab:hover,.ttab.act{color:var(--ink);}
+.ttab.act .cb{border-color:var(--red);background:var(--red);}
+.ttab.act .cb::after{content:'✓';font-size:6px;color:var(--paper);}
+
+/* MASONRY */
+.gallery-wrap{padding:40px 28px 80px;min-height:60vh;}
+.masonry{columns:3;column-gap:4px;}
+.gi{
+  break-inside:avoid;margin-bottom:4px;position:relative;overflow:hidden;
+  background:var(--paper2);box-shadow:0 1px 8px rgba(14,12,9,0.04);
+}
+.gi img{width:100%;display:block;filter:contrast(1.02);transition:transform 0.55s var(--ease-smooth),filter 0.4s,opacity 0.3s;}
+.gi:hover img{transform:scale(1.04);filter:contrast(1.06) brightness(0.82);}
+.gi-ov{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(14,12,9,0.72) 0%,rgba(14,12,9,0.15) 50%,transparent 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:18px;
+  opacity:0;transition:opacity 0.35s;
+}
+.gi:hover .gi-ov{opacity:1;}
+.gi-cat{font-size:0.48rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:5px;}
+.gi-title{font-family:'Dela Gothic One',sans-serif;font-size:1.1rem;color:var(--paper);line-height:1;margin-bottom:5px;}
+.gi-hint{font-size:0.56rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(242,237,228,0.4);}
+.gi-badge{position:absolute;top:10px;right:10px;font-size:0.48rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);font-weight:600;background:rgba(242,237,228,0.88);backdrop-filter:blur(4px);padding:3px 9px;}
+.empty-state{text-align:center;padding:80px;font-size:0.82rem;color:var(--muted);display:none;}
+
+/* LIGHTBOX */
+#lb{position:fixed;inset:0;z-index:9000;background:rgba(14,12,9,0.97);display:flex;align-items:stretch;opacity:0;visibility:hidden;transition:opacity 0.4s,visibility 0.4s;}
+#lb.open{opacity:1;visibility:visible;}
+.lb-vis{flex:1;display:flex;align-items:center;justify-content:center;padding:80px 40px 80px 80px;overflow:hidden;}
+.lb-vis img{max-width:100%;max-height:85vh;object-fit:contain;border:1px solid rgba(242,237,228,0.06);box-shadow:0 0 80px rgba(0,0,0,0.5);}
+.lb-panel{width:290px;flex-shrink:0;padding:80px 32px 80px 28px;display:flex;flex-direction:column;justify-content:center;border-left:1px solid rgba(242,237,228,0.07);}
+.lb-panel-head{border-bottom:1.5px solid rgba(242,237,228,0.07);padding-bottom:18px;margin-bottom:22px;}
+.lb-num{font-family:'Noto Serif SC',serif;font-size:0.58rem;color:var(--red);font-weight:700;letter-spacing:0.06em;margin-bottom:8px;}
+.lb-cat{font-size:0.48rem;letter-spacing:0.24em;text-transform:uppercase;color:rgba(242,237,228,0.3);font-weight:600;margin-bottom:10px;}
+.lb-title{font-family:'Dela Gothic One',sans-serif;font-size:1.75rem;letter-spacing:0.02em;line-height:0.92;color:var(--paper);}
+.lb-yr{font-family:'Noto Serif SC',serif;font-size:0.62rem;color:rgba(242,237,228,0.22);margin-top:9px;}
+.lb-desc{font-size:0.76rem;color:rgba(242,237,228,0.4);line-height:1.8;}
+.lb-nav{display:flex;gap:8px;margin-top:26px;}
+.lb-btn{width:42px;height:42px;border:1px solid rgba(242,237,228,0.1);background:transparent;color:var(--paper);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.25s var(--ease-smooth);cursor:none;}
+.lb-btn:hover{border-color:var(--red);color:var(--red);background:rgba(190,47,24,0.08);}
+.lb-x{position:fixed;top:22px;right:22px;width:42px;height:42px;border:1px solid rgba(242,237,228,0.1);background:transparent;color:rgba(242,237,228,0.35);font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.25s;cursor:none;z-index:9050;}
+.lb-x:hover{border-color:var(--red);color:var(--red);}
+.lb-count{font-family:'Dela Gothic One',sans-serif;font-size:0.72rem;letter-spacing:0.1em;color:rgba(242,237,228,0.12);margin-top:auto;}
+
+/* FOOTER */
+footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.f-logo{font-family:'Dela Gothic One',sans-serif;font-size:0.9rem;color:var(--paper);letter-spacing:0.04em;}
+.f-logo .r{color:var(--red);}
+.f-lnk{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(242,237,228,0.25);text-decoration:none;transition:color 0.25s;}
+.f-lnk:hover{color:var(--red);}
+
+@media(max-width:900px){.masonry{columns:2;} #lb{flex-direction:column;} .lb-vis{padding:80px 20px 20px;} .lb-panel{width:100%;border-left:none;border-top:1px solid rgba(242,237,228,0.07);padding:22px;} nav{padding:14px 20px;}}
+@media(max-width:600px){.masonry{columns:1;} .nav-mid{display:none;}}
+</style>
+</head>
+<body>
+<div id="seal"><svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg"><rect id="sr" x="2" y="2" width="48" height="48" rx="5"/><rect id="si" x="5.5" y="5.5" width="41" height="41" rx="3"/><text id="sc" x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="24" font-weight="700">画</text></svg></div>
+<div class="grain"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo"><span class="nav-logo-mark-wrap"><img src="images/logo_horse.png" class="nav-logo-mark" alt="logo"></span>CODY<span class="r">.</span>OE</a>
+  <ul class="nav-mid">
+    <li><a href="videos.html">影 Work</a></li>
+    <li><a href="artwork.html" class="act">画 Art</a></li>
+    <li><a href="index.html#about">简 About</a></li>
+    <li><a href="index.html#contact">联 Contact</a></li>
+  </ul>
+  <a href="index.html" class="nav-back">← 主页 Home</a>
+</nav>
+
+<div class="ph">
+  <span class="ph-bg-text">画</span>
+  <div class="ph-cn">零三 · 艺术作品 · Artwork Gallery</div>
+  <h1 class="ph-title">ART<span class="out">WORK</span><span class="r">.</span></h1>
+  <p class="ph-desc">Digital art, graphic design, and brand identity. 数字艺术与品牌设计。Click any piece for full view + details.</p>
+</div>
+
+<div class="tab-form">
+  <div class="tab-lbl">分类 <span>Category</span></div>
+  <button class="ttab act" data-t="all"><span class="cb"></span>All</button>
+  <button class="ttab" data-t="illustration"><span class="cb"></span>插画 Illustration</button>
+  <button class="ttab" data-t="digital"><span class="cb"></span>数字艺术 Digital</button>
+  <button class="ttab" data-t="design"><span class="cb"></span>设计 Design</button>
+  <button class="ttab" data-t="brand"><span class="cb"></span>品牌 Brand</button>
+</div>
+
+<div class="gallery-wrap">
+  <div class="masonry" id="gallery"></div>
+  <div class="empty-state" id="empty">此分类暂无作品 · Nothing in this category yet.</div>
+</div>
+
+<div id="lb">
+  <button class="lb-x" id="lbx">✕</button>
+  <div class="lb-vis"><img id="lb-img" src="" alt=""></div>
+  <div class="lb-panel">
+    <div class="lb-panel-head">
+      <div class="lb-num" id="lb-num"></div>
+      <div class="lb-cat" id="lb-cat"></div>
+      <div class="lb-title" id="lb-title"></div>
+      <div class="lb-yr" id="lb-yr"></div>
+    </div>
+    <p class="lb-desc" id="lb-desc"></p>
+    <div class="lb-nav">
+      <button class="lb-btn" id="lbprev">←</button>
+      <button class="lb-btn" id="lbnext">→</button>
+    </div>
+    <p class="lb-count" id="lb-count"></p>
+  </div>
+</div>
+
+<footer>
+  <span class="f-logo">CODY<span class="r">.</span>OE</span>
+  <div style="display:flex;gap:22px;"><a href="videos.html" class="f-lnk">影 Videos →</a><a href="index.html#contact" class="f-lnk">联 Contact →</a></div>
+  <a href="index.html" class="f-lnk">← 主页 Home</a>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const ART=[
+  {img:'images/IMG_2989.PNG',title:'Angel (T)',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Portrait series exploring duality — holy and broken at the same time. Procreate. Pencil texture, digital colour. The halo is loose, unresolved.'},
+  {img:'images/IMG_2990.PNG',title:'King (R)',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Pencil portrait with gold crown accent. Part of the same character series. Quiet confidence, layered chains, crown sitting off-centre.'},
+  {img:'images/IMG_2991.PNG',title:'Devil (C)',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Red horns as the only colour in an otherwise monochrome composition. Hair, expression, atmosphere — done in Procreate.'},
+  {img:'images/IMG_2992.PNG',title:'Portrait Study (SW)',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Graphite-style portrait. Hand-to-mouth, direct gaze. Looser line quality, more expressive — a moment more than a character.'},
+  {img:'images/Untitled_Artwork_1.png',title:'Silence',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Dark digital painting — rain-soaked, hand obscuring the lower face, direct stare. Rendered entirely in black, grey and white. Heavy atmosphere, minimal colour. Done in Procreate.'},
+  {img:'images/IMG_2993.PNG',title:'Saint (N)',cat:'illustration',cl:'插画 Illustration',yr:'2024',desc:'Ink-style portrait with a loose gold halo. A single red accent — blood at the lip — against clean linework on textured paper. Fragile, sacred, slightly wrong.'},
+  {img:'images/Untitled_Artwork_4.png',title:'Chaos Composition',cat:'digital',cl:'数字艺术 Digital',yr:'2024',desc:'Experimental digital painting. Mixed media layers — barbed wire, eyes, smiley faces, graffiti text, anatomical forms. Purple and violet field torn apart by graphic marks. A dense visual argument about noise and contradiction.'},
+  {img:'images/Untitled_Artwork_3.png',title:'In Heaven',cat:'digital',cl:'数字艺术 Digital',yr:'2024',desc:'Mixed media digital piece. Eye with halo, abstract figurative form, tribal lettering, graffiti fragments. "Let me die." "How much me." Themes of longing and spiritual disruption.'},
+  {img:'images/Untitled_Artwork_2.png',title:'After Hours',cat:'digital',cl:'数字艺术 Digital',yr:'2024',desc:'Digital painting — warm golden light, green bomber jacket, a halo barely holding above dark hair. A quiet moment before something. Influenced by WLOP and painterly realism.'},
+  {img:'images/IMG_2994.PNG',title:'Hollow',cat:'digital',cl:'数字艺术 Digital',yr:'2024',desc:'Minimal digital composition. Dark void eyes, single teardrop, red mark floating above. Unsettling stillness. Built in Procreate — stripped back to just what unsettles.'},
+  {img:'images/Untitled_Artwork.png',title:'code.',cat:'design',cl:'平面设计 Graphic Design',yr:'2024',desc:'Album cover design. Editorial collage — K-pop reference photography, Y2K typography, devil horns, distressed paper texture, restricted rating sticker. Layered and intentional.'},
+  {img:'images/Untitled_Artwork_6.png',title:'Over + The',cat:'design',cl:'平面设计 Graphic Design',yr:'2024',desc:'Event poster for "Over + The Horizon". Spray-paint drip typography on acid green. Sony cassette as centrepiece, smiley face as recurring motif. Bold, immediate, genre-aware.'},
+  {img:'images/Untitled_Artwork_5.png',title:'Over + The Horizon',cat:'design',cl:'平面设计 Graphic Design',yr:'2024',desc:'Alternate poster. Vintage Visor PDA showing event details — "June 25 and June 29. Experience something like no other." Hand-drawn blue flame motifs flanking it. Retro-futurist meets underground.'},
+  {img:'images/Untitled_Artwork_7.png',title:'Horizon Flyer',cat:'design',cl:'平面设计 Graphic Design',yr:'2024',desc:'Event flyer for Horizon — Kodak film-stock aesthetic, bold retro type, layered colour fields. "High Standard Color" branding. Designed for print and digital distribution.'},
+  {img:'images/IMG_2969.PNG',title:'Seek In Xtra — Red',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Brand poster for six5.crew\'s showcase. Distressed editorial typography, layered goldfish and dancer imagery, ink splatters, the six5 logo. Built for social and print.'},
+  {img:'images/IMG_2970.PNG',title:'Seek In Xtra — Mono',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Alternate colourway — greyscale with red accent spots only. More controlled, more editorial. Same layout, completely different energy.'},
+  {img:'images/IMG_2978.PNG',title:'Are You Ready Movers?',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Halftone character illustration for six5.crew promo. CMYK halftone print aesthetic — dancer rendered in dots and movement.'},
+  {img:'images/IMG_2982.PNG',title:'Denim Label',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Product label mockup — leather jeans patch for six5.crew apparel. Embossed logo, "COMING SOON?" Merch design with real-world application.'},
+  {img:'images/IMG_2983.PNG',title:'T-Shirt Neck Tag',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Neck tag design for six5.crew merch. Woven label with the six5 logo. Clean, minimal, typographic.'},
+  {img:'images/IMG_2984.PNG',title:'+SIX5 Business Card',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Brand identity business card for +SIX5. Front: halftone dot logo. Back: name, number, address. Born in Singapore. Made to move anywhere.'},
+  {img:'images/IMG_2968.PNG',title:'Normal is Overrated',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Photography + branding composition from a live showcase. The six5 logo in white, overlaid on a performance photograph. Normal is Overrated. Seek In Xtra.'},
+  {img:'images/IMG_2998.PNG',title:'Set Design — OTH',cat:'brand',cl:'品牌设计 Brand Identity',yr:'2024',desc:'Physical set design and creative direction for the Over + The Horizon event. Divided room installation — vintage portraits, floral wallpaper, dual-space environment. Concept to construction.'},
+];
+
+/* SEAL */
+const seal=document.getElementById('seal');
+let mx=window.innerWidth/2,my=window.innerHeight/2,sx=mx,sy=my;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function l(){sx+=(mx-sx)*0.12;sy+=(my-sy)*0.12;seal.style.left=sx+'px';seal.style.top=sy+'px';requestAnimationFrame(l);})();
+document.addEventListener('click',e=>{
+  seal.classList.add('stamping');setTimeout(()=>seal.classList.remove('stamping'),180);
+  const s=document.createElement('div');s.className='stamp-splat';
+  s.style.cssText=`left:${e.clientX}px;top:${e.clientY}px;transform:translate(-50%,-50%) rotate(${-10+Math.random()*20}deg)`;
+  s.innerHTML=`<svg viewBox="0 0 52 52"><rect x="2" y="2" width="48" height="48" rx="5"/><rect x="5.5" y="5.5" width="41" height="41" rx="3" fill="none" stroke="rgba(242,237,228,0.5)" stroke-width="0.8"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="20" font-weight="700" font-family="Noto Serif SC,serif">印</text></svg>`;
+  document.body.appendChild(s);
+  gsap.fromTo(s,{scale:0.5,opacity:0.8},{scale:1.3,opacity:0,duration:0.95,ease:'expo.out',onComplete:()=>s.remove()});
+});
+
+/* GALLERY */
+let visible=[],current=0;
+const gal=document.getElementById('gallery'),empty=document.getElementById('empty');
+function render(filter){
+  visible=filter==='all'?ART:ART.filter(a=>a.cat===filter);
+  gal.innerHTML='';
+  empty.style.display=visible.length?'none':'block';
+  visible.forEach((a,i)=>{
+    const d=document.createElement('div');d.className='gi';d.dataset.i=i;
+    d.innerHTML=`<img src="${a.img}" alt="${a.title}" loading="lazy"><div class="gi-ov"><p class="gi-cat">${a.cl}</p><p class="gi-title">${a.title}</p><p class="gi-hint">点击查看 Click to view ↗</p></div><span class="gi-badge">${a.cl.split(' ')[0]}</span>`;
+    d.addEventListener('click',()=>openLB(i));
+    gal.appendChild(d);
+  });
+  attachHover();
+  gsap.from('.gi',{y:25,opacity:0,stagger:0.035,duration:0.5,ease:'power2.out'});
+}
+
+function attachHover(){
+  document.querySelectorAll('.gi,a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>seal.classList.add('hovering'));
+    el.addEventListener('mouseleave',()=>seal.classList.remove('hovering'));
+  });
+}
+
+/* TABS */
+document.querySelectorAll('.ttab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.ttab').forEach(x=>x.classList.remove('act'));
+    t.classList.add('act');render(t.dataset.t);
+  });
+  t.addEventListener('mouseenter',()=>seal.classList.add('hovering'));
+  t.addEventListener('mouseleave',()=>seal.classList.remove('hovering'));
+});
+
+/* LIGHTBOX */
+const lb=document.getElementById('lb'),lbImg=document.getElementById('lb-img');
+function openLB(i){
+  current=i;const a=visible[i];
+  lbImg.src=a.img;
+  document.getElementById('lb-num').textContent=`编号 ${String(i+1).padStart(2,'0')}`;
+  document.getElementById('lb-cat').textContent=a.cl;
+  document.getElementById('lb-title').textContent=a.title;
+  document.getElementById('lb-yr').textContent=`年份 ${a.yr}`;
+  document.getElementById('lb-desc').textContent=a.desc;
+  document.getElementById('lb-count').textContent=`${i+1} / ${visible.length}`;
+  lb.classList.add('open');document.body.style.overflow='hidden';
+  gsap.from('.lb-panel',{x:25,opacity:0,duration:0.45,ease:'power2.out'});
+  gsap.from('.lb-vis img',{scale:0.94,opacity:0,duration:0.45,ease:'power2.out'});
+}
+function closeLB(){lb.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('lbx').addEventListener('click',closeLB);
+lb.addEventListener('click',e=>{if(e.target===lb)closeLB();});
+document.getElementById('lbprev').addEventListener('click',e=>{e.stopPropagation();openLB((current-1+visible.length)%visible.length);});
+document.getElementById('lbnext').addEventListener('click',e=>{e.stopPropagation();openLB((current+1)%visible.length);});
+document.addEventListener('keydown',e=>{
+  if(!lb.classList.contains('open'))return;
+  if(e.key==='Escape')closeLB();
+  if(e.key==='ArrowLeft')openLB((current-1+visible.length)%visible.length);
+  if(e.key==='ArrowRight')openLB((current+1)%visible.length);
+});
+
+/* URL PARAM */
+const pt=new URLSearchParams(window.location.search).get('tab');
+const matchTab=pt&&document.querySelector(`.ttab[data-t="${pt}"]`);
+if(matchTab){document.querySelectorAll('.ttab').forEach(x=>x.classList.remove('act'));matchTab.classList.add('act');render(pt);}
+else render('all');
+
+/* GSAP */
+gsap.from('.ph-title',{y:45,opacity:0,duration:0.8,ease:'power3.out',delay:0.2});
+gsap.from('.ph-desc',{y:25,opacity:0,duration:0.7,ease:'power2.out',delay:0.4});
+gsap.from('.ph-cn',{x:-20,opacity:0,duration:0.5,ease:'power2.out',delay:0.1});
+</script>
+</body>
+</html>
