@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>codyoe</title>
-<link rel="icon" type="image/png" href="images/logo_horse_fav.png">
+<link rel="icon" type="image/png" href="../images/logo_horse_fav.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Serif+SC:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Serif+SC:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <style>
@@ -13,10 +13,21 @@
 :root{
   --paper:#F2EDE4;--paper2:#E8E2D8;--ink:#0E0C09;--ink2:#2C2820;
   --red:#BE2F18;--red-glow:rgba(190,47,24,0.12);--muted:#7A7468;
+  --ochre:#C89660;--olive:#6B6A3B;
   --border:rgba(14,12,9,0.10);--border2:rgba(14,12,9,0.20);
   --dark:#0E0C09;--dark2:#18160F;
   --ease-smooth:cubic-bezier(.32,.72,0,1);
 }
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important;}
+}
+@media(hover:none){
+  body,a,button{cursor:auto!important;}
+  #seal,.stamp-splat{display:none!important;}
+}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:2px;}
+.skip-link{position:absolute;left:-9999px;top:0;padding:10px 16px;background:var(--paper);color:var(--ink);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;z-index:9999;text-decoration:none;}
+.skip-link:focus{left:14px;top:14px;}
 html{scroll-behavior:smooth;}
 body{background:var(--dark);color:var(--paper);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
 a,button{cursor:none;}
@@ -55,6 +66,18 @@ nav{
 .nav-mid a:hover::after,.nav-mid a.act::after{transform:scaleX(1);}
 .nav-back{font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(242,237,228,0.25);text-decoration:none;transition:color 0.25s;}
 .nav-back:hover{color:var(--paper);}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 12px;border:1px solid var(--red);border-radius:999px;
+  font-size:0.5rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--red);font-weight:600;
+  background:rgba(190,47,24,0.06);white-space:nowrap;text-decoration:none;
+  transition:all 0.25s var(--ease-smooth);
+}
+.nav-pill:hover{background:var(--red);color:var(--paper);box-shadow:0 4px 16px var(--red-glow);}
+.nav-pill-dot{width:6px;height:6px;border-radius:50%;background:#2EA043;animation:pill-pulse 2s ease-in-out infinite;}
+@keyframes pill-pulse{0%,100%{box-shadow:0 0 0 0 rgba(46,160,67,0.55);}50%{box-shadow:0 0 0 6px rgba(46,160,67,0);}}
+@media(max-width:700px){.nav-pill-text{display:none;}.nav-pill{padding:6px 8px;}.nav-back{display:none;}}
 
 /* PAGE HEADER */
 .ph{padding:120px 28px 60px;border-bottom:1px solid rgba(242,237,228,0.07);position:relative;overflow:hidden;}
@@ -122,7 +145,7 @@ nav{
 .phone-play svg{margin-left:3px;}
 .phone-card.playing .phone-play{display:none;}
 .phone-info{padding:16px 4px 0;}
-.pi-platform{font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:6px;}
+.pi-platform{font-size:0.48rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--ochre);font-weight:600;margin-bottom:6px;}
 .pi-title{font-family:'Dela Gothic One',sans-serif;font-size:1.05rem;color:var(--paper);line-height:1.1;margin-bottom:7px;letter-spacing:0.02em;}
 .pi-desc{font-size:0.66rem;color:rgba(242,237,228,0.33);line-height:1.65;margin-bottom:10px;}
 .pi-link{display:inline-flex;align-items:center;gap:5px;font-size:0.54rem;letter-spacing:0.16em;text-transform:uppercase;color:rgba(242,237,228,0.25);text-decoration:none;border-bottom:1px solid rgba(242,237,228,0.1);transition:all 0.25s;}
@@ -141,9 +164,26 @@ nav{
   width:44px;height:44px;border:1px solid rgba(242,237,228,0.12);background:transparent;
   color:rgba(242,237,228,0.4);font-size:1.15rem;
   display:flex;align-items:center;justify-content:center;
-  transition:all 0.25s;cursor:none;
+  transition:all 0.25s;cursor:none;border-radius:50%;
 }
 .vm-close:hover{border-color:var(--red);color:var(--red);}
+.vm-nav{
+  position:fixed;top:50%;transform:translateY(-50%);z-index:9050;
+  width:44px;height:44px;border:1px solid rgba(242,237,228,0.12);background:rgba(14,12,9,0.6);
+  color:rgba(242,237,228,0.4);font-size:1rem;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  transition:all 0.25s;cursor:none;backdrop-filter:blur(6px);
+}
+.vm-nav:hover{border-color:var(--red);color:var(--red);}
+.vm-nav.prev{left:22px;}
+.vm-nav.next{right:22px;}
+.vm-idx{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:9050;
+  font-family:'Dela Gothic One',sans-serif;font-size:0.72rem;letter-spacing:0.1em;color:rgba(242,237,228,0.35);
+  padding:6px 14px;border:1px solid rgba(242,237,228,0.08);background:rgba(14,12,9,0.6);backdrop-filter:blur(6px);
+  border-radius:999px;
+}
+@media(max-width:700px){.vm-nav{width:40px;height:40px;} .vm-nav.prev{left:10px;} .vm-nav.next{right:10px;}}
 .vm-video{
   height:min(90vh,860px);width:auto;
   border-radius:14px;
@@ -164,8 +204,14 @@ nav{
 .design-strip::-webkit-scrollbar{height:2px;}
 .design-strip::-webkit-scrollbar-thumb{background:var(--red);}
 .ds-card{flex-shrink:0;width:220px;position:relative;overflow:hidden;background:var(--dark2);transition:background 0.3s;}
-.ds-card img{width:220px;height:360px;object-fit:cover;filter:grayscale(0.15);opacity:0.75;display:block;transition:transform 0.5s var(--ease-smooth),filter 0.3s,opacity 0.3s;}
-.ds-card:hover img{transform:scale(1.04);filter:grayscale(0);opacity:0.95;}
+.ds-card::before{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(135deg,rgba(200,150,96,0.28) 0%,rgba(26,23,19,0.55) 100%);
+  mix-blend-mode:color;opacity:0.85;transition:opacity 0.5s var(--ease-smooth);
+}
+.ds-card:hover::before{opacity:0;}
+.ds-card img{width:220px;height:360px;object-fit:cover;filter:grayscale(0.35);opacity:0.85;display:block;transition:transform 0.6s var(--ease-smooth),filter 0.4s,opacity 0.3s;}
+.ds-card:hover img{transform:scale(1.05);filter:grayscale(0) saturate(1.1);opacity:1;}
 .ds-info{padding:13px 15px;}
 .ds-title{font-family:'Dela Gothic One',sans-serif;font-size:0.88rem;color:var(--paper);letter-spacing:0.02em;margin-bottom:4px;}
 .ds-sub{font-size:0.62rem;color:rgba(242,237,228,0.25);}
@@ -179,7 +225,7 @@ nav{
 .ig-sub a:hover{color:var(--red);border-color:var(--red);}
 
 /* FOOTER */
-footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid rgba(242,237,228,0.06);}
 .f-logo{font-family:'Dela Gothic One',sans-serif;font-size:0.9rem;color:var(--paper);letter-spacing:0.04em;}
 .f-logo .r{color:var(--red);}
 .f-lnk{font-size:0.56rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(242,237,228,0.25);text-decoration:none;transition:color 0.25s;}
@@ -191,19 +237,25 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
 </style>
 </head>
 <body>
-<div id="seal"><svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg"><rect id="sr" x="2" y="2" width="48" height="48" rx="5"/><rect id="si" x="5.5" y="5.5" width="41" height="41" rx="3"/><text id="sc" x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="24" font-weight="700">影</text></svg></div>
-<div class="grain"></div>
+<a href="#main" class="skip-link">Skip to content</a>
+<div id="seal" aria-hidden="true"><svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg"><rect id="sr" x="2" y="2" width="48" height="48" rx="5"/><rect id="si" x="5.5" y="5.5" width="41" height="41" rx="3"/><text id="sc" x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="24" font-weight="700">影</text></svg></div>
+<div class="grain" aria-hidden="true"></div>
 
 <nav>
-  <a href="index.html" class="nav-logo"><span class="nav-logo-mark-wrap"><img src="images/logo_horse.png" class="nav-logo-mark" alt="logo"></span>CODY<span class="r">.</span>OE</a>
-  <ul class="nav-mid">
-    <li><a href="videos.html" class="act">影 Work</a></li>
-    <li><a href="artwork.html">画 Art</a></li>
-    <li><a href="index.html#about">简 About</a></li>
-    <li><a href="index.html#contact">联 Contact</a></li>
+  <a href="../" class="nav-logo" aria-label="Cody Oe — home"><span class="nav-logo-mark-wrap"><img src="../images/logo_horse.png" class="nav-logo-mark" alt="Cody Oe seal"></span>CODY<span class="r">.</span>OE</a>
+  <ul class="nav-mid" role="menubar">
+    <li role="none"><a role="menuitem" href="../work/" class="act">影 Work</a></li>
+    <li role="none"><a role="menuitem" href="../art/">画 Art</a></li>
+    <li role="none"><a role="menuitem" href="../#about">简 About</a></li>
+    <li role="none"><a role="menuitem" href="../#contact">联 Contact</a></li>
   </ul>
-  <a href="index.html" class="nav-back">← 主页 Home</a>
+  <div class="nav-right">
+    <a href="../#contact" class="nav-pill" aria-label="Open to Creative Strategist roles in Singapore"><span class="nav-pill-dot" aria-hidden="true"></span><span class="nav-pill-text">Open · Creative SG</span></a>
+    <a href="../" class="nav-back">← 主页 Home</a>
+  </div>
 </nav>
+
+<main id="main">
 
 <div class="ph">
   <span class="ph-bg-text" aria-hidden="true">影</span>
@@ -218,8 +270,10 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
 </div>
 
 <!-- VIDEO MODAL -->
-<div class="vmodal" id="vmodal">
-  <button class="vm-close" id="vmClose">✕</button>
+<div class="vmodal" id="vmodal" role="dialog" aria-modal="true" aria-label="Video player">
+  <button class="vm-close" id="vmClose" aria-label="Close video">✕</button>
+  <button class="vm-nav prev" id="vmPrev" aria-label="Previous video">‹</button>
+  <button class="vm-nav next" id="vmNext" aria-label="Next video">›</button>
   <video class="vm-video" id="vmVideo" controls playsinline></video>
   <div class="vm-info">
     <p class="vm-platform" id="vmPlatform"></p>
@@ -227,6 +281,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
     <p class="vm-desc" id="vmDesc"></p>
     <a class="vm-link" id="vmLink" href="https://instagram.com/six5.crew" target="_blank" rel="noopener">Watch on Instagram ↗</a>
   </div>
+  <div class="vm-idx" id="vmIdx" aria-live="polite"></div>
 </div>
 
 <!-- SIX5 CREW REELS -->
@@ -242,7 +297,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
   </div>
   <div class="reel-strip" id="reelStrip">
 
-    <div class="phone-card" data-cat="crew" data-src="vid/aura.mp4" data-title="Unlimited Aura" data-desc="Loopyboopydoopy has constant unlimited aura for days." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/aura.mp4" data-title="Unlimited Aura" data-desc="Loopyboopydoopy has constant unlimited aura for days." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -256,7 +311,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/halloween.mp4" data-title="Still Creepin'" data-desc="Halloween is over but we still be creepin' around — six5 crew energy." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/halloween.mp4" data-title="Still Creepin'" data-desc="Halloween is over but we still be creepin' around — six5 crew energy." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -270,7 +325,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/rule1.mp4" data-title="Rule #1" data-desc="Don't fall asleep in six5 pracs. Behind the scenes crew content." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/rule1.mp4" data-title="Rule #1" data-desc="Don't fall asleep in six5 pracs. Behind the scenes crew content." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -284,7 +339,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/challenge.mp4" data-title="Seek In Xtra Challenge" data-desc="What started as an innocent act of sincerity from a friend turned into the Seek In Xtra Challenge." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/challenge.mp4" data-title="Seek In Xtra Challenge" data-desc="What started as an innocent act of sincerity from a friend turned into the Seek In Xtra Challenge." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -298,7 +353,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v1.mp4" data-title="are we into... butt stuff?" data-desc="six5.crew doing what they do best — unexpected, unfiltered, and absolutely unserious." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v1.mp4" data-title="are we into... butt stuff?" data-desc="six5.crew doing what they do best — unexpected, unfiltered, and absolutely unserious." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -312,7 +367,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v2.mp4" data-title="Headphones Call Challenge" data-desc="fun times while waiting for our stage... the headphones game hits different backstage." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v2.mp4" data-title="Headphones Call Challenge" data-desc="fun times while waiting for our stage... the headphones game hits different backstage." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -326,7 +381,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v3.mp4" data-title="Watch us fail Fashion by Cortis" data-desc="attempted Fashion by Cortis. key word: attempted." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v3.mp4" data-title="Watch us fail Fashion by Cortis" data-desc="attempted Fashion by Cortis. key word: attempted." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -340,7 +395,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v4.mp4" data-title="Headphones Call Challenge Pt. 2" data-desc="it was too good not to do again." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v4.mp4" data-title="Headphones Call Challenge Pt. 2" data-desc="it was too good not to do again." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -354,7 +409,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v5.mp4" data-title="Wild Wild West" data-desc="six5 in the wild wild west — practice behind the scenes." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v5.mp4" data-title="Wild Wild West" data-desc="six5 in the wild wild west — practice behind the scenes." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -368,7 +423,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v6.mp4" data-title="Training Montage" data-desc="six5 training montage — doing pt at dance practice. no days off." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v6.mp4" data-title="Training Montage" data-desc="six5 training montage — doing pt at dance practice. no days off." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -382,7 +437,7 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
       </div>
     </div>
 
-    <div class="phone-card" data-cat="crew" data-src="vid/six5_v7.mp4" data-title="ESSENTIALS AFTER PRACTICE" data-desc="the after prac routine. non-negotiable." data-platform="@six5.crew · Instagram Reel">
+    <div class="phone-card" data-cat="crew" data-src="../vid/six5_v7.mp4" data-title="ESSENTIALS AFTER PRACTICE" data-desc="the after prac routine. non-negotiable." data-platform="@six5.crew · Instagram Reel">
       <div class="phone-frame"><div class="phone-notch"></div>
         <video class="phone-video" loop muted playsinline preload="none"></video>
         <div class="phone-overlay"></div>
@@ -407,14 +462,14 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
     <span class="rh-handle">Design Work</span>
   </div>
   <div class="design-strip">
-    <div class="ds-card"><img src="images/IMG_2969.PNG" alt="Seek In Xtra Red"><div class="ds-info"><p class="ds-title">Seek In Xtra</p><p class="ds-sub">Poster · Red Colourway</p></div></div>
-    <div class="ds-card"><img src="images/IMG_2970.PNG" alt="Seek In Xtra Mono"><div class="ds-info"><p class="ds-title">Seek In Xtra</p><p class="ds-sub">Poster · Mono Colourway</p></div></div>
-    <div class="ds-card"><img src="images/Untitled_Artwork_6.png" alt="Over + The"><div class="ds-info"><p class="ds-title">Over + The</p><p class="ds-sub">Event Poster</p></div></div>
-    <div class="ds-card"><img src="images/Untitled_Artwork_5.png" alt="Over + The Horizon"><div class="ds-info"><p class="ds-title">Over + The Horizon</p><p class="ds-sub">Alternate Poster</p></div></div>
-    <div class="ds-card"><img src="images/IMG_2978.PNG" alt="Movers"><div class="ds-info"><p class="ds-title">Are You Ready Movers?</p><p class="ds-sub">Halftone Character</p></div></div>
-    <div class="ds-card"><img src="images/Untitled_Artwork.png" alt="code."><div class="ds-info"><p class="ds-title">code.</p><p class="ds-sub">Editorial Cover</p></div></div>
-    <div class="ds-card"><img src="images/IMG_2984.PNG" alt="Business Card"><div class="ds-info"><p class="ds-title">+SIX5 Business Card</p><p class="ds-sub">Brand Identity</p></div></div>
-    <div class="ds-card"><img src="images/IMG_2968.PNG" alt="Performance"><div class="ds-info"><p class="ds-title">Performance</p><p class="ds-sub">Photography</p></div></div>
+    <div class="ds-card"><img src="../images/IMG_2969.PNG" alt="Seek In Xtra Red"><div class="ds-info"><p class="ds-title">Seek In Xtra</p><p class="ds-sub">Poster · Red Colourway</p></div></div>
+    <div class="ds-card"><img src="../images/IMG_2970.PNG" alt="Seek In Xtra Mono"><div class="ds-info"><p class="ds-title">Seek In Xtra</p><p class="ds-sub">Poster · Mono Colourway</p></div></div>
+    <div class="ds-card"><img src="../images/Untitled_Artwork_6.png" alt="Over + The"><div class="ds-info"><p class="ds-title">Over + The</p><p class="ds-sub">Event Poster</p></div></div>
+    <div class="ds-card"><img src="../images/Untitled_Artwork_5.png" alt="Over + The Horizon"><div class="ds-info"><p class="ds-title">Over + The Horizon</p><p class="ds-sub">Alternate Poster</p></div></div>
+    <div class="ds-card"><img src="../images/IMG_2978.PNG" alt="Movers"><div class="ds-info"><p class="ds-title">Are You Ready Movers?</p><p class="ds-sub">Halftone Character</p></div></div>
+    <div class="ds-card"><img src="../images/Untitled_Artwork.png" alt="code."><div class="ds-info"><p class="ds-title">code.</p><p class="ds-sub">Editorial Cover</p></div></div>
+    <div class="ds-card"><img src="../images/IMG_2984.PNG" alt="Business Card"><div class="ds-info"><p class="ds-title">+SIX5 Business Card</p><p class="ds-sub">Brand Identity</p></div></div>
+    <div class="ds-card"><img src="../images/IMG_2968.PNG" alt="Performance"><div class="ds-info"><p class="ds-title">Performance</p><p class="ds-sub">Photography</p></div></div>
   </div>
 </div>
 
@@ -424,27 +479,33 @@ footer{background:var(--ink);padding:20px 28px;display:flex;align-items:center;j
   <p class="ig-sub">More content on Instagram — <a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a> &nbsp;·&nbsp; <a href="https://instagram.com/six5.crew" target="_blank" rel="noopener">@six5.crew ↗</a></p>
 </div>
 
-<footer>
+</main>
+
+<footer role="contentinfo">
   <span class="f-logo">CODY<span class="r">.</span>OE</span>
   <div style="display:flex;gap:22px;">
-    <a href="artwork.html" class="f-lnk">画 Artwork →</a>
-    <a href="index.html#contact" class="f-lnk">联 Contact →</a>
+    <a href="../art/" class="f-lnk">画 Artwork →</a>
+    <a href="../#contact" class="f-lnk">联 Contact →</a>
   </div>
-  <a href="index.html" class="f-lnk">← 主页 Home</a>
+  <a href="../" class="f-lnk">← 主页 Home</a>
 </footer>
 
 <script>
 gsap.registerPlugin(ScrollTrigger);
+const RM = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const TOUCH = window.matchMedia('(hover:none)').matches;
 
 /* SEAL */
 const seal=document.getElementById('seal');
 let mx=window.innerWidth/2,my=window.innerHeight/2,sx=mx,sy=my;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
-(function l(){sx+=(mx-sx)*0.12;sy+=(my-sy)*0.12;seal.style.left=sx+'px';seal.style.top=sy+'px';requestAnimationFrame(l);})();
-document.querySelectorAll('a,button,.phone-card,.ds-card').forEach(el=>{
-  el.addEventListener('mouseenter',()=>seal.classList.add('hovering'));
-  el.addEventListener('mouseleave',()=>seal.classList.remove('hovering'));
-});
+if(!TOUCH){
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+  (function l(){sx+=(mx-sx)*0.12;sy+=(my-sy)*0.12;seal.style.left=sx+'px';seal.style.top=sy+'px';requestAnimationFrame(l);})();
+  document.querySelectorAll('a,button,.phone-card,.ds-card').forEach(el=>{
+    el.addEventListener('mouseenter',()=>seal.classList.add('hovering'));
+    el.addEventListener('mouseleave',()=>seal.classList.remove('hovering'));
+  });
+}
 document.addEventListener('click',e=>{
   seal.classList.add('stamping');setTimeout(()=>seal.classList.remove('stamping'),180);
   const s=document.createElement('div');s.className='stamp-splat';
@@ -454,45 +515,91 @@ document.addEventListener('click',e=>{
   gsap.fromTo(s,{scale:0.5,opacity:0.8},{scale:1.3,opacity:0,duration:0.95,ease:'expo.out',onComplete:()=>s.remove()});
 });
 
-/* VIDEO MODAL */
+/* VIDEO MODAL — with prev/next + swipe-down to close */
 const vmodal=document.getElementById('vmodal');
 const vmVideo=document.getElementById('vmVideo');
 const vmClose=document.getElementById('vmClose');
+const vmPrev=document.getElementById('vmPrev');
+const vmNext=document.getElementById('vmNext');
+const vmIdx=document.getElementById('vmIdx');
+
+let currentIdx=-1;
+function visibleCards(){return [...document.querySelectorAll('.phone-card')].filter(c=>c.style.display!=='none');}
 
 function openVideoModal(card){
-  const src=card.dataset.src;
+  const list=visibleCards();
+  currentIdx=list.indexOf(card);
   vmVideo.preload='auto';
-  vmVideo.src=src;
+  vmVideo.src=card.dataset.src;
   vmVideo.muted=false;
   document.getElementById('vmPlatform').textContent=card.dataset.platform||'@six5.crew · Instagram Reel';
   document.getElementById('vmTitle').textContent=card.dataset.title||'';
   document.getElementById('vmDesc').textContent=card.dataset.desc||'';
+  vmIdx.textContent=`${currentIdx+1} / ${list.length}`;
   vmodal.classList.add('open');
   document.body.style.overflow='hidden';
   vmVideo.play().catch(()=>{});
 }
 function closeVideoModal(){
-  vmVideo.pause();
-  vmVideo.src='';
-  vmodal.classList.remove('open');
-  document.body.style.overflow='';
+  vmVideo.pause();vmVideo.src='';
+  vmodal.classList.remove('open');document.body.style.overflow='';
+  currentIdx=-1;
+}
+function stepModal(dir){
+  const list=visibleCards();if(!list.length)return;
+  currentIdx=(currentIdx+dir+list.length)%list.length;
+  openVideoModal(list[currentIdx]);
 }
 vmClose.addEventListener('click',closeVideoModal);
+vmPrev.addEventListener('click',e=>{e.stopPropagation();stepModal(-1);});
+vmNext.addEventListener('click',e=>{e.stopPropagation();stepModal(1);});
 vmodal.addEventListener('click',e=>{if(e.target===vmodal)closeVideoModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&vmodal.classList.contains('open'))closeVideoModal();});
+document.addEventListener('keydown',e=>{
+  if(!vmodal.classList.contains('open'))return;
+  if(e.key==='Escape')closeVideoModal();
+  if(e.key==='ArrowLeft')stepModal(-1);
+  if(e.key==='ArrowRight')stepModal(1);
+});
 
-/* PHONE CARDS — lazy-load src on first hover, play on hover, click anywhere → modal */
-document.querySelectorAll('.phone-card').forEach(card=>{
+/* Touch swipe — down to close, left/right to navigate */
+let tStartY=0,tStartX=0,tMoveY=0,tMoveX=0;
+vmodal.addEventListener('touchstart',e=>{tStartY=e.touches[0].clientY;tStartX=e.touches[0].clientX;tMoveY=0;tMoveX=0;},{passive:true});
+vmodal.addEventListener('touchmove',e=>{tMoveY=e.touches[0].clientY-tStartY;tMoveX=e.touches[0].clientX-tStartX;},{passive:true});
+vmodal.addEventListener('touchend',()=>{
+  if(Math.abs(tMoveY)>80&&Math.abs(tMoveY)>Math.abs(tMoveX)*1.3&&tMoveY>0){closeVideoModal();return;}
+  if(Math.abs(tMoveX)>60&&Math.abs(tMoveX)>Math.abs(tMoveY)){stepModal(tMoveX<0?1:-1);}
+});
+
+/* PHONE CARDS — autoplay on visible (IntersectionObserver), hover boost, click→modal */
+const phoneCards=document.querySelectorAll('.phone-card');
+phoneCards.forEach(card=>{
   const video=card.querySelector('video');
   if(!video)return;
   let loaded=false;
-  function lazyLoad(){
-    if(!loaded){video.src=card.dataset.src;video.load();loaded=true;}
+  const lazyLoad=()=>{if(!loaded){video.src=card.dataset.src;video.load();loaded=true;}};
+  if(!TOUCH){
+    card.addEventListener('mouseenter',()=>{lazyLoad();video.play().catch(()=>{});});
+    card.addEventListener('mouseleave',()=>{if(!card.dataset.autoplaying)video.pause();});
   }
-  card.addEventListener('mouseenter',()=>{lazyLoad();video.play().catch(()=>{});});
-  card.addEventListener('mouseleave',()=>{video.pause();video.currentTime=0;});
   card.addEventListener('click',()=>openVideoModal(card));
 });
+
+/* Autoplay when visible — gentle on perf: max 3 playing, pause off-screen */
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      const card=en.target;const video=card.querySelector('video');if(!video)return;
+      if(en.isIntersecting&&en.intersectionRatio>0.5){
+        if(!video.src){video.src=card.dataset.src;video.load();}
+        card.dataset.autoplaying='1';
+        video.play().catch(()=>{});
+      } else {
+        video.pause();delete card.dataset.autoplaying;
+      }
+    });
+  },{threshold:[0,0.5,1]});
+  phoneCards.forEach(c=>io.observe(c));
+}
 
 /* SCROLL NAV BUTTONS */
 (function(){
@@ -505,23 +612,53 @@ document.querySelectorAll('.phone-card').forEach(card=>{
   next.addEventListener('click',()=>strip.scrollBy({left:STEP,behavior:'smooth'}));
 })();
 
-/* GSAP */
-gsap.from('.ph-title',{y:45,opacity:0,duration:0.8,ease:'power3.out',delay:0.2});
-gsap.from('.ph-desc',{y:25,opacity:0,duration:0.7,ease:'power2.out',delay:0.4});
-gsap.from('.ph-cn',{x:-20,opacity:0,duration:0.5,ease:'power2.out',delay:0.1});
+/* GSAP — respect reduced motion */
+if(!RM){
+  /* Letter-split title reveal */
+  (function splitPhTitle(){
+    const el=document.querySelector('.ph-title');if(!el)return;
+    const walk=n=>[...n.childNodes].forEach(c=>{
+      if(c.nodeType===3){
+        const frag=document.createDocumentFragment();
+        [...c.textContent].forEach(ch=>{
+          const s=document.createElement('span');s.className='sc';s.textContent=ch;
+          s.style.cssText='display:inline-block;transform:translateY(100%);opacity:0;will-change:transform,opacity;';
+          if(ch===' ')s.style.width='0.3em';
+          frag.appendChild(s);
+        });
+        c.replaceWith(frag);
+      } else if(c.nodeType===1) walk(c);
+    });
+    walk(el);
+    gsap.to(el.querySelectorAll('.sc'),{y:0,opacity:1,duration:0.7,stagger:0.03,ease:'power3.out',delay:0.15});
+  })();
+  gsap.from('.ph-desc',{y:25,opacity:0,duration:0.7,ease:'power2.out',delay:0.5});
+  gsap.from('.ph-cn',{x:-20,opacity:0,duration:0.5,ease:'power2.out',delay:0.1});
 
-document.querySelectorAll('.reel-section,.design-section').forEach(sec=>{
-  gsap.from(sec.querySelector('.reel-header'),{
-    scrollTrigger:{trigger:sec,start:'top 85%'},x:-20,opacity:0,duration:0.5,ease:'power2.out'
+  const ta='play reverse play reverse';
+  document.querySelectorAll('.reel-section,.design-section').forEach(sec=>{
+    gsap.from(sec.querySelector('.reel-header'),{
+      scrollTrigger:{trigger:sec,start:'top 85%',toggleActions:ta},x:-20,opacity:0,duration:0.5,ease:'power2.out'
+    });
+    const cards=[...sec.querySelectorAll('.phone-card,.ds-card')].slice(0,4);
+    gsap.from(cards,{
+      scrollTrigger:{trigger:sec,start:'top 82%',toggleActions:ta},y:30,opacity:0,stagger:0.05,duration:0.5,ease:'power2.out'
+    });
   });
-  /* only animate first 4 cards per section for performance */
-  const cards=[...sec.querySelectorAll('.phone-card,.ds-card')].slice(0,4);
-  gsap.from(cards,{
-    scrollTrigger:{trigger:sec,start:'top 82%'},y:30,opacity:0,stagger:0.05,duration:0.45,ease:'power2.out'
-  });
-});
 
-/* Phone hover lift — CSS only for performance */
+  /* Magnetic CTAs (desktop only) */
+  if(!TOUCH){
+    document.querySelectorAll('.nav-pill,.nav-back,.reel-btn,.vm-close,.vm-nav').forEach(el=>{
+      el.addEventListener('mousemove',e=>{
+        const r=el.getBoundingClientRect();
+        const dx=(e.clientX-(r.left+r.width/2))*0.22;
+        const dy=(e.clientY-(r.top+r.height/2))*0.22;
+        gsap.to(el,{x:dx,y:dy,duration:0.35,ease:'power2.out',overwrite:'auto'});
+      });
+      el.addEventListener('mouseleave',()=>gsap.to(el,{x:0,y:0,duration:0.45,ease:'elastic.out(1,0.5)',overwrite:'auto'}));
+    });
+  }
+}
 
 /* FILTER */
 document.querySelectorAll('.ftab').forEach(tab=>{

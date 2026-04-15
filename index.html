@@ -8,7 +8,7 @@
 <meta name="description" content="Cody Oe — Content Creator, Videographer & Artist. Singapore.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <style>
@@ -16,15 +16,29 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --paper:#F2EDE4;--paper2:#E8E2D8;--paper3:#DDD7CC;
-  --ink:#0E0C09;--ink2:#2C2820;
+  --ink:#0E0C09;--ink2:#2C2820;--ink-deep:#1A1713;
   --red:#BE2F18;--red2:#8B1A08;--red-glow:rgba(190,47,24,0.12);
+  --ochre:#C89660;--olive:#6B6A3B;
   --blue:#2040A8;
   --muted:#7A7468;
   --border:rgba(14,12,9,0.10);--border2:rgba(14,12,9,0.20);
   --stamp-size:48px;
   --ease-smooth:cubic-bezier(.32,.72,0,1);
   --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+  --shadow-soft:0 2px 30px rgba(14,12,9,0.04);
+  --shadow-mid:0 8px 40px rgba(14,12,9,0.10);
 }
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important;}
+}
+@media(hover:none){
+  body{cursor:auto!important;}
+  a,button{cursor:auto!important;}
+  #seal,.stamp-splat{display:none!important;}
+}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:2px;}
+.skip-link{position:absolute;left:-9999px;top:0;padding:10px 16px;background:var(--ink);color:var(--paper);font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;z-index:9999;}
+.skip-link:focus{left:14px;top:14px;}
 html{scroll-behavior:smooth;}
 body{background:var(--paper);color:var(--ink);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
 a,button{cursor:none;}
@@ -58,7 +72,7 @@ a,button{cursor:none;}
 /* ──────────── GRAIN ──────────── */
 .grain{
   position:fixed;inset:-150px;width:calc(100%+300px);height:calc(100%+300px);
-  opacity:0.022;pointer-events:none;z-index:8500;
+  opacity:0.038;pointer-events:none;z-index:8500;mix-blend-mode:multiply;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size:180px;animation:grain 8s steps(12) infinite;
 }
@@ -130,7 +144,7 @@ nav.solid{
 .nav-logo:hover{opacity:0.7;}
 .nav-logo .r{color:var(--red);}
 .nav-logo-mark-wrap{display:flex;align-items:center;justify-content:center;width:52px;height:52px;flex-shrink:0;}
-.nav-logo-mark{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;}
+.nav-logo-mark{width:100%;height:100%;object-fit:contain;}
 .nav-mid{display:flex;gap:28px;list-style:none;}
 .nav-mid a{
   font-size:0.58rem;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;
@@ -145,6 +159,21 @@ nav.solid{
 .nav-mid a:hover{opacity:1;color:var(--red);}
 .nav-mid a:hover::after{transform:scaleX(1);}
 .nav-cn{font-family:'Noto Serif SC',serif;font-size:0.68rem;color:var(--red);opacity:0.4;letter-spacing:0.08em;}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 12px;border:1px solid var(--red);border-radius:999px;
+  font-size:0.5rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--red);font-weight:600;
+  background:rgba(190,47,24,0.04);white-space:nowrap;
+  transition:all 0.25s var(--ease-smooth);text-decoration:none;
+}
+.nav-pill:hover{background:var(--red);color:var(--paper);box-shadow:0 4px 16px var(--red-glow);}
+.nav-pill .nav-pill-dot{
+  width:6px;height:6px;border-radius:50%;background:#2EA043;
+  box-shadow:0 0 0 0 rgba(46,160,67,0.6);animation:pill-pulse 2s ease-in-out infinite;
+}
+@keyframes pill-pulse{0%,100%{box-shadow:0 0 0 0 rgba(46,160,67,0.55);}50%{box-shadow:0 0 0 6px rgba(46,160,67,0);}}
+@media(max-width:640px){.nav-pill-text{display:none;}.nav-pill{padding:6px 8px;}}
 
 /* ──────────── HERO — DOCUMENT FORM ──────────── */
 #hero{
@@ -226,8 +255,9 @@ nav.solid{
 }
 .hero-logo-above{
   display:block;width:clamp(96px,20vw,256px);height:auto;
-  mix-blend-mode:multiply;pointer-events:none;user-select:none;
+  pointer-events:none;user-select:none;
   margin-bottom:6px;
+  filter:drop-shadow(0 2px 10px rgba(14,12,9,0.06));
 }
 .hero-stamp{
   position:absolute;top:28px;right:32px;
@@ -361,8 +391,8 @@ nav.solid{
 .about-col-rule{background:var(--border);}
 .about-col{padding:30px 30px;}
 .col-head{
-  font-family:'DM Serif Display',serif;font-style:italic;
-  font-size:clamp(1.05rem,2vw,1.5rem);line-height:1.38;
+  font-family:'Noto Serif SC',serif;font-style:italic;font-weight:400;
+  font-size:clamp(1.05rem,2vw,1.5rem);line-height:1.4;
   color:var(--ink);margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);
 }
 .col-body p{font-size:0.8rem;color:var(--ink2);line-height:1.95;margin-bottom:14px;text-align:justify;}
@@ -402,8 +432,8 @@ nav.solid{
 .col-pull{
   border-left:3px solid var(--red);padding:12px 0 12px 16px;
   margin:20px 0;
-  font-family:'DM Serif Display',serif;font-style:italic;
-  font-size:1.05rem;color:var(--ink);line-height:1.45;
+  font-family:'Noto Serif SC',serif;font-style:italic;font-weight:400;
+  font-size:1.05rem;color:var(--ink);line-height:1.5;
 }
 /* Now strip */
 .col-now{margin-top:20px;border-top:1px solid var(--border);padding-top:14px;}
@@ -440,13 +470,29 @@ nav.solid{
   transition:transform 0.4s var(--ease-smooth);
 }
 .cat-entry:hover{transform:translateY(-3px);}
-.cat-entry:hover .cat-img{opacity:0.82;transform:scale(1.05);filter:grayscale(0) contrast(1.06);}
-.cat-entry:hover .cat-num{color:rgba(190,47,24,0.25);}
-.cat-entry:hover .cat-arr{color:var(--red);}
+.cat-entry:hover .cat-img{opacity:0.92;transform:scale(1.06);filter:grayscale(0) contrast(1.1) saturate(1.15);}
+.cat-entry:hover .cat-duo{opacity:0;}
+.cat-entry:hover .cat-num{color:rgba(190,47,24,0.3);}
+.cat-entry:hover .cat-arr{color:var(--red);transform:translateX(4px);}
+.cat-entry:hover .cat-grad{background:linear-gradient(to top,rgba(14,12,9,0.92) 0%,rgba(14,12,9,0.08) 60%,transparent 100%);}
 .cat-img{
   position:absolute;inset:0;background-size:cover;background-position:center;
-  filter:grayscale(0.2) contrast(1.08);opacity:0.45;
-  transition:all 0.65s var(--ease-smooth);
+  filter:grayscale(0.35) contrast(1.08);opacity:0.6;
+  transition:all 0.7s var(--ease-smooth);
+}
+.cat-duo{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(135deg,rgba(190,47,24,0.22) 0%,rgba(26,23,19,0.55) 100%);
+  mix-blend-mode:color;opacity:0.85;
+  transition:opacity 0.55s var(--ease-smooth);
+}
+.cat-arr{transition:color 0.3s,transform 0.3s var(--ease-smooth);}
+.cat-tag{color:var(--ochre)!important;}
+.cat-featured{
+  position:absolute;top:16px;left:16px;z-index:4;
+  padding:5px 11px;background:var(--red);color:var(--paper);
+  font-size:0.44rem;letter-spacing:0.26em;text-transform:uppercase;font-weight:700;
+  box-shadow:0 6px 20px rgba(190,47,24,0.35);
 }
 .cat-dots{
   position:absolute;inset:0;
@@ -522,13 +568,35 @@ nav.solid{
 .ri-val a:hover{color:var(--red);border-color:var(--red);}
 .ri-val.avail{color:var(--red);font-weight:600;}
 
+/* Receipt prominent CTA row */
+.rcta{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border-bottom:1.5px solid var(--border2);
+}
+.rcta-btn{
+  padding:22px 20px;text-align:center;text-decoration:none;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  border-right:1px solid var(--border);
+  transition:background 0.3s var(--ease-smooth),color 0.3s;
+  position:relative;
+}
+.rcta-btn:last-child{border-right:none;}
+.rcta-btn:hover{background:var(--ink);color:var(--paper);}
+.rcta-btn:hover .rcta-main{color:var(--paper);}
+.rcta-btn:hover .rcta-sub{color:rgba(242,237,228,0.55);}
+.rcta-btn:hover .rcta-arrow{transform:translate(3px,-3px);}
+.rcta-main{font-family:'Dela Gothic One',sans-serif;font-size:1rem;color:var(--ink);letter-spacing:0.02em;display:flex;align-items:center;gap:8px;transition:color 0.3s;}
+.rcta-sub{font-size:0.48rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--muted);font-weight:600;transition:color 0.3s;}
+.rcta-arrow{display:inline-block;transition:transform 0.3s var(--ease-smooth);}
+@media(max-width:640px){.rcta{grid-template-columns:1fr;}.rcta-btn{border-right:none;border-bottom:1px solid var(--border);padding:16px;}.rcta-btn:last-child{border-bottom:none;}}
+
 /* Receipt total */
 .receipt-total{
   border-top:1.5px solid var(--border2);padding:22px 30px;
   display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
 }
 .rt-btns{display:flex;flex-direction:column;gap:10px;min-width:220px;}
-.rt-note{font-family:'DM Serif Display',serif;font-style:italic;font-size:0.86rem;color:var(--muted);line-height:1.75;max-width:320px;}
+.rt-note{font-family:'Noto Serif SC',serif;font-style:italic;font-size:0.82rem;color:var(--muted);line-height:1.85;max-width:320px;}
 
 /* ──────────── FOOTER ──────────── */
 footer{
@@ -545,23 +613,38 @@ footer{
 
 /* ──────────── RESPONSIVE ──────────── */
 @media(max-width:960px){
-  #hero{margin:60px 14px 0;}
+  #hero{margin:60px 14px 0;min-height:auto;}
   .fb{grid-template-columns:170px 1fr;}
   .about-cols{grid-template-columns:1fr 2px 1fr;}.about-sidebar{display:none;}
   .about-stamp{display:none;}
   .catalog{grid-template-columns:1fr;}.cat-entry{aspect-ratio:auto;min-height:380px;}
   nav{padding:14px 20px;}
+  .nav-cn{display:none;}
 }
 @media(max-width:640px){
-  #hero{margin:56px 10px 0;}
-  .fb{grid-template-columns:1fr;}.fb-fields{border-right:none;border-bottom:1.5px solid var(--border2);}
-  .hero-stamp{display:none;}.fh{grid-template-columns:1fr 1fr;}.fh-cell.center{display:none;}
+  nav{padding:12px 14px;}
+  #hero{margin:52px 10px 0;min-height:auto;}
+  /* Simplified mobile hero — single column, logo + wordmark only */
+  .fh{grid-template-columns:1fr;}.fh-cell{border-right:none!important;border-bottom:1px solid var(--border);}.fh-cell.center{display:flex;}.fh-cell:last-child{border-bottom:none;}
+  .fb{grid-template-columns:1fr;}
+  .fb-fields{border-right:none;border-bottom:1.5px solid var(--border2);order:2;}
+  .fb-display{order:1;padding:36px 18px 28px;}
+  .hero-stamp{top:14px;right:14px;width:70px;height:70px;}
+  .fc-row{padding:10px 16px;}.fc-label{padding-right:12px;margin-right:12px;}
+  .fc-item{font-size:0.52rem;padding:4px 12px 4px 0;}
   .nav-mid{display:none;}
   .about-cols{grid-template-columns:1fr;}.about-col-rule{display:none;}
-  .ri{grid-template-columns:80px 1fr;}.ri-action{display:none;}
-  .hfoot{flex-direction:column;align-items:flex-start;gap:14px;}
+  .about-col{padding:22px 20px;}
+  .ri{grid-template-columns:70px 1fr;padding:15px 18px;gap:12px;}.ri-action{display:none;}
+  .receipt-total{padding:18px;}.rt-btns{min-width:100%;}
+  .hfoot{flex-direction:column;align-items:flex-start;gap:12px;padding:14px 16px;}
   .hfoot-scroll{display:none;}
-  .s-wrap{padding:70px 18px;}
+  .s-wrap{padding:64px 16px;}
+  .s-title{font-size:clamp(2.4rem,11vw,4rem);}
+  .mast-title{font-size:clamp(1.6rem,7vw,2.4rem);}
+  .mq-item{font-size:0.7rem;}
+  .work-strip{padding:16px;flex-wrap:wrap;gap:10px;}
+  .ws-cn{display:none;}
 }
 </style>
 </head>
@@ -595,22 +678,29 @@ footer{
   </svg>
 </div>
 
-<div class="grain"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<a href="#main" class="skip-link">Skip to content</a>
 
 <!-- NAV -->
 <nav id="nav">
-  <a href="index.html" class="nav-logo"><span class="nav-logo-mark-wrap"><img src="images/logo_horse.png" class="nav-logo-mark" alt="logo"></span>CODY<span class="r">.</span>OE</a>
-  <ul class="nav-mid">
-    <li><a href="videos.html">影 Work</a></li>
-    <li><a href="artwork.html">画 Art</a></li>
-    <li><a href="#about">简 About</a></li>
-    <li><a href="#contact">联 Contact</a></li>
+  <a href="./" class="nav-logo" aria-label="Cody Oe — home"><span class="nav-logo-mark-wrap"><img src="images/logo_horse.png" class="nav-logo-mark" alt="Cody Oe seal"></span>CODY<span class="r">.</span>OE</a>
+  <ul class="nav-mid" role="menubar">
+    <li role="none"><a role="menuitem" href="work/">影 Work</a></li>
+    <li role="none"><a role="menuitem" href="art/">画 Art</a></li>
+    <li role="none"><a role="menuitem" href="#about">简 About</a></li>
+    <li role="none"><a role="menuitem" href="#contact">联 Contact</a></li>
   </ul>
-  <span class="nav-cn">作品集 · 二〇二六</span>
+  <div class="nav-right">
+    <a href="#contact" class="nav-pill" aria-label="Open to Creative Strategist roles in Singapore"><span class="nav-pill-dot" aria-hidden="true"></span><span class="nav-pill-text">Open · Creative SG</span></a>
+    <span class="nav-cn" aria-hidden="true">作品集 · 二〇二六</span>
+  </div>
 </nav>
 
+<main id="main">
+
 <!-- ═══════════ HERO ═══════════ -->
-<section id="hero">
+<section id="hero" aria-label="Hero introduction">
   <div class="notebook-anim" id="notebookAnim" aria-hidden="true">
     <canvas id="notebookLines"></canvas>
     <div id="notebookWords"></div>
@@ -677,7 +767,7 @@ footer{
 
   <div class="hfoot" data-gsap="hfoot">
     <div class="hfoot-ctas">
-      <a href="videos.html" class="btn-ink">
+      <a href="work/" class="btn-ink">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
         Watch Work
       </a>
@@ -698,7 +788,7 @@ footer{
 <div class="mq"><div class="mq-track" id="mq"></div></div>
 
 <!-- ═══════════ ABOUT ═══════════ -->
-<section id="about">
+<section id="about" aria-label="About Cody Oe">
   <div class="s-wrap">
     <div class="s-header">
       <div class="s-meta"><span class="s-num">零一</span><div class="s-dash"></div><span class="s-lbl">关于 · About</span></div>
@@ -794,7 +884,7 @@ footer{
 </section>
 
 <!-- ═══════════ WORK ═══════════ -->
-<section id="work">
+<section id="work" aria-label="Selected work">
   <div class="s-wrap" style="padding-bottom:0;">
     <div class="s-header">
       <div class="s-meta"><span class="s-num" style="color:var(--red);">零二</span><div class="s-dash"></div><span class="s-lbl">作品 · Work</span></div>
@@ -803,10 +893,12 @@ footer{
     </div>
   </div>
   <div class="catalog">
-    <a href="videos.html" class="cat-entry">
+    <a href="work/" class="cat-entry" aria-label="Videos — short-form reels">
       <div class="cat-img" style="background-image:url('images/IMG_2968.PNG');"></div>
+      <div class="cat-duo"></div>
       <div class="cat-dots"></div><div class="cat-grad"></div>
-      <div class="cat-num">壹</div>
+      <span class="cat-featured">Selected · 精选</span>
+      <div class="cat-num" aria-hidden="true">壹</div>
       <div class="cat-body">
         <div class="cat-tag">影像 · Reels · Short-Form · Events</div>
         <div class="cat-title">Videos</div>
@@ -814,10 +906,11 @@ footer{
         <div class="cat-arr">探索 Explore →</div>
       </div>
     </a>
-    <a href="artwork.html?tab=illustration" class="cat-entry">
+    <a href="artwork.html?tab=illustration" class="cat-entry" aria-label="Illustration — digital portrait work">
       <div class="cat-img" style="background-image:url('images/IMG_2990.PNG');"></div>
+      <div class="cat-duo"></div>
       <div class="cat-dots"></div><div class="cat-grad"></div>
-      <div class="cat-num">贰</div>
+      <div class="cat-num" aria-hidden="true">贰</div>
       <div class="cat-body">
         <div class="cat-tag">插画 · Digital · Procreate</div>
         <div class="cat-title">Illustration</div>
@@ -825,10 +918,11 @@ footer{
         <div class="cat-arr">探索 Explore →</div>
       </div>
     </a>
-    <a href="artwork.html?tab=design" class="cat-entry">
+    <a href="artwork.html?tab=design" class="cat-entry" aria-label="Design — posters and brand identity">
       <div class="cat-img" style="background-image:url('images/Untitled_Artwork_6.png');"></div>
+      <div class="cat-duo"></div>
       <div class="cat-dots"></div><div class="cat-grad"></div>
-      <div class="cat-num">叁</div>
+      <div class="cat-num" aria-hidden="true">叁</div>
       <div class="cat-body">
         <div class="cat-tag">设计 · Poster · Brand · Identity</div>
         <div class="cat-title">Design</div>
@@ -845,7 +939,7 @@ footer{
 </section>
 
 <!-- ═══════════ CONTACT ═══════════ -->
-<section id="contact">
+<section id="contact" aria-label="Contact Cody">
   <div class="s-wrap">
     <div class="s-header">
       <div class="s-meta"><span class="s-num">零三</span><div class="s-dash"></div><span class="s-lbl">联系 · Contact</span></div>
@@ -856,7 +950,21 @@ footer{
           <div class="rh-title">LET'S<br><span class="r">WORK<span class="out">.</span></span></div>
           <div class="rh-sub">合作请联系 · Open to internships &amp; collabs</div>
         </div>
-        <div class="rh-stamp"><div class="rh-stamp-cn">合</div></div>
+        <div class="rh-stamp" aria-hidden="true"><div class="rh-stamp-cn">合</div></div>
+      </div>
+      <div class="rcta" role="group" aria-label="Primary contact actions">
+        <a href="mailto:codyuuer@gmail.com" class="rcta-btn">
+          <span class="rcta-main">Email <span class="rcta-arrow">↗</span></span>
+          <span class="rcta-sub">codyuuer@gmail.com</span>
+        </a>
+        <a href="https://wa.me/6596633428" target="_blank" rel="noopener" class="rcta-btn">
+          <span class="rcta-main">WhatsApp <span class="rcta-arrow">↗</span></span>
+          <span class="rcta-sub">+65 9663 3428</span>
+        </a>
+        <a href="CODY_CV.pdf" download class="rcta-btn">
+          <span class="rcta-main">Download CV <span class="rcta-arrow">↓</span></span>
+          <span class="rcta-sub">简历 · PDF</span>
+        </a>
       </div>
       <div class="receipt-items">
         <div class="ri">
@@ -886,18 +994,20 @@ footer{
         <p class="rt-note">Internships, freelance, creative collabs — always open to a good project and good people. 随时欢迎合作。</p>
         <div class="rt-btns">
           <a href="CODY_CV.pdf" download class="btn-ink" style="justify-content:center;text-align:center;">↓ 下载简历 Download CV</a>
-          <a href="artwork.html" class="btn-bare" style="justify-content:center;text-align:center;">→ 查看作品 View Art</a>
+          <a href="art/" class="btn-bare" style="justify-content:center;text-align:center;">→ 查看作品 View Art</a>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<footer>
+</main>
+
+<footer role="contentinfo">
   <span class="f-logo">CODY<span class="r">.</span>OE</span>
   <div class="f-mid">
-    <a href="videos.html" class="f-lnk">影 Work</a>
-    <a href="artwork.html" class="f-lnk">画 Art</a>
+    <a href="work/" class="f-lnk">影 Work</a>
+    <a href="art/" class="f-lnk">画 Art</a>
     <a href="https://instagram.com/codyoe" target="_blank" rel="noopener" class="f-lnk">IG ↗</a>
   </div>
   <span class="f-cn">© 2026 版权所有</span>
@@ -905,6 +1015,10 @@ footer{
 
 <script>
 gsap.registerPlugin(ScrollTrigger);
+
+/* ── MOTION PREFERENCES ── */
+const RM = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const TOUCH = window.matchMedia('(hover:none)').matches;
 
 /* ── LOADER ── */
 const lp=document.getElementById('lp'),loader=document.getElementById('loader');
@@ -954,29 +1068,65 @@ function type(){
 }
 type();
 
-/* ── MARQUEE ── */
+/* ── MARQUEE ── seamless + scroll-velocity coupled */
 const tags=['CapCut','Premiere Pro','Photoshop','Procreate','短片制作','Graphic Design','六五','Photography','Illustration','Brand Identity','Singapore 新加坡'];
 const mqEl=document.getElementById('mq');
 let h='';for(let i=0;i<4;i++)tags.forEach(t=>{h+=`<span class="mq-item">${t}<span class="mq-sep"></span></span>`;});
 mqEl.innerHTML=h;
-/* GSAP seamless marquee — modulo wrap, never jumps or blanks */
-let mqX=0;
+let mqX=0,mqBoost=0,lastScroll=window.scrollY;
+window.addEventListener('scroll',()=>{
+  const dy=window.scrollY-lastScroll;
+  mqBoost=Math.max(-8,Math.min(8,dy*0.4));
+  lastScroll=window.scrollY;
+},{passive:true});
 gsap.ticker.add(()=>{
-  mqX-=0.6;
+  mqX-=(0.6+mqBoost);
+  mqBoost*=0.88; // decay back to idle
   const half=mqEl.scrollWidth/2;
   if(mqX<=-half)mqX+=half;
+  if(mqX>0)mqX-=half;
   gsap.set(mqEl,{x:mqX});
 });
 
+/* ── SPLIT HELPER — letter-by-letter reveal on s-title ── */
+function splitChars(el){
+  if(el.dataset.split==='1')return;el.dataset.split='1';
+  const walk=n=>{
+    [...n.childNodes].forEach(c=>{
+      if(c.nodeType===3){
+        const frag=document.createDocumentFragment();
+        [...c.textContent].forEach(ch=>{
+          const s=document.createElement('span');
+          s.className='sc';s.textContent=ch;
+          s.style.cssText='display:inline-block;transform:translateY(100%);opacity:0;will-change:transform,opacity;';
+          if(ch===' ')s.style.width='0.3em';
+          frag.appendChild(s);
+        });
+        c.replaceWith(frag);
+      } else if(c.nodeType===1){ walk(c); }
+    });
+  };
+  walk(el);
+}
+
 /* ── GSAP ANIMATIONS ── */
 function startAnimations(){
+  if(RM){
+    /* reduced motion: just snap things visible, skip decorative */
+    document.querySelectorAll('[data-gsap],.about-mast,.about-col,.exp-entry,.about-stamp,.cat-entry,.s-title,.receipt,.ri').forEach(e=>{e.style.opacity='1';e.style.transform='none';});
+    return;
+  }
+
   const tl=gsap.timeline({delay:0.1});
   tl.from('[data-gsap="fh"]',{y:-25,opacity:0,duration:0.55,ease:'power3.out'})
     .from('[data-gsap="ff"]',{x:-25,opacity:0,stagger:0.07,duration:0.5,ease:'power2.out'},'<0.1')
     .from('[data-gsap="name"]',{y:40,opacity:0,duration:0.7,ease:'power3.out'},'<0.15')
-    // stamp removed
     .from('[data-gsap="checks"]',{y:18,opacity:0,duration:0.4,ease:'power2.out'},'<0.15')
-    .from('[data-gsap="hfoot"]',{y:16,opacity:0,duration:0.35,ease:'power2.out'},'<0.1');
+    .from('[data-gsap="hfoot"]',{y:16,opacity:0,duration:0.35,ease:'power2.out'},'<0.1')
+    /* stamp impact — lands last with rotation + back ease */
+    .fromTo('.hero-stamp',
+      {scale:2.2,rotate:-26,opacity:0,y:-30},
+      {scale:1,rotate:-10,opacity:0.45,y:0,duration:0.9,ease:'back.out(2.2)'},'<0.2');
 
   /* ABOUT */
   const ta='play reverse play reverse';
@@ -988,35 +1138,37 @@ function startAnimations(){
   /* WORK */
   gsap.from('.cat-entry',{scrollTrigger:{trigger:'.catalog',start:'top 82%',toggleActions:ta},y:55,opacity:0,stagger:0.1,duration:0.7,ease:'power3.out'});
 
-  /* S-TITLES */
-  gsap.utils.toArray('.s-title').forEach(el=>{
-    gsap.from(el,{scrollTrigger:{trigger:el,start:'top 84%',toggleActions:ta},y:45,opacity:0,duration:0.8,ease:'power3.out',clipPath:'inset(0% 0% 100% 0%)'});
+  /* S-TITLES — letter-by-letter rise */
+  gsap.utils.toArray('.s-title, .rh-title').forEach(el=>{
+    splitChars(el);
+    const chars=el.querySelectorAll('.sc');
+    gsap.to(chars,{
+      scrollTrigger:{trigger:el,start:'top 88%',toggleActions:ta},
+      y:0,opacity:1,duration:0.6,stagger:0.025,ease:'power3.out'
+    });
   });
 
   /* CONTACT */
   gsap.from('.receipt',{scrollTrigger:{trigger:'#contact',start:'top 80%',toggleActions:ta},y:35,opacity:0,duration:0.7,ease:'power3.out'});
+  gsap.from('.rcta-btn',{scrollTrigger:{trigger:'.rcta',start:'top 88%',toggleActions:ta},y:16,opacity:0,stagger:0.08,duration:0.5,ease:'power2.out'});
   gsap.from('.ri',{scrollTrigger:{trigger:'.receipt-items',start:'top 84%',toggleActions:ta},y:18,opacity:0,stagger:0.06,duration:0.5,ease:'power2.out'});
 
-  /* Hero parallax — mouse move */
+  /* Hero parallax — mouse move (desktop only) */
   const heroLogo=document.querySelector('.hero-logo-above');
   const heroWm=document.querySelector('.hero-wordmark');
-  document.addEventListener('mousemove',e=>{
-    if(window.scrollY>window.innerHeight)return;
-    const dx=(e.clientX/window.innerWidth-0.5)*2;
-    const dy=(e.clientY/window.innerHeight-0.5)*2;
-    gsap.to(heroLogo,{x:dx*10,y:dy*6,duration:0.7,ease:'power2.out',overwrite:'auto'});
-    gsap.to(heroWm,{x:dx*-6,y:dy*-4,duration:0.9,ease:'power2.out',overwrite:'auto'});
-  },{passive:true});
+  if(!TOUCH){
+    document.addEventListener('mousemove',e=>{
+      if(window.scrollY>window.innerHeight)return;
+      const dx=(e.clientX/window.innerWidth-0.5)*2;
+      const dy=(e.clientY/window.innerHeight-0.5)*2;
+      gsap.to(heroLogo,{x:dx*10,y:dy*6,duration:0.7,ease:'power2.out',overwrite:'auto'});
+      gsap.to(heroWm,{x:dx*-6,y:dy*-4,duration:0.9,ease:'power2.out',overwrite:'auto'});
+    },{passive:true});
+  }
 
   /* Hero parallax — scroll */
-  gsap.to('.hero-logo-above',{
-    scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:0.6},
-    y:-70,ease:'none'
-  });
-  gsap.to('.hero-wordmark',{
-    scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:0.6},
-    y:-30,ease:'none'
-  });
+  gsap.to('.hero-logo-above',{scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:0.6},y:-70,ease:'none'});
+  gsap.to('.hero-wordmark',{scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:0.6},y:-30,ease:'none'});
 
   /* Micro-interactions */
   document.querySelectorAll('.c-tag').forEach(tag=>{
@@ -1027,6 +1179,21 @@ function startAnimations(){
     btn.addEventListener('mouseenter',()=>gsap.to(btn,{y:-2,duration:0.18,ease:'power2.out'}));
     btn.addEventListener('mouseleave',()=>gsap.to(btn,{y:0,duration:0.18,ease:'power2.in'}));
   });
+
+  /* Magnetic CTA — pull button toward cursor within 60px radius (desktop only) */
+  if(!TOUCH){
+    document.querySelectorAll('.btn-ink,.btn-bare,.nav-pill,.rcta-btn').forEach(el=>{
+      el.addEventListener('mousemove',e=>{
+        const r=el.getBoundingClientRect();
+        const cx=r.left+r.width/2,cy=r.top+r.height/2;
+        const dx=(e.clientX-cx)*0.25,dy=(e.clientY-cy)*0.25;
+        gsap.to(el,{x:dx,y:dy,duration:0.35,ease:'power2.out',overwrite:'auto'});
+      });
+      el.addEventListener('mouseleave',()=>{
+        gsap.to(el,{x:0,y:0,duration:0.45,ease:'elastic.out(1,0.5)',overwrite:'auto'});
+      });
+    });
+  }
 }
 
 /* NAV */
