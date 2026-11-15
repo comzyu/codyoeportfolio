@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Calligraphy reveal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/poto.css">
+<style>
+  .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; }
+  .back { position: relative; width: min(78vw, 320px, 50vh); aspect-ratio: 3 / 4.27; background: #F3EBDD; border-radius: var(--r-card); padding: 8% 8%; color: #1F2A44; transform: rotate(.8deg); box-shadow: 0 1px 1px rgba(0,0,0,.08), 0 10px 28px -10px rgba(0,0,0,.28); }
+  .back .stamp { position: absolute; right: 6%; top: 5%; width: 24%; transform: rotate(2deg); } .back .stamp svg, .back .pm svg { width: 100%; height: auto; display: block; }
+  .back .pm { position: absolute; right: 13%; top: 9%; width: 46%; transform: rotate(-9deg); }
+  .msg { font: 400 25px/38px "La Belle Aurore", "Homemade Apple", cursive; margin: 44% 0 0; position: relative; }
+  .msg .w { display: inline-block; white-space: nowrap; margin-right: .28em; }
+  .msg .l { display: inline-block; clip-path: inset(0 100% 0 0); padding: 0 .02em; }
+  .msg.plain .l { clip-path: none; }
+  .nib { position: absolute; width: 9px; height: 9px; margin: -9px 0 0 -2px; border-radius: 50% 50% 50% 0; background: #1F2A44; transform: rotate(-45deg); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .inks { display: flex; gap: 10px; align-items: center; }
+  .inks button { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--line); }
+  .inks button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .inks .replay { width: auto; height: 34px; border-radius: 999px; border: 1px solid var(--line); box-shadow: none; padding: 0 16px; font-size: 12px; color: var(--ink-soft); margin-left: 8px; }
+  body.tweaking .inks { visibility: hidden; }
+</style>
+</head>
+<body>
+<main class="stage">
+  <div class="back" id="card"><div class="stamp" id="stamp"></div><div class="pm" id="pm"></div>
+    <p class="msg" id="msg" aria-label="the light was like this all evening. wish you were here"></p><i class="nib" id="nib"></i></div>
+  <div class="inks" role="group" aria-label="Ink">
+    <button type="button" data-ink="#1F2A44" style="background:#1F2A44" aria-label="Navy ink" aria-pressed="true"></button>
+    <button type="button" data-ink="#1E1E1E" style="background:#1E1E1E" aria-label="Black ink" aria-pressed="false"></button>
+    <button type="button" class="replay" id="replay">Close and reopen the card</button>
+  </div>
+</main>
+<script src="shared/sounds.js"></script>
+<script src="shared/art.js"></script>
+<script src="shared/poto.js"></script>
+<script>
+Poto.bar('Calligraphy reveal', 'v0.2 preview');
+const V = Poto.panel('calligraphy', [
+  { key: 'unit', label: 'Reveal by', options: ['letter', 'word'], value: 'letter' },
+  { key: 'letter_ms', label: 'Per letter', min: 20, max: 160, step: 5, value: 62, unit: 'ms' },
+  { key: 'word_pause', label: 'Lift between words', min: 0, max: 400, step: 10, value: 110, unit: 'ms' },
+  { key: 'line_pause', label: 'Pause at line end', min: 0, max: 600, step: 10, value: 220, unit: 'ms' },
+  { key: 'start_delay', label: 'Wait after opening', min: 0, max: 1000, step: 20, value: 380, unit: 'ms' },
+  { key: 'bleed', label: 'Ink bleed', min: 0, max: 1.2, step: 0.05, value: 0.45, unit: 'px' },
+  { key: 'nib', label: 'Show the nib', options: ['yes', 'no'], value: 'yes' },
+  { key: 'volume', label: 'Scratch volume', min: 0, max: 1, step: 0.05, value: 0.7 },
+], (v, k) => { if (k !== 'volume') play(); });
+const $ = (id) => document.getElementById(id), msg = $('msg'), nib = $('nib'), card = $('card');
+$('stamp').innerHTML = POTO_ART.stamp; $('pm').innerHTML = POTO_ART.postmark;
+const TEXT = 'the light was like this all evening. wish you were here';
+let token = 0, stops = [];
+function build() {
+  msg.innerHTML = TEXT.split(' ').map((w) => '<span class="w">' + w.split('').map((c) => '<span class="l">' + c + '</span>').join('') + '</span>').join(' ');
+  msg.style.textShadow = '0 0 ' + V.bleed + 'px currentColor';        // edge bleed: the ink soaks a hair past the stroke
+}
+async function play() {
+  const my = ++token; stops.forEach((s) => s(40)); stops = []; build();
+  const words = [...msg.querySelectorAll('.w')];
+  if (Poto.reduced()) { msg.classList.add('plain'); msg.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); return; }   // reduce motion: the whole message fades in
+  msg.classList.remove('plain'); await Poto.wait(V.start_delay); if (my !== token) return;
+  const base = card.getBoundingClientRect(); nib.style.opacity = V.nib === 'yes' ? 1 : 0;
+  let lastTop = null;
+  for (const w of words) {
+    const top = w.offsetTop;
+    if (lastTop !== null) { nib.style.opacity = 0; await Poto.wait(top !== lastTop ? V.line_pause : V.word_pause); if (my !== token) return; nib.style.opacity = V.nib === 'yes' ? 1 : 0; }
+    lastTop = top;
+    const letters = [...w.children], dur = letters.length * V.letter_ms;
+    // one scratch per word, stretched to the word's length; pen pressure varies a little word to word
+    stops.push(Poto.play('nib', { rate: Poto.clamp(550 / Math.max(dur, 120), 0.7, 2.4), volume: V.volume * (0.7 + Math.random() * 0.3), detune: 120, maxVoices: 3 }));
+    const r = w.getBoundingClientRect(), x0 = r.left - base.left, y = r.top - base.top + r.height * 0.72;
+    if (V.unit === 'word') {
+      letters.forEach((l) => (l.style.clipPath = 'none')); w.style.clipPath = 'inset(-20% 100% -20% -5%)';
+      const a = w.animate([{ clipPath: 'inset(-20% 100% -20% -5%)' }, { clipPath: 'inset(-20% -5% -20% -5%)' }], { duration: dur, easing: 'cubic-bezier(.3,0,.6,1)', fill: 'forwards' });
+      nib.animate([{ left: x0 + 'px', top: y + 'px' }, { left: x0 + r.width + 'px', top: y + 'px' }], { duration: dur, easing: 'cubic-bezier(.3,0,.6,1)', fill: 'forwards' });
+      await a.finished;
+    } else {
+      for (const l of letters) {
+        const lr = l.getBoundingClientRect(), lx = lr.left - base.left;
+        const a = l.animate([{ clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% -10% -20% -10%)' }], { duration: V.letter_ms, easing: 'linear', fill: 'forwards' });
+        // the nib bobs a little on each letter so it reads as writing, not a wipe
+        nib.animate([{ left: lx + 'px', top: y + 2 + 'px' }, { left: lx + lr.width * 0.5 + 'px', top: y - 3 + 'px' }, { left: lx + lr.width + 'px', top: y + 1 + 'px' }], { duration: V.letter_ms, fill: 'forwards' });
+        await a.finished; if (my !== token) return;
+      }
+    }
+    if (my !== token) return;
+  }
+  nib.style.opacity = 0; Poto.haptic('Soft');
+}
+document.querySelectorAll('[data-ink]').forEach((b) => (b.onclick = () => { card.style.color = nib.style.background = b.dataset.ink; document.querySelectorAll('[data-ink]').forEach((o) => o.setAttribute('aria-pressed', String(o === b))); play(); }));
+$('replay').onclick = async () => {           // stands in for flipping to the back: every time the card is opened, the message is written again
+  token++; stops.forEach((s) => s(40)); nib.style.opacity = 0;
+  Poto.play('whoosh', { volume: 0.5 });
+  if (!Poto.reduced()) { await card.animate([{ transform: 'rotate(.8deg) scaleX(1)' }, { transform: 'rotate(.8deg) scaleX(0.02)' }, { transform: 'rotate(.8deg) scaleX(1)' }], { duration: 500, easing: Poto.css('inOut') }).finished; }
+  play();
+};
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(play);
+</script>
+</body>
+</html>

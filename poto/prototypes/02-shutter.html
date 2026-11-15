@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Shutter and film advance</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/poto.css">
+<style>
+  body { background: var(--viewfinder); color: var(--on-viewfinder); }
+  .bar { background: rgba(11,11,11,.8); border-color: #262626; }
+  .bar h1 { color: var(--on-viewfinder); } .bar a, .bar button, .bar .tag { color: #9B978F; border-color: #333; }
+  .bar button[aria-pressed="true"] { color: var(--on-viewfinder); border-color: #777; }
+  .stage { display: flex; flex-direction: column; }
+  .vf { position: relative; margin: 10px 12px 0; aspect-ratio: 3 / 4; max-height: 62%; align-self: center; width: calc(100% - 24px); max-width: calc(62vh * .75); border-radius: 4px; overflow: hidden; background: #000; }
+  .vf img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vf .dark { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+  .vf .blade { position: absolute; left: 0; right: 0; height: 51%; background: #000; pointer-events: none; }
+  .vf .blade.t { top: 0; transform: translateY(-101%); } .vf .blade.b { bottom: 0; transform: translateY(101%); }
+  .meta { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px 0; }
+  .odo { display: inline-flex; font-variant-numeric: tabular-nums; }
+  .odo .d { position: relative; display: inline-block; width: 1ch; height: 1.5em; overflow: hidden; }
+  .odo .d span { position: absolute; left: 0; top: 0; line-height: 1.5em; }
+  .meta .mono { font-size: 12px; line-height: 1.5em; display: inline-flex; }
+  .deck { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 110px; position: relative; }
+  .shutter { width: 78px; height: 78px; border-radius: 50%; border: 2px solid var(--on-viewfinder); padding: 5px; }
+  .shutter i { display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--on-viewfinder); will-change: transform; }
+  .shutter:disabled { opacity: .45; }
+  .blank { position: absolute; left: 50%; top: 14%; width: 46%; aspect-ratio: 3 / 4.25; margin-left: -23%; background: var(--photo-paper); border-radius: 3px; padding: 3.6%; transform: translateY(120vh); pointer-events: none; z-index: 5; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .blank::before { content: ""; display: block; aspect-ratio: 3 / 4; background: var(--blank-film); }
+  .hint { position: absolute; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; color: #77736C; }
+  body.tweaking .hint { display: none; }
+</style>
+</head>
+<body>
+<main class="stage">
+  <div class="vf" id="vf"><img src="shared/img/window-raw.jpg" alt="Plain viewfinder showing a desk by a window">
+    <div class="dark"></div><div class="blade t"></div><div class="blade b"></div></div>
+  <div class="meta"><span class="mono">Sunday</span><span class="mono" aria-live="polite" aria-label="Exposures used"><span class="odo" id="odo"></span>/27</span></div>
+  <div class="deck"><button class="shutter" id="shutter" type="button" aria-label="Shutter"><i></i></button></div>
+  <div class="blank" id="blank"></div>
+  <p class="hint mono">Press the shutter. Try it fast.</p>
+</main>
+<script src="shared/sounds.js"></script>
+<script src="shared/poto.js"></script>
+<script>
+Poto.bar('Shutter + film advance', 'v0.1');
+const V = Poto.panel('shutter', [
+  { key: 'fire_on', label: 'Fires on', options: ['release', 'press'], value: 'release' },
+  { key: 'squash', label: 'Button squash', min: 0.7, max: 1, step: 0.01, value: 0.86 },
+  { key: 'squash_ms', label: 'Squash in', min: 20, max: 200, step: 5, value: 60, unit: 'ms' },
+  { key: 'spring_ms', label: 'Spring back', min: 60, max: 500, step: 10, value: 220, unit: 'ms' },
+  { key: 'blink', label: 'Viewfinder', options: ['curtain', 'blink', 'none'], value: 'curtain' },
+  { key: 'blink_ms', label: 'Blink length', min: 60, max: 400, step: 10, value: 150, unit: 'ms' },
+  { key: 'advance_delay', label: 'Advance starts', min: 0, max: 600, step: 10, value: 180, unit: 'ms' },
+  { key: 'tick_at', label: 'Counter ticks', min: 0, max: 600, step: 10, value: 260, unit: 'ms' },
+  { key: 'tick_ms', label: 'Digit roll', min: 80, max: 600, step: 10, value: 280, unit: 'ms' },
+  { key: 'card', label: 'Blank card rises', options: ['yes', 'no'], value: 'yes' },
+]);
+const btn = document.getElementById('shutter'), knob = btn.querySelector('i'), vf = document.getElementById('vf'), odo = document.getElementById('odo'), blank = document.getElementById('blank');
+let count = 14, down = false;
+function paintOdo(n) { odo.innerHTML = String(n).padStart(2, '0').split('').map((c) => '<span class="d"><span>' + c + '</span></span>').join(''); }
+paintOdo(count);
+function rollTo(n) {
+  const next = String(n).padStart(2, '0'), cells = odo.querySelectorAll('.d'), ms = Poto.reduced() ? 0 : V.tick_ms;
+  cells.forEach((cell, i) => {
+    const old = cell.firstElementChild; if (old.textContent === next[i]) return;
+    const neu = document.createElement('span'); neu.textContent = next[i]; cell.appendChild(neu);
+    const o = { duration: ms, easing: Poto.css('mechanical'), fill: 'forwards', delay: (cells.length - 1 - i) * 40 };   // units digit first, like gears
+    old.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-100%)' }], o);
+    neu.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], o).onfinish = () => old.remove();
+  });
+}
+function press() {
+  down = true;
+  knob.animate([{ transform: 'scale(' + V.squash + ')' }], { duration: Poto.reduced() ? 0 : V.squash_ms, easing: Poto.css('out'), fill: 'forwards' });
+  if (V.fire_on === 'press') fire();
+}
+function release(cancelled) {
+  if (!down) return; down = false;
+  knob.animate([{ transform: 'scale(1)' }], { duration: Poto.reduced() ? 0 : V.spring_ms, easing: 'cubic-bezier(.3,1.5,.5,1)', fill: 'forwards' });   // one small overshoot, like a sprung button — not a bounce
+  if (V.fire_on === 'release' && !cancelled) fire();
+}
+function fire() {
+  // t = 0: everything the finger feels happens in this frame
+  Poto.haptic('Medium'); Poto.play('shutter', { detune: 25 });
+  const ms = Poto.reduced() ? 0 : V.blink_ms;
+  if (V.blink === 'blink' || (V.blink === 'curtain' && Poto.reduced())) {
+    vf.querySelector('.dark').animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: Math.max(ms, 90) });
+  } else if (V.blink === 'curtain') {
+    const k = [{ offset: 0 }, { transform: 'translateY(0)', offset: 0.38, easing: 'ease-in' }, { transform: 'translateY(0)', offset: 0.55 }, { offset: 1 }];
+    vf.querySelector('.blade.t').animate([{ transform: 'translateY(-101%)', ...k[0] }, k[1], k[2], { transform: 'translateY(-101%)', ...k[3] }], { duration: ms });
+    vf.querySelector('.blade.b').animate([{ transform: 'translateY(101%)', ...k[0] }, k[1], k[2], { transform: 'translateY(101%)', ...k[3] }], { duration: ms });
+  }
+  // the film advance: sound, then the counter rolls while the gears are still turning, then a soft stop
+  setTimeout(() => Poto.play('advance', { detune: 20, volume: 0.9 }), V.advance_delay);
+  setTimeout(() => { count = count >= 27 ? 1 : count + 1; rollTo(count); }, V.tick_at);
+  setTimeout(() => Poto.haptic('Soft'), V.advance_delay + 520);
+  if (V.card === 'yes' && !Poto.reduced()) {
+    blank.animate([{ transform: 'translateY(120vh) rotate(-3deg)' }, { transform: 'translateY(0) rotate(-1deg)', offset: 0.28, easing: Poto.css('paper') }, { transform: 'translateY(0) rotate(-1deg)', offset: 0.7, easing: Poto.css('in') }, { transform: 'translateY(120vh) rotate(2deg)' }], { duration: 1500, delay: 120 });
+  }
+}
+btn.addEventListener('pointerdown', (e) => { btn.setPointerCapture(e.pointerId); press(); });
+btn.addEventListener('pointerup', () => release(false));
+btn.addEventListener('pointercancel', () => release(true));
+btn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !down) { e.preventDefault(); press(); } });
+btn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') release(false); });
+</script>
+</body>
+</html>

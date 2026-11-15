@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto Motion Prototypes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 15px/22px Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 560px; margin: 0 auto; padding-block: 36px 56px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; font-size: 10.5px; }
+  h1 { font-size: 34px; line-height: 40px; font-weight: 500; letter-spacing: -0.02em; margin: 6px 0 10px; }
+  .lede { color: var(--ink-soft); margin: 0 0 8px; max-width: 46ch; }
+  .how { margin: 22px 0 0; padding: 14px 0; border-block: 1px solid var(--line); display: grid; gap: 6px; font-size: 13px; line-height: 19px; color: var(--ink-soft); }
+  .how b { color: var(--ink); font-weight: 500; }
+  h2 { margin: 34px 0 4px; color: var(--ink-soft); font-weight: 500; }
+  h2.preview { color: var(--accent); }
+  ol { list-style: none; margin: 0; padding: 0; }
+  li a { display: grid; grid-template-columns: 30px 1fr 16px; gap: 6px; align-items: baseline; padding: 15px 0; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+  li a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  li .n { color: var(--ink-soft); }
+  li b { display: block; font-weight: 500; font-size: 16px; }
+  li span.q { display: block; font-size: 13px; line-height: 19px; color: var(--ink-soft); }
+  li i { font-style: normal; color: var(--ink-soft); }
+  .foot { margin-top: 34px; font-size: 13px; line-height: 19px; color: var(--ink-soft); }
+  .foot a { color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <span class="mono">Poto · before any app code</span>
+  <h1>Feel it first.</h1>
+  <p class="lede">Ten moments of Poto to try on your phone. Tune each one until it feels right, then send the numbers back.</p>
+  <div class="how">
+    <span><b>Tweak</b> opens sliders for timing, easing and intensity.</span>
+    <span><b>Copy values</b> copies your settings as one line. Paste it back to Claude.</span>
+    <span><b>Sound on</b> toggles audio. The small black pill shows where the phone would give a haptic tap.</span>
+  </div>
+
+  <h2 class="mono">v0.1 · the camera</h2>
+  <ol>
+    <li><a href="01-developing.html"><span class="mono n">01</span><span><b>Developing reveal</b><span class="q">Three ways a photo can appear. Does one feel like magic?</span></span><i>›</i></a></li>
+    <li><a href="02-shutter.html"><span class="mono n">02</span><span><b>Shutter and film advance</b><span class="q">Does it feel mechanical? Press it fast, ten times.</span></span><i>›</i></a></li>
+    <li><a href="03-load-roll.html"><span class="mono n">03</span><span><b>Load a roll</b><span class="q">Does choosing a look feel like a decision, not a setting?</span></span><i>›</i></a></li>
+    <li><a href="04-roll-complete.html"><span class="mono n">04</span><span><b>Roll complete</b><span class="q">The 27th shot. Is the ending small and satisfying?</span></span><i>›</i></a></li>
+    <li><a href="05-camera.html"><span class="mono n">05</span><span><b>Camera home</b><span class="q">Two layouts for the tucked-away controls. Which stays quieter?</span></span><i>›</i></a></li>
+    <li><a href="06-diary.html"><span class="mono n">06</span><span><b>Diary</b><span class="q">Month, day, photo. Loose enough to feel like prints on a table?</span></span><i>›</i></a></li>
+  </ol>
+
+  <h2 class="mono preview">v0.2 preview · the postcard</h2>
+  <ol>
+    <li><a href="07-flip.html"><span class="mono n">07</span><span><b>Postcard flip</b><span class="q">Tap or drag. Does it feel like card, with weight?</span></span><i>›</i></a></li>
+    <li><a href="08-typewriter.html"><span class="mono n">08</span><span><b>Typewriter mode</b><span class="q">Type on your phone keyboard. Is it charming at full speed?</span></span><i>›</i></a></li>
+    <li><a href="09-calligraphy.html"><span class="mono n">09</span><span><b>Calligraphy reveal</b><span class="q">The message writes itself each time the card opens.</span></span><i>›</i></a></li>
+    <li><a href="10-stickers.html"><span class="mono n">10</span><span><b>Sticker peel and place</b><span class="q">Drag up from the tray. Pinch and twist with two fingers.</span></span><i>›</i></a></li>
+  </ol>
+
+  <p class="foot">The previews are design studies only and don't change what v0.1 builds. Sample photos are generated test scenes until real reference photos arrive.
+    Looks, papers, stickers and sounds are on the <a href="../assets-src/review/index.html">asset review page</a>.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "slug": "peach",
+  "name": "Peach",
+  "description": "Pale, pastel, slightly sunburnt.",
+  "lut": "peach.lut.png",
+  "cube": "peach.cube",
+  "grain": {
+    "amount": 0.045,
+    "tile": "grain.png"
+  },
+  "lightLeak": {
+    "chance": 0.2,
+    "strength": 0.5,
+    "color": "#FFB199"
+  },
+  "vignette": 0.06,
+  "flash": 0.0,
+  "dateStampDefault": false,
+  "pipelineVersion": 1
+}

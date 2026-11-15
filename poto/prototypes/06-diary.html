@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Diary</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/poto.css">
+<style>
+  .view { position: absolute; inset: calc(44px + env(safe-area-inset-top, 0px)) 0 0 0; overflow-y: auto; padding: 18px max(20px, env(safe-area-inset-right, 0px)) 40px max(20px, env(safe-area-inset-left, 0px)); }
+  .view[hidden] { display: none; }
+  h2 { font-size: var(--t-title); line-height: 28px; font-weight: 500; letter-spacing: -0.01em; margin: 0; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; min-height: 30px; }
+  .head button { color: var(--ink-soft); font-size: 14px; padding: 6px 0; }
+  .dow, .grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .dow span { text-align: center; color: var(--ink-soft); padding-bottom: 8px; }
+  .grid { row-gap: 6px; }
+  .cell { position: relative; aspect-ratio: 3 / 4.6; text-align: left; padding: 0; }
+  .cell .n { position: absolute; left: 4px; top: 0; font-size: 10px; line-height: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .cell.today .n { color: var(--accent); font-weight: 600; }
+  .cell.future .n { opacity: .4; }
+  .cell .th { position: absolute; left: 12%; right: 12%; top: 15px; aspect-ratio: 3 / 4; background: var(--photo-paper); padding: 1.5px 1.5px 4px; box-shadow: 0 1px 2px rgba(0,0,0,.18); border-radius: 1px; }
+  .cell .th img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .cell .more { position: absolute; right: 4px; bottom: 0; font-size: 9px; line-height: 12px; color: var(--ink-soft); }
+  .sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 16px; align-items: start; padding: 4px 4px 0; }
+  .sheet .p { padding: 4% 4% 0; display: block; will-change: transform; }
+  .sheet .p:nth-child(even) { margin-top: 26px; }
+  .sheet .p img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .sheet .p span { display: block; height: 0; padding-bottom: 11%; }
+  .sheet.one { grid-template-columns: 72%; justify-content: center; }
+  #full { background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; padding-top: 0; }
+  #full .big { width: min(86%, 46vh); padding: 3.6% 3.6% 0; will-change: transform; }
+  #full .big img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  #full .cap { display: flex; justify-content: space-between; padding: 9px 1% 10px; color: #6B6B6B; }
+  #full .cap b { font-weight: 500; letter-spacing: .02em; text-transform: none; color: #9a958c; }
+  #full .close { margin-top: 26px; color: var(--ink-soft); font-size: 14px; padding: 8px 14px; }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="view" id="month">
+    <div class="head"><h2>November</h2><span class="mono soft">2026 · 31 kept</span></div>
+    <div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+    <div class="grid" id="grid"></div>
+    <p class="note" style="margin-top:22px">Tap a day with photos. Then tap a photo.</p>
+  </section>
+  <section class="view" id="day" hidden>
+    <div class="head"><h2 id="dtitle"></h2><button type="button" id="back">November</button></div>
+    <div class="sheet" id="sheet"></div>
+  </section>
+  <section class="view" id="full" hidden>
+    <div class="big print" id="big"><img id="bigimg" alt=""><div class="cap mono"><span id="bigcap"></span><b>poto</b></div></div>
+    <button type="button" class="close" id="close">Close</button>
+  </section>
+</main>
+<script src="shared/sounds.js"></script>
+<script src="shared/poto.js"></script>
+<script>
+Poto.bar('Diary: month, day, photo', 'v0.1');
+const V = Poto.panel('diary', [
+  { key: 'tilt', label: 'Looseness', min: 0, max: 5, step: 0.25, value: 2.25, unit: '°' },
+  { key: 'deal_ms', label: 'Day opens', min: 150, max: 900, step: 10, value: 420, unit: 'ms' },
+  { key: 'stagger_ms', label: 'Deal stagger', min: 0, max: 120, step: 5, value: 45, unit: 'ms' },
+  { key: 'zoom_ms', label: 'Photo opens', min: 150, max: 900, step: 10, value: 380, unit: 'ms' },
+], () => build());
+const $ = (id) => document.getElementById(id);
+// a made-up month. Seeded so it's the same every time.
+let seed = 15; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+const SC = ['window', 'dusk', 'table', 'night'], PLAN = { 1: 2, 2: 1, 4: 3, 5: 1, 7: 5, 8: 2, 9: 1, 11: 4, 12: 1, 13: 2, 14: 6, 15: 3 };
+const DAYS = {}; for (const d in PLAN) DAYS[d] = Array.from({ length: PLAN[d] }, () => ({ img: SC[(rnd() * 4) | 0], look: d < 9 ? 'harbour' : 'sunday', tilt: rnd() * 2 - 1, dx: rnd() * 2 - 1 }));
+const src = (p) => 'shared/img/' + p.img + '-' + p.look + '.jpg';
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+let openDay = null, openCell = null, openPrint = null;
+function build() {
+  const g = $('grid'); g.innerHTML = '';
+  for (let i = 0; i < 6; i++) g.appendChild(document.createElement('span'));           // 1 Nov 2026 is a Sunday
+  for (let d = 1; d <= 30; d++) {
+    const ps = DAYS[d], c = document.createElement(ps ? 'button' : 'div'); c.className = 'cell' + (d === 15 ? ' today' : d > 15 ? ' future' : '');
+    c.innerHTML = '<span class="n">' + d + '</span>';
+    if (ps) {
+      c.type = 'button'; c.setAttribute('aria-label', d + ' November, ' + ps.length + ' photos');
+      ps.slice(0, 3).reverse().forEach((p, i, a) => {                                    // up to three prints, loosely stacked
+        const t = document.createElement('span'); t.className = 'th'; const k = a.length - 1 - i;
+        t.style.transform = 'translate(' + (p.dx * 2 + k * 2.5).toFixed(1) + 'px,' + (k * -1.5) + 'px) rotate(' + (p.tilt * V.tilt * 1.6).toFixed(2) + 'deg)';
+        t.innerHTML = '<img src="' + src(p) + '" alt="" loading="lazy">'; c.appendChild(t);
+      });
+      if (ps.length > 3) c.insertAdjacentHTML('beforeend', '<span class="more mono">+' + (ps.length - 3) + '</span>');
+      c.onclick = () => showDay(d, c);
+    }
+    g.appendChild(c);
+  }
+}
+function flip(el, from, ms, delay, ease, fromRot) {                                      // animate el from rect `from` to where it now sits
+  const to = el.getBoundingClientRect(), sx = from.width / to.width;
+  return el.animate([{ transform: 'translate(' + (from.left - to.left) + 'px,' + (from.top - to.top) + 'px) scale(' + sx + ') rotate(' + (fromRot || 0) + 'deg)', transformOrigin: '0 0' },
+    { transform: getComputedStyle(el).transform === 'none' ? 'none' : getComputedStyle(el).transform, transformOrigin: '0 0' }], { duration: Poto.reduced() ? 0 : ms, delay: Poto.reduced() ? 0 : delay, easing: Poto.css(ease), fill: 'backwards' });
+}
+function showDay(d, cell) {
+  openDay = d; openCell = cell; const ps = DAYS[d], from = cell.querySelector('.th').getBoundingClientRect();
+  $('dtitle').textContent = DOW[new Date(2026, 10, d).getDay()] + ' ' + d + ' Nov';
+  const sh = $('sheet'); sh.innerHTML = ''; sh.classList.toggle('one', ps.length === 1);
+  ps.forEach((p, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'p print'; b.style.transform = 'rotate(' + (p.tilt * V.tilt).toFixed(2) + 'deg) translateX(' + (p.dx * 3).toFixed(1) + 'px)';
+    b.setAttribute('aria-label', 'Photo ' + (i + 1)); b.innerHTML = '<img src="' + src(p) + '" alt=""><span></span>'; b.onclick = () => showFull(p, b); sh.appendChild(b);
+  });
+  $('month').hidden = true; $('day').hidden = false; $('day').scrollTop = 0; Poto.haptic('Light');
+  // the day's prints are dealt out from the calendar cell onto the table
+  [...sh.children].forEach((b, i) => flip(b, from, V.deal_ms, i * V.stagger_ms, 'paper', -6 + i * 3));
+  $('day').querySelector('.head').animate([{ opacity: 0 }, { opacity: 1 }], { duration: Poto.reduced() ? 0 : 260 });
+}
+function backToMonth() {
+  $('day').hidden = true; $('month').hidden = false;
+  if (!Poto.reduced()) $('month').animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 220 });
+  if (openCell && !Poto.reduced()) openCell.animate([{ transform: 'scale(1.12)' }, { transform: 'none' }], { duration: 300, easing: Poto.css('paper') });
+}
+function showFull(p, print) {
+  openPrint = print; const from = print.getBoundingClientRect();
+  $('bigimg').src = src(p); $('bigcap').textContent = p.look + ' · ' + openDay + ' Nov 2026';
+  $('full').hidden = false; print.style.visibility = 'hidden'; Poto.haptic('Light');
+  flip($('big'), from, V.zoom_ms, 0, 'standard', p.tilt * V.tilt);
+  if (!Poto.reduced()) { $('full').animate([{ backgroundColor: 'transparent' }, { backgroundColor: getComputedStyle(document.body).backgroundColor }], { duration: V.zoom_ms * 0.7 });
+    $('big').querySelector('.cap').animate([{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], { duration: V.zoom_ms + 200 }); }
+}
+function closeFull() {
+  const big = $('big'), to = openPrint.getBoundingClientRect(), from = big.getBoundingClientRect();
+  const done = () => { $('full').hidden = true; openPrint.style.visibility = ''; };
+  if (Poto.reduced()) return done();
+  $('full').animate([{ backgroundColor: getComputedStyle(document.body).backgroundColor }, { backgroundColor: 'transparent' }], { duration: V.zoom_ms * 0.8, fill: 'forwards' }).onfinish = (e) => e.target.cancel();
+  big.animate([{ transform: 'none', transformOrigin: '0 0' }, { transform: 'translate(' + (to.left - from.left) + 'px,' + (to.top - from.top) + 'px) scale(' + to.width / from.width + ')', transformOrigin: '0 0' }],
+    { duration: V.zoom_ms * 0.8, easing: Poto.css('standard') }).onfinish = done;
+}
+$('back').onclick = backToMonth; $('close').onclick = closeFull; $('big').onclick = closeFull;
+build();
+</script>
+</body>
+</html>

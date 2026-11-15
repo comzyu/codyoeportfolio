@@ -1,0 +1,20 @@
+{
+  "slug": "harbour",
+  "name": "Harbour",
+  "description": "Cool shadows, quiet reds. For going places.",
+  "lut": "harbour.lut.png",
+  "cube": "harbour.cube",
+  "grain": {
+    "amount": 0.06,
+    "tile": "grain.png"
+  },
+  "lightLeak": {
+    "chance": 0.06,
+    "strength": 0.4,
+    "color": "#FFB070"
+  },
+  "vignette": 0.2,
+  "flash": 0.0,
+  "dateStampDefault": false,
+  "pipelineVersion": 1
+}

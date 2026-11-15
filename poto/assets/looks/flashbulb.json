@@ -1,0 +1,20 @@
+{
+  "slug": "flashbulb",
+  "name": "Flashbulb",
+  "description": "Loud, bright, a little too much flash.",
+  "lut": "flashbulb.lut.png",
+  "cube": "flashbulb.cube",
+  "grain": {
+    "amount": 0.03,
+    "tile": "grain.png"
+  },
+  "lightLeak": {
+    "chance": 0.0,
+    "strength": 0.0,
+    "color": "#FFFFFF"
+  },
+  "vignette": 0.34,
+  "flash": 0.4,
+  "dateStampDefault": true,
+  "pipelineVersion": 1
+}
