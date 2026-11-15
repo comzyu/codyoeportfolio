@@ -100,10 +100,20 @@ function layPile(drop) {
     o.el.style.zIndex = i + 1; o.el.style.transform = 'translate(' + o.x + '%,' + (o.y + depth * -1.2) + '%) rotate(' + o.r + 'deg)'; });
 }
 order.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'p'; b.setAttribute('aria-label', 'Photo'); b.innerHTML = '<img src="' + ph(o.n) + '" alt="" draggable="false">'; o.el = b; pile.appendChild(b);
-  b.onclick = () => { if (order[order.length - 1] !== o) return;
-    // lift it off, swing it out, tuck it under the rest
-    const dir = rnd() > 0.5 ? 1 : -1; b.style.transition = reduced ? 'none' : 'transform .32s cubic-bezier(.4,0,.7,.2)'; b.style.transform = 'translate(' + dir * 118 + '%, -8%) rotate(' + dir * 24 + 'deg)';
-    setTimeout(() => { order.pop(); order.unshift(o); o.r = (rnd() - 0.5) * 22; o.x = (rnd() - 0.5) * 34; o.y = (rnd() - 0.5) * 16; b.style.transition = ''; layPile(); }, reduced ? 0 : 300); }; });
+  b.onclick = shuffle; });
+// one card moves at a time. Taps while a card is moving are counted and played after it, so fast tapping never tangles the pile.
+let moving = false, queued = 0;
+function shuffle() {
+  if (moving) { queued = Math.min(queued + 1, 2); return; }
+  moving = true; const o = order[order.length - 1], b = o.el, dir = rnd() > 0.5 ? 1 : -1;
+  // lift it off the top (above everything), swing it out, then tuck it under the rest
+  b.style.zIndex = 50; b.style.transition = reduced ? 'none' : 'transform .26s cubic-bezier(.4,0,.7,.2)'; b.style.transform = 'translate(' + dir * 112 + '%, -6%) rotate(' + dir * 22 + 'deg)';
+  setTimeout(() => {
+    order.pop(); order.unshift(o); o.r = (rnd() - 0.5) * 22; o.x = (rnd() - 0.5) * 34; o.y = (rnd() - 0.5) * 16;
+    b.style.transition = reduced ? 'none' : 'transform .5s cubic-bezier(.3,1.25,.5,1)'; layPile();                 // it slides back in underneath
+    setTimeout(() => { moving = false; if (queued) { queued--; shuffle(); } }, reduced ? 0 : 170);
+  }, reduced ? 0 : 250);
+}
 pile.insertAdjacentHTML('beforeend', '<p class="tag mono">6 from this week</p>'); layPile();
 
 // ---- the month ----

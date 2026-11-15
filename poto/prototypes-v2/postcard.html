@@ -33,7 +33,7 @@
     <button type="button" class="gloss" data-f="gloss"><i></i>Gloss</button>
     <button type="button" class="matte" data-f="matte"><i></i>Matte</button>
   </div>
-  <p class="hint mono" id="hint">Drag to turn · tap to flip · peel the sticker</p>
+  <p class="hint mono" id="hint">Drag to turn · tap to flip · peel a sticker off the back</p>
   <nav class="dock glass" aria-label="Postcard">
     <button type="button" id="flip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0114-3l2 2M20 15a8 8 0 01-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Flip</button>
     <span class="sep"></span>
@@ -58,7 +58,7 @@
     PotoPaper.front(photo, 'Sunday · 15 Nov 2026'),
     PotoPaper.back(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], to: ['Dana Okafor', '14 Tiong Bahru Rd', 'Singapore 168732'], caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })
   );
-  pc.addSticker('star', 'holo', -0.24, 0.02, -0.16, 'back');
+  pc.addSticker('star', 'holo', -0.29, 0.25, -0.16);              // back only. Card x is mirrored on the back: negative x is the right of the written side.
   const S = window.PotoSound || { play() {}, start() { return () => {}; } };
   pc.onFlip = (face, quiet) => { $('side').textContent = face ? 'Back' : 'Front'; if (!quiet) S.play('flip'); };
   pc.onLand = () => S.play('land');
@@ -71,12 +71,17 @@
   $('flip').onclick = () => pc.flip();
   const tray = $('tray'), stick = $('stick'); let kinds = ['heart', 'dot', 'star'], n = 0;
   stick.onclick = () => { const o = tray.classList.toggle('open'); stick.setAttribute('aria-expanded', String(o)); stick.classList.toggle('on', o); };
-  tray.querySelectorAll('button').forEach((b) => (b.onclick = () => {
-    if (pc.stickers.length >= 5) return;
-    const side = pc.face() ? 'back' : 'front', s = pc.addSticker(kinds[n++ % 3], b.dataset.f, (Math.random() - 0.5) * 0.4, -0.1 + (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.4, side);
-    s.u.uPeel.value = 1; s.u.uFoldD.value.set(0.8, 0.6); s.u.uFoldP.value.set(-0.3, -0.2); pc.onPress(1);            // arrives pressed on from one edge
-    const t0 = performance.now(); (function go(now) { const t = Math.min(1, (now - t0) / 300), e = 1 - Math.pow(1 - t, 3); s.u.uFoldP.value.set(0.8, 0.6).multiplyScalar(-0.26 + e * 0.54); if (t < 1) requestAnimationFrame(go); else s.u.uPeel.value = 0; })(t0);
+  let adding = false;
+  tray.querySelectorAll('button').forEach((b) => (b.onclick = async () => {
     tray.classList.remove('open'); stick.classList.remove('on'); stick.setAttribute('aria-expanded', 'false');
+    if (pc.stickers.length >= 5 || adding) return; adding = true;
+    if (pc.face() !== 1) { pc.flip(1); await new Promise((r) => setTimeout(r, 700)); }          // stickers only go on the back: turn it over first
+    // lands somewhere in the open space, a little crooked, laid down from one edge
+    const spots = [[-0.3, 0.25], [0.22, 0.24], [-0.28, -0.05], [0.3, -0.52], [-0.05, 0.27]], free = spots.filter(([x, y]) => !pc.stickers.some((s) => Math.hypot(s.x - x, s.y - y) < 0.2));
+    const [x, y] = free[0] || spots[n % spots.length];
+    const s = pc.addSticker(kinds[n++ % 3], b.dataset.f, x, y, (Math.random() - 0.5) * 0.4);
+    s.u.uPeel.value = 1; s.u.uFoldD.value.set(0.8, 0.6); s.u.uFoldR.value = 0.03; pc.onPress(1);
+    const t0 = performance.now(); (function go(now) { const t = Math.min(1, (now - t0) / 320), e = 1 - Math.pow(1 - t, 3); s.u.uFoldP.value.set(0.8, 0.6).multiplyScalar(-0.26 + e * 0.56); if (t < 1) requestAnimationFrame(go); else { s.u.uPeel.value = 0; adding = false; } })(t0);
   }));
   setTimeout(() => ($('hint').style.opacity = 0), 9000);
 })();
