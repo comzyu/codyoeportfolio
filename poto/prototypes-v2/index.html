@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto Round Two</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<style>
+  body { height: auto; min-height: 100%; }
+  main { max-width: 560px; margin: 0 auto; padding-block: 44px 64px; padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
+  h1 { margin: 8px 0 10px; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; }
+  h1 span { font-weight: 300; color: var(--ink-3); }
+  .lede { margin: 0; color: var(--ink-2); max-width: 44ch; }
+  ol { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 14px; }
+  li a { display: grid; grid-template-columns: 84px 1fr; gap: 18px; align-items: center; padding: 14px; border-radius: 22px; color: inherit; text-decoration: none; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 12px 28px -18px rgba(20,20,30,.25); }
+  li a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 22px; }
+  li .t { position: relative; height: 96px; display: grid; place-items: center; }
+  li .t i { display: block; width: 58px; background: #FDFCFA; padding: 3px 3px 9px; border-radius: 2px; box-shadow: 0 1px 1.5px rgba(20,20,30,.18), 0 10px 18px -8px rgba(20,20,30,.35); }
+  li .t i img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  li.dark .t { background: #0A0A0B; border-radius: 14px; } li.dark .t i { width: 0; height: 0; padding: 19px; border-radius: 50%; background: radial-gradient(circle at 50% 28%, #fff, #c9c9ce); box-shadow: 0 0 0 3px #0a0a0b, 0 0 0 5px #9a9aa0; }
+  li b { display: block; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; } li span { display: block; font-size: 13.5px; line-height: 19px; color: var(--ink-2); margin-top: 2px; }
+  .note { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--hair); font-size: 13px; line-height: 19px; color: var(--ink-2); display: grid; gap: 8px; }
+  .note b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <span class="mono soft">Poto · round two</span>
+  <h1>Real things, <span>white room.</span></h1>
+  <p class="lede">Three pieces rebuilt from your picks: gallery white, a dark camera, and objects you could pick up.</p>
+  <ol>
+    <li><a href="postcard.html"><span class="t"><i style="transform:rotate(-6deg)"><img src="img/photo-04-s.jpg" alt=""></i></span><span><b>The postcard</b><span>A real 3D card. Drag to turn it, tap to flip, tilt it to see the gloss and the paper. Peel the sticker off by its edge and press it back down.</span></span></a></li>
+    <li class="dark"><a href="camera.html"><span class="t"><i></i></span><span><b>The camera</b><span>Dark, close to the normal camera, glass controls. Press the shutter: a print comes out and develops. Drag the print to tilt it.</span></span></a></li>
+    <li><a href="home.html"><span class="t"><i style="transform:rotate(5deg)"><img src="img/photo-09-s.jpg" alt=""></i></span><span><b>The diary</b><span>A loose pile of this week's prints, a mostly-white month, and rolls kept in frosted folders you can open.</span></span></a></li>
+  </ol>
+  <div class="note">
+    <span><b>No sound yet, on purpose.</b> Synthesised sound is what felt fake before, and the free sound libraries blocked me from here. The hooks are in; real recordings drop in next.</span>
+    <span><b>Photos are stand-ins.</b> Real photographs from Unsplash photographers, credited in the repo, until yours go in.</span>
+    <span><b>Fonts are placeholders.</b> You'll choose those later.</span>
+  </div>
+</main>
+</body>
+</html>

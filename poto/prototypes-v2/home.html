@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Diary</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<style>
+  /* Gallery white. Type and glass stay quiet; prints and folders are the only things with material. */
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(120px + env(safe-area-inset-bottom, 0px)); }
+  .pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
+  .month { display: flex; align-items: baseline; gap: 10px; }
+  .month h2 { margin: 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; }
+  .month span { font-size: 40px; line-height: 44px; font-weight: 300; letter-spacing: -0.03em; color: var(--ink-3); }
+  .sub { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
+  h3 { margin: 40px 0 0; font-size: 13px; font-weight: 600; letter-spacing: -0.005em; display: flex; justify-content: space-between; align-items: baseline; }
+  h3 small { font: 400 10.5px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+
+  /* a print: thick white paper, an emulsion edge, a shadow with two parts (tight contact + soft fall) */
+  .p { position: absolute; display: block; background: #FDFCFA; padding: 4% 4% 13%; border-radius: 2.5px; will-change: transform;
+    box-shadow: inset 0 0 0 .5px rgba(0,0,0,.05), 0 .5px 0 rgba(0,0,0,.12), 0 1px 1.5px rgba(20,20,30,.16), 0 10px 22px -8px rgba(20,20,30,.28), 0 26px 40px -24px rgba(20,20,30,.22); }
+  .p img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.2); }
+  .p::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,0) 38%); }
+
+  /* this week: prints dropped in a loose pile. Tap or flick the top one and it goes to the bottom. */
+  .pile { position: relative; height: 330px; margin-top: 18px; touch-action: pan-y; }
+  .pile .p { width: 47%; left: 26.5%; top: 6px; transition: transform .7s var(--spring), box-shadow .3s; cursor: grab; }
+  .pile .tag { position: absolute; left: 0; right: 0; bottom: -4px; text-align: center; color: var(--ink-3); }
+
+  /* the month: mostly white. Days are tiny loose prints under small numerals. */
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 14px; margin-top: 18px; }
+  .cal .d { position: relative; aspect-ratio: 1 / 1.34; }
+  .cal .d b { position: absolute; left: 50%; top: 0; transform: translateX(-50%); font: 500 10px/12px var(--sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .cal .d.today b { color: #fff; background: var(--ink); border-radius: 999px; padding: 0 5px; }
+  .cal .d .p { position: absolute; width: 64%; left: 18%; top: 17px; padding: 5% 5% 14%; border-radius: 1.5px; box-shadow: 0 .5px 1px rgba(20,20,30,.22), 0 4px 8px -3px rgba(20,20,30,.25); }
+  .cal .d .p + .p { z-index: -1; }
+  .dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 22px; text-align: center; color: var(--ink-3); }
+
+  /* rolls: each finished roll is a folder. Back board with a tab, prints inside, a frosted front pocket that really blurs what's behind it. */
+  .rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
+  .roll { position: relative; display: block; text-align: left; }
+  .folder { position: relative; aspect-ratio: 1 / 0.86; }
+  .folder .board { position: absolute; inset: 14% 0 0 0; border-radius: 16px; background: linear-gradient(180deg, #F4F3F0, #ECEBE7); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(20,20,30,.05), 0 14px 26px -14px rgba(20,20,30,.3); }
+  .folder .board::before { content: ""; position: absolute; left: 0; top: -15%; width: 44%; height: 22%; border-radius: 14px 14px 0 0; background: #F4F3F0; box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 rgba(20,20,30,.04), inset -1px 0 0 rgba(20,20,30,.04);
+    clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%); }
+  .folder .p { width: 46%; top: 3%; transition: transform .6s var(--spring); }
+  .folder .p:nth-child(2) { left: 6%; transform: rotate(-7deg); } .folder .p:nth-child(3) { left: 28%; transform: rotate(2deg) translateY(-4%); } .folder .p:nth-child(4) { left: 50%; transform: rotate(8deg) translateY(2%); }
+  .folder .pocket { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; border-radius: 16px; background: rgba(255,255,255,.46); -webkit-backdrop-filter: blur(9px) saturate(150%); backdrop-filter: blur(9px) saturate(150%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), inset 0 1.5px 0 #fff, inset 0 -8px 16px -8px rgba(20,20,30,.08), 0 -1px 3px rgba(20,20,30,.06); transition: transform .6s var(--spring); transform-origin: 50% 100%; }
+  .folder .pocket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 40%); }
+  .folder .clip { position: absolute; right: 10%; top: 27%; width: 10%; z-index: 3; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); transition: transform .6s var(--spring); }
+  .folder .swatch { position: absolute; right: 7%; top: 39%; width: 30%; z-index: 2; aspect-ratio: 1 / 1.1; border-radius: 3px; background: #FDFCFA; transform: rotate(7deg); padding: 5%; box-shadow: 0 1px 1.5px rgba(20,20,30,.2), 0 8px 14px -6px rgba(20,20,30,.3); transition: transform .6s var(--spring); }
+  .folder .swatch u { display: block; height: 34%; border-radius: 1.5px; } .folder .swatch i { display: block; font: 500 7px/1 var(--mono); letter-spacing: .08em; margin-top: 12%; font-style: normal; color: #2a2a2c; }
+  .folder .n { position: absolute; left: 9%; bottom: 10%; z-index: 2; font: 500 10px/1 var(--mono); letter-spacing: .08em; color: var(--ink-2); }
+  .roll.open .p:nth-child(2) { transform: rotate(-16deg) translate(-14%, -30%); } .roll.open .p:nth-child(3) { transform: rotate(1deg) translateY(-44%); } .roll.open .p:nth-child(4) { transform: rotate(17deg) translate(14%, -28%); }
+  .roll.open .pocket { transform: perspective(600px) rotateX(-24deg); } .roll.open .swatch { transform: rotate(13deg) translateY(10%); } .roll.open .clip { transform: rotate(14deg) translateY(16%); }
+  .roll strong { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; } .roll em { display: block; font-style: normal; font-size: 12.5px; color: var(--ink-2); }
+
+  .dock button[aria-pressed="true"] { background: rgba(20,20,22,.07); color: var(--ink); box-shadow: none; }
+  .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
+  .dock .cam i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; display: block; }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <a class="glass round" style="color:inherit" href="index.html" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <button type="button" class="glass round" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+  </header>
+  <div class="scroll" id="scroll">
+    <div class="pad">
+      <div class="month"><h2>November</h2><span>2026</span></div>
+      <p class="sub">31 kept. 13 left on Sunday.</p>
+      <h3>This week <small>Tap the pile</small></h3>
+    </div>
+    <div class="pile" id="pile"></div>
+    <div class="pad">
+      <div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal" id="cal"></div>
+      <h3>Rolls <small>Tap to look inside</small></h3>
+      <div class="rolls" id="rolls"></div>
+    </div>
+  </div>
+  <nav class="dock glass" aria-label="Poto">
+    <button type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16M9 4v5.5"/></svg>Diary</button>
+    <a class="cam" href="camera.html" aria-label="Camera" style="border-radius:999px;display:inline-flex;align-items:center"><i></i></a>
+    <button type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/></svg>Rolls</button>
+  </nav>
+</main>
+<script>
+const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
+let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+
+// ---- the pile ----
+const pile = $('pile'), order = [4, 9, 1, 6, 12, 3].map((n) => ({ n, r: (rnd() - 0.5) * 22, x: (rnd() - 0.5) * 34, y: (rnd() - 0.5) * 16 }));
+function layPile(drop) {
+  order.forEach((o, i) => { const depth = order.length - 1 - i;              // last in the list is on top
+    o.el.style.zIndex = i + 1; o.el.style.transform = 'translate(' + o.x + '%,' + (o.y + depth * -1.2) + '%) rotate(' + o.r + 'deg)'; });
+}
+order.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'p'; b.setAttribute('aria-label', 'Photo'); b.innerHTML = '<img src="' + ph(o.n) + '" alt="" draggable="false">'; o.el = b; pile.appendChild(b);
+  b.onclick = () => { if (order[order.length - 1] !== o) return;
+    // lift it off, swing it out, tuck it under the rest
+    const dir = rnd() > 0.5 ? 1 : -1; b.style.transition = reduced ? 'none' : 'transform .32s cubic-bezier(.4,0,.7,.2)'; b.style.transform = 'translate(' + dir * 118 + '%, -8%) rotate(' + dir * 24 + 'deg)';
+    setTimeout(() => { order.pop(); order.unshift(o); o.r = (rnd() - 0.5) * 22; o.x = (rnd() - 0.5) * 34; o.y = (rnd() - 0.5) * 16; b.style.transition = ''; layPile(); }, reduced ? 0 : 300); }; });
+pile.insertAdjacentHTML('beforeend', '<p class="tag mono">6 from this week</p>'); layPile();
+
+// ---- the month ----
+const PLAN = { 1: 1, 2: 1, 4: 2, 5: 1, 7: 2, 8: 1, 9: 1, 11: 2, 12: 1, 13: 1, 14: 2, 15: 1 }, cal = $('cal');
+for (let i = 0; i < 6; i++) cal.appendChild(document.createElement('span'));
+for (let d = 1; d <= 30; d++) { const c = document.createElement('div'); c.className = 'd' + (d === 15 ? ' today' : ''); c.innerHTML = '<b>' + d + '</b>';
+  for (let k = 0; k < (PLAN[d] || 0); k++) c.insertAdjacentHTML('beforeend', '<span class="p" style="transform:rotate(' + ((rnd() - 0.5) * 16).toFixed(1) + 'deg) translate(' + (k * 14 - 2) + '%,' + (k * -6) + '%)"><img src="' + ph(1 + ((d * 5 + k * 3) % 12)) + '" alt="" loading="lazy"></span>');
+  cal.appendChild(c); }
+
+// ---- rolls as folders ----
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.4" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+[['Roll 03', 'Harbour', '27 frames · Oct', 'linear-gradient(90deg,#3E7C80 0 60%,#1b1b1c 60% 65%,#C9CED1 65%)', [7, 11, 5]], ['Roll 02', 'Sunday', '24 frames · Sep', 'linear-gradient(90deg,#E8B44C 0 62%,#1b1b1c 62% 66%,#C8553A 66%)', [8, 3, 10]],
+ ['Roll 01', 'Flashbulb', '27 frames · Aug', 'linear-gradient(90deg,#1b1b1c 0 30%,#E9E9EC 30% 72%,#D8553F 72%)', [2, 12, 6]], ['Trip', 'Hội An', '2 rolls · Jul', 'linear-gradient(90deg,#E8B44C 0 62%,#1b1b1c 62% 66%,#C8553A 66%)', [4, 1, 9]]].forEach(([n, look, meta, sw, ps]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'roll'; b.setAttribute('aria-expanded', 'false');
+  b.innerHTML = '<div class="folder"><div class="board"></div>' + ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + look.toUpperCase() + '</i></div>' + CLIP + '<span class="n">' + n.toUpperCase() + '</span></div><strong>' + look + '</strong><em>' + meta + '</em>';
+  b.onclick = () => { const o = b.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); }; $('rolls').appendChild(b); });
+</script>
+</body>
+</html>

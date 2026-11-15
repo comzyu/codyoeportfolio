@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Poto · The postcard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;700&family=Special+Elite&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<style>
+  #stage { position: absolute; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+  .tray { position: absolute; z-index: 6; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 14px) scale(.96); display: flex; gap: 4px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .4s var(--spring); }
+  .tray.open { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  .tray button { height: 40px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; position: relative; }
+  .tray button i { width: 16px; height: 16px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .tray .holo i { background: conic-gradient(from 40deg, #9be7ff, #c9a4ff, #ffb3d1, #ffe9a3, #a8ffcf, #9be7ff); }
+  .tray .gloss i { background: radial-gradient(circle at 35% 30%, #fff, #d9d9de 55%, #9b9ba3); }
+  .tray .matte i { background: #cfcfd3; }
+  .tray.open ~ .hint { opacity: 0; }
+  .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <a class="glass round" style="color:inherit" href="index.html" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <span class="mono soft" id="side">Front</span>
+    <span class="round" aria-hidden="true"></span>
+  </header>
+  <div id="stage" role="img" aria-label="A postcard you can turn, flip and put stickers on"></div>
+  <div class="tray glass" id="tray" role="group" aria-label="Sticker finish">
+    <button type="button" class="holo" data-f="holo"><i></i>Holographic</button>
+    <button type="button" class="gloss" data-f="gloss"><i></i>Gloss</button>
+    <button type="button" class="matte" data-f="matte"><i></i>Matte</button>
+  </div>
+  <p class="hint mono" id="hint">Drag to turn · tap to flip · peel the sticker</p>
+  <nav class="dock glass" aria-label="Postcard">
+    <button type="button" id="flip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0114-3l2 2M20 15a8 8 0 01-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Flip</button>
+    <span class="sep"></span>
+    <button type="button" id="stick" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg>Sticker</button>
+  </nav>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="lib/paper.js"></script>
+<script src="lib/postcard3d.js"></script>
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id), stage = $('stage');
+  if (!window.THREE || !document.createElement('canvas').getContext('webgl2')) { stage.innerHTML = '<p class="fallback">This needs WebGL, which this browser has switched off.</p>'; return; }
+  // fonts have to be in before anything is drawn onto the card
+  const fonts = ['37px "Special Elite"', '58px "La Belle Aurore"', '500 19px "IBM Plex Mono"', '700 120px "IBM Plex Mono"'];
+  await Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
+  const photo = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'img/photo-04.jpg'; });
+
+  const pc = new PotoPostcard(stage, { lite: /[?&]lite/.test(location.search) });
+  window.pc = pc;
+  pc.setFaces(
+    PotoPaper.front(photo, 'Sunday · 15 Nov 2026'),
+    PotoPaper.back(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], to: ['Dana Okafor', '14 Tiong Bahru Rd', 'Singapore 168732'], caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })
+  );
+  pc.addSticker('star', 'holo', -0.24, 0.02, -0.16, 'back');
+  const S = window.PotoSound || { play() {}, start() { return () => {}; } };
+  pc.onFlip = (face, quiet) => { $('side').textContent = face ? 'Back' : 'Front'; if (!quiet) S.play('flip'); };
+  pc.onLand = () => S.play('land');
+  let stopPeel = null;
+  pc.onPeelStart = () => { stopPeel = S.start('peel'); };
+  pc.onLift = () => { if (stopPeel) stopPeel(); stopPeel = null; S.play('lift'); };
+  pc.onPress = (how) => { if (stopPeel) stopPeel(); stopPeel = null; S.play('press', how); };
+  pc.onRemove = () => S.play('lift');
+
+  $('flip').onclick = () => pc.flip();
+  const tray = $('tray'), stick = $('stick'); let kinds = ['heart', 'dot', 'star'], n = 0;
+  stick.onclick = () => { const o = tray.classList.toggle('open'); stick.setAttribute('aria-expanded', String(o)); stick.classList.toggle('on', o); };
+  tray.querySelectorAll('button').forEach((b) => (b.onclick = () => {
+    if (pc.stickers.length >= 5) return;
+    const side = pc.face() ? 'back' : 'front', s = pc.addSticker(kinds[n++ % 3], b.dataset.f, (Math.random() - 0.5) * 0.4, -0.1 + (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.4, side);
+    s.u.uPeel.value = 1; s.u.uFoldD.value.set(0.8, 0.6); s.u.uFoldP.value.set(-0.3, -0.2); pc.onPress(1);            // arrives pressed on from one edge
+    const t0 = performance.now(); (function go(now) { const t = Math.min(1, (now - t0) / 300), e = 1 - Math.pow(1 - t, 3); s.u.uFoldP.value.set(0.8, 0.6).multiplyScalar(-0.26 + e * 0.54); if (t < 1) requestAnimationFrame(go); else s.u.uPeel.value = 0; })(t0);
+    tray.classList.remove('open'); stick.classList.remove('on'); stick.setAttribute('aria-expanded', 'false');
+  }));
+  setTimeout(() => ($('hint').style.opacity = 0), 9000);
+})();
+</script>
+</body>
+</html>
