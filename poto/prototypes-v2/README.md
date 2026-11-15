@@ -19,5 +19,7 @@ Round 2 fixes (16 Nov, Cody's feedback): matte thin card with rounded soft edges
 
 Round 3 (16 Nov): stickers stack (newest on top, peel top-first), develop 4 s with tap-to-skip, one folder open at a time. Watermark should become the app domain (see ../docs/NEXT_BUILDS.md).
 
+Build 1 (16 Nov): Write mode on postcard.html: live typewriter on the back (lib/paper.js PotoPaper.backWriter).
+
 Not done yet: sound (hooks exist: `onFlip`, `onLand`, `onPeelStart`, `onLift`, `onPress`), typewriter and calligraphy as live input on the 3D card, load-a-roll and roll-complete in the new style, Cody's own sticker artwork (any transparent image can replace `PotoPaper.sticker`).
 Picks this was built from: Y3, L1, L9, R1, R4, R5, R7, R8, T1, P1, P2, P3, P5, D1, D3, D5, C2, C4, O1, O2, O5, J4, S2, M3 · W1 · dark camera.

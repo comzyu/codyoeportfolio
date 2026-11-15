@@ -17,6 +17,15 @@
   .tray .gloss i { background: radial-gradient(circle at 35% 30%, #fff, #d9d9de 55%, #9b9ba3); }
   .tray .matte i { background: #cfcfd3; }
   .tray.open ~ .hint { opacity: 0; }
+  /* writing: a small glass capsule rides along under the line, where the next letter will land */
+  .cap { position: fixed; z-index: 7; left: 0; top: 0; width: 22px; height: 7px; margin: 6px 0 0 -2px; border-radius: 999px; pointer-events: none; opacity: 0;
+    background: rgba(255,255,255,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(20,20,30,.22), inset 0 -1px 0 rgba(20,20,30,.12);
+    transition: transform .09s cubic-bezier(.2,.8,.2,1), opacity .25s, background .2s; will-change: transform; }
+  .writing .cap { opacity: 1; } .cap.bell { background: rgba(255,214,120,.8); }
+  .done { position: absolute; z-index: 8; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px)); height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 600; font-size: 14px; color: #fff; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .writing .done { opacity: 1; pointer-events: auto; } .writing .dock, .writing .hint, .writing .tray { opacity: 0 !important; pointer-events: none !important; }
+  .left { position: absolute; z-index: 8; left: 0; right: 0; pointer-events: none; top: calc(26px + env(safe-area-inset-top, 0px)); text-align: center; opacity: 0; transition: opacity .25s; } .writing .left { opacity: 1; } .writing #side { opacity: 0; }
+  #ta { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0; resize: none; }
   .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
 </style>
 </head>
@@ -34,8 +43,13 @@
     <button type="button" class="matte" data-f="matte"><i></i>Matte</button>
   </div>
   <p class="hint mono" id="hint">Drag to turn · tap to flip · peel a sticker off the back</p>
+  <i class="cap" id="cap" aria-hidden="true"></i>
+  <button type="button" class="done" id="done">Done</button><span class="left mono soft" id="left"></span>
+  <textarea id="ta" maxlength="150" aria-label="Message on the back of the postcard" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <nav class="dock glass" aria-label="Postcard">
     <button type="button" id="flip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0114-3l2 2M20 15a8 8 0 01-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Flip</button>
+    <span class="sep"></span>
+    <button type="button" id="write"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>Write</button>
     <span class="sep"></span>
     <button type="button" id="stick" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg>Sticker</button>
   </nav>
@@ -52,11 +66,12 @@
   await Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
   const photo = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'img/photo-04.jpg'; });
 
+  let W;
   const pc = new PotoPostcard(stage, { lite: /[?&]lite/.test(location.search) });
   window.pc = pc;
   pc.setFaces(
     PotoPaper.front(photo, 'Sunday · 15 Nov 2026'),
-    PotoPaper.back(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], to: ['Dana Okafor', '14 Tiong Bahru Rd', 'Singapore 168732'], caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })
+    (W = PotoPaper.backWriter(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], to: ['Dana Okafor', '14 Tiong Bahru Rd', 'Singapore 168732'], caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })).tex
   );
   pc.addSticker('star', 'holo', -0.29, 0.25, -0.16);              // back only. Card x is mirrored on the back: negative x is the right of the written side.
   const S = window.PotoSound || { play() {}, start() { return () => {}; } };
@@ -69,6 +84,37 @@
   pc.onRemove = () => S.play('lift');
 
   $('flip').onclick = () => pc.flip();
+
+  // ---- writing on the back ----
+  window.W = W;
+  const ta = $('ta'), cap = $('cap'), app = document.querySelector('.app'), left = $('left'), START = W.laid.map((g) => g.ch).join('');
+  ta.value = 'the lights came on all at\nonce and nobody said\nanything for a minute.\n\nyou would have loved it.';
+  let prev = ta.value, belled = -1, capRaf = 0;
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  function placeCap() {                                  // the capsule follows the next letter, every frame while writing (the card is still settling)
+    cancelAnimationFrame(capRaf); if (!app.classList.contains('writing')) return;
+    const c = W.caret, a = pc.backToScreen(c.x, c.y + 8), b = pc.backToScreen(c.x + W.adv, c.y + 8);
+    cap.style.width = Math.max(10, Math.hypot(b.x - a.x, b.y - a.y) * 1.05) + 'px'; cap.style.transform = 'translate(' + a.x + 'px,' + a.y + 'px)';
+    capRaf = requestAnimationFrame(placeCap);
+  }
+  function startWriting() { app.classList.add('writing'); pc.writing(true); ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); left.textContent = (150 - ta.value.length) + ' left'; placeCap(); }
+  function stopWriting() { app.classList.remove('writing'); pc.writing(false); ta.blur(); cancelAnimationFrame(capRaf); }
+  $('write').onclick = startWriting; $('done').onclick = stopWriting; pc.onTapWhileWriting = () => ta.focus({ preventScroll: true });
+  ta.addEventListener('input', () => {
+    const r = W.set(ta.value);
+    if (!r.ok) { ta.value = prev; buzz([8, 40, 8]); return; }       // the card is full: the carriage won't go further
+    if (r.dirty) pc.refreshBack();
+    const grew = ta.value.length > prev.length, last = ta.value[ta.value.length - 1];
+    if (grew) {
+      if (r.newline) { pc.nudge('return'); buzz(14); S.play('return'); belled = -1; }
+      else if (last === ' ') { pc.nudge('key'); buzz(4); S.play('space'); }
+      else { pc.nudge('key'); buzz(6); S.play('key'); }
+      if (r.caret.col >= W.cols - 5 && belled !== r.caret.line) { belled = r.caret.line; pc.nudge('bell'); buzz([5, 30, 5]); S.play('bell'); cap.classList.add('bell'); setTimeout(() => cap.classList.remove('bell'), 380); }
+    } else { buzz(3); S.play('back'); }
+    prev = ta.value; left.textContent = (150 - ta.value.length) + ' left';
+  });
+  // keep the card above the phone keyboard
+  if (window.visualViewport) visualViewport.addEventListener('resize', () => { document.getElementById('stage').style.height = app.classList.contains('writing') ? visualViewport.height + 'px' : ''; });
   const tray = $('tray'), stick = $('stick'); let kinds = ['heart', 'dot', 'star'], n = 0;
   stick.onclick = () => { const o = tray.classList.toggle('open'); stick.setAttribute('aria-expanded', String(o)); stick.classList.toggle('on', o); };
   let adding = false;

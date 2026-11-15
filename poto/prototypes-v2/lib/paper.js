@@ -210,3 +210,84 @@
     return { col, foil, hgt };
   };
 })();
+
+/* ---------- live typewriter on the back (build 1) ----------
+   The back is drawn once without a message. Each new letter is struck onto the live canvases on its own
+   (ink layer, dent in the height map, normals rebuilt for that letter's rectangle only), so typing stays fast.
+   Deleting or re-wrapping restores the message area from a clean copy and re-strikes everything. */
+(function () {
+  const P = window.PotoPaper, TW = 1024, TH = 1448;
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const hash = (i) => { let x = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b) >>> 0; x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35) >>> 0; x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+
+  P.normalRegion = function (hc, nc, x, y, w, h, strength) {
+    x = Math.max(0, Math.floor(x)); y = Math.max(0, Math.floor(y)); w = Math.min(TW - x, Math.ceil(w)); h = Math.min(TH - y, Math.ceil(h)); if (w <= 0 || h <= 0) return;
+    const sx = Math.max(0, x - 1), sy = Math.max(0, y - 1), sw = Math.min(TW, x + w + 1) - sx, sh = Math.min(TH, y + h + 1) - sy;
+    const src = hc.getContext('2d').getImageData(sx, sy, sw, sh).data, out = nc.getContext('2d').createImageData(w, h), d = out.data;
+    const H = (px, py) => src[((Math.min(sh - 1, Math.max(0, py - sy))) * sw + Math.min(sw - 1, Math.max(0, px - sx))) * 4];
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const px = x + i, py = y + j, dx = (H(px + 1, py) - H(px - 1, py)) / 255 * strength, dy = (H(px, py + 1) - H(px, py - 1)) / 255 * strength, l = Math.hypot(dx, dy, 1), k = (j * w + i) * 4;
+      d[k] = (-dx / l * 0.5 + 0.5) * 255; d[k + 1] = (dy / l * 0.5 + 0.5) * 255; d[k + 2] = (1 / l * 0.5 + 0.5) * 255; d[k + 3] = 255;
+    }
+    nc.getContext('2d').putImageData(out, x, y);
+  };
+
+  P.backWriter = function (photo, o) {
+    const t = P.back(photo, Object.assign({}, o, { message: [] })), NS = 1.9;
+    t.nrm = P.normalFromHeight(t.hgt, NS);
+    const R = { x: 56, y: 540, w: 930, h: 440 }, clean = {};
+    for (const k of ['col', 'hgt']) { const c = mk(R.w, R.h); c.getContext('2d').drawImage(t[k], R.x, R.y, R.w, R.h, 0, 0, R.w, R.h); clean[k] = c; }
+    const size = 37, lead = 60, x0 = 86, y0 = 610, ink = '#26231f', FONT = size + 'px "Special Elite", "Courier New", monospace';
+    const m = mk(8, 8).getContext('2d'); m.font = FONT; const adv = m.measureText('m').width;
+    const W = { cols: 26, lines: 6, adv, lead, x0, y0, size, tex: t, laid: [] };
+
+    // typewriter wrap: break at the last space once a line is full; a hard return starts a new line
+    W.layout = function (text) {
+      const out = []; let line = 0, col = 0, lastSpace = -1;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '\n') { line++; col = 0; lastSpace = -1; continue; }
+        if (col >= W.cols) {
+          if (lastSpace >= 0 && ch !== ' ') { const moved = out.splice(lastSpace + 1); line++; col = 0; for (const g of moved) { g.line = line; g.col = col++; out.push(g); } }
+          else { line++; col = 0; }
+          lastSpace = -1; if (ch === ' ') continue;
+        }
+        const g = { ch, i, line, col }; out.push(g); if (ch === ' ') lastSpace = out.length - 1; col++;
+      }
+      return { glyphs: out, caret: { line, col } };
+    };
+    const at = (g) => ({ x: x0 + g.col * adv + (hash(g.i * 3 + 1) - 0.5) * 1.6, y: y0 + g.line * lead + (hash(g.i * 3 + 2) - 0.5) * 2.4 });
+
+    // every keystroke: wipe the message area back to clean paper and strike the whole message again, in one ink layer,
+    // with the same recipe as the approved static card (the paper's valleys knocked out of the ink, worn ribbon, dents)
+    function redraw(glyphs) {
+      t.c.drawImage(clean.col, R.x, R.y); t.h.drawImage(clean.hgt, R.x, R.y);
+      const L = mk(R.w, R.h).getContext('2d'); L.font = FONT; L.textBaseline = 'alphabetic';
+      t.h.save(); t.h.font = FONT; t.h.textBaseline = 'alphabetic';
+      for (const g of glyphs) {
+        if (g.ch === ' ') continue;
+        const p = at(g), press = 0.6 + hash(g.i * 5 + 7) * 0.4, rot = (hash(g.i * 5 + 9) - 0.5) * 0.035, weak = hash(g.i * 5 + 11) < 0.08 ? 0.5 : 1;
+        L.save(); L.translate(p.x - R.x, p.y - R.y); L.rotate(rot); L.fillStyle = ink;
+        L.globalAlpha = press * 0.18; L.filter = 'blur(1.2px)'; L.fillText(g.ch, 0.6, 0.4); L.filter = 'none'; L.globalAlpha = press * weak; L.fillText(g.ch, 0, 0); L.restore();
+        t.h.save(); t.h.translate(p.x, p.y); t.h.rotate(rot); t.h.globalAlpha = 0.5 * press; t.h.fillStyle = '#202020'; t.h.filter = 'blur(0.7px)'; t.h.fillText(g.ch, 0, 0); t.h.restore();
+      }
+      t.h.restore();
+      L.save(); L.globalCompositeOperation = 'destination-out'; L.translate(-R.x, -R.y); L.fillStyle = L.createPattern(t.stock.valleys, 'repeat'); L.fillRect(R.x, R.y, R.w, R.h);
+      for (let k = 0; k < glyphs.length * 22; k++) { L.fillStyle = 'rgba(0,0,0,' + (0.2 + hash(k * 7 + 3) * 0.5) + ')'; L.fillRect(R.x + hash(k * 13 + 1) * R.w, R.y + hash(k * 17 + 2) * R.h, 0.8 + hash(k * 19) * 1.8, 0.8 + hash(k * 23) * 1.4); }
+      L.restore();
+      t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, R.x, R.y); t.c.restore();
+      P.normalRegion(t.hgt, t.nrm, R.x, R.y, R.w, R.h, NS);
+    }
+
+    /* set the whole message; returns { ok, newline, caret:{x,y,col,line} } */
+    W.set = function (text) {
+      const lay = W.layout(text); if (lay.caret.line >= W.lines || lay.glyphs.some((g) => g.line >= W.lines)) return { ok: false };
+      const nl = W.caret ? lay.caret.line > W.caret.line : false;
+      redraw(lay.glyphs);
+      W.laid = lay.glyphs; W.caret = { line: lay.caret.line, col: lay.caret.col, x: x0 + lay.caret.col * adv, y: y0 + lay.caret.line * lead };
+      return { ok: true, dirty: true, newline: nl, caret: W.caret };
+    };
+    W.set(o.message.join('\n'));
+    return W;
+  };
+})();

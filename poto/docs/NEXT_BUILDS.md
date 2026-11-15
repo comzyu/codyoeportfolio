@@ -14,7 +14,7 @@ Written 16 Nov 2026 at the end of round two. Agreed so far: gallery white, dark 
 
 | # | Build | What it proves | Size |
 |---|---|---|---|
-| 1 | **Writing on the card** | Live typing on the 3D back: typewriter mode (letters strike into the paper as you type, carriage + bell) and pen mode (writes itself on). Ink/paper code already exists in `lib/paper.js`; this makes it interactive. | M |
+| 1 | ✅ **Writing on the card** (done 16 Nov: Write mode, live typewriter strikes with dents and paper-following ink, wrap at 26 columns, 6 lines / 150 chars, capsule marker, bell 5 from the end, keystroke jolt. Not yet: pen mode for the address, crossed-out corrections, sounds) | Live typing on the 3D back: typewriter mode (letters strike into the paper as you type, carriage + bell) and pen mode (writes itself on). Ink/paper code already exists in `lib/paper.js`; this makes it interactive. | M |
 | 2 | **The whole loop, joined up** | One flow: camera → develop → Keep → print drops onto the diary pile → tap it → it becomes the 3D postcard → flip → write → sticker. Turns three demos into one app feel. | M |
 | 3 | **Load a roll + roll complete, new style** | Choosing a look as picking up a real film box (3D or CSS object), locking it in, and the 27th-shot ending. Last two v0.1 screens not yet in the white/dark style. | M |
 | 4 | **Sound pass** | Real recordings for shutter, film advance, card flip, card land, sticker peel/pat, paper slide, typewriter. Wire to the hooks already in place. Develop sound quiet or none. | S (once files exist) |
@@ -22,7 +22,7 @@ Written 16 Nov 2026 at the end of round two. Agreed so far: gallery white, dark 
 | 6 | **Look previews on real photos** | Run the three looks (Sunday, Harbour, Flashbulb) on Cody's own six reference photos inside the camera's print, so the look is part of the develop. | S |
 | 7 | **Hand-off to the app build** | Freeze the approved feel into an updated motion spec + design tokens, then start v0.1 in Expo per `docs/v0.1-technical-design.md` (spikes S1 to S5 first). Needs the Mac with Xcode/Android SDK. | L |
 
-Recommended order: 1 → 2 → 4 → 3 → 5 → 6 → 7. Writing and the joined-up loop are what make it feel like a product; sound is cheap once recordings exist.
+Recommended order: ~~1~~ → 2 → 4 → 3 → 5 → 6 → 7. Writing and the joined-up loop are what make it feel like a product; sound is cheap once recordings exist.
 
 ## Open decisions for Cody
 - The watermark domain.
