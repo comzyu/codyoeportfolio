@@ -160,6 +160,9 @@
     c.font = '500 14px "IBM Plex Mono", ui-monospace, monospace'; c.fillText('TO', 96, 1120); c.fillText(o.caption.toUpperCase(), 86, TH - 78);
     c.restore();
     penned(t, o.to[0], 262, 1112, 58, '#1c2947', -0.012); penned(t, o.to[1], 262, 1196, 52, '#1c2947', -0.006); penned(t, o.to[2], 262, 1280, 52, '#1c2947', 0.004);
+    // stamp + postmark are OFF by default (Cody, 16 Nov: keep the back minimal; decoration is up to the sender).
+    // Kept here as an option: the plan is a postmark only when a card is actually mailed, and stamps as stickers/drops.
+    if (!o.stamp) return t;
     // the stamp: a perforated piece of gummed paper with a small print of the photo
     const sw = 196, sh = 244, sx = TW - 86 - sw, sy = 84, hole = 7.2, nx = 12, ny = 15;
     const stamp = (ctx, fill) => { ctx.save(); ctx.translate(sx + sw / 2, sy + sh / 2); ctx.rotate(0.03); ctx.translate(-sw / 2, -sh / 2); ctx.fillStyle = fill; ctx.fillRect(0, 0, sw, sh); };
