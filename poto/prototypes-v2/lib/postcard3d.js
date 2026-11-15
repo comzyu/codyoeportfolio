@@ -147,10 +147,12 @@
       const shadow = new T.Mesh(new T.PlaneGeometry(SS, SS), new T.ShaderMaterial({ vertexShader: CONTACT_VS, fragmentShader: CONTACT_FS, transparent: true, depthWrite: false,
         polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, uniforms: { uMap: { value: tex(sc) }, uOp: { value: 0.32 }, uFoldP: u.uFoldP, uFoldD: u.uFoldD, uPeel: u.uPeel } }));
       const holder = new T.Group(); holder.add(shadow); holder.add(mesh); shadow.position.z = 0.0003; mesh.position.z = 0.0006;
-      const s = { holder, mesh, shadow, u, kind, finish, lift: 0, state: 'stuck', rot, x, y, tilt: new V2() };
+      const s = { holder, mesh, shadow, u, kind, finish, lift: 0, state: 'stuck', rot, x, y, tilt: new V2(), layer: ++layers };
       place(s, x, y, rot, 0); card.add(holder); stickers.push(s); return s;
     }
-    function place(s, x, y, rot, lift) { s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
+    // stacking: each sticker sits a hair above the ones put down before it, so the latest is always on top and nothing clips
+    let layers = 0; const LAYER = 0.0007;
+    function place(s, x, y, rot, lift) { s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift - s.layer * LAYER); s.mesh.renderOrder = s.shadow.renderOrder = s.layer * 2 + (s.state === 'held' || s.state === 'placing' ? 1000 : 0); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
     this.addSticker = addSticker; this.stickers = stickers;
 
     /* ---------- turning: yaw only (that's the flip), a little tilt that springs back, never upside down ---------- */
@@ -173,8 +175,11 @@
       const x = Math.floor(uv.x * d.width), y = Math.floor((1 - uv.y) * d.height); return x >= 0 && y >= 0 && x < d.width && y < d.height && d.data[(y * d.width + x) * 4 + 3] > 100; }
     function hitSticker(e) {
       if (!backFacing() || flipping) return null; toNdc(e);
-      const hits = ray.intersectObjects(stickers.filter((s) => s.state === 'stuck').map((s) => s.mesh), false); if (!hits.length) return null;
-      const s = stickers.find((k) => k.mesh === hits[0].object), uv = hits[0].uv; return uv && sampleAlpha(s, uv) ? { s, p: new V2((uv.x - 0.5) * SS, (uv.y - 0.5) * SS) } : null;
+      // every sticker under the finger, top layer first; the first one whose painted area you're touching is the one that peels
+      const hits = ray.intersectObjects(stickers.filter((s) => s.state === 'stuck').map((s) => s.mesh), false)
+        .map((h) => ({ h, s: stickers.find((k) => k.mesh === h.object) })).sort((a, b) => b.s.layer - a.s.layer);
+      for (const { h, s } of hits) if (h.uv && sampleAlpha(s, h.uv)) return { s, p: new V2((h.uv.x - 0.5) * SS, (h.uv.y - 0.5) * SS) };
+      return null;
     }
     function stickerLocal(s, e) { const p = onCardPlane(e, BZ); if (!p) return null; const l = s.holder.worldToLocal(card.localToWorld(p.clone())); return new V2(l.x, l.y); }
 
@@ -222,7 +227,7 @@
       let mx = -1e9, mn = 1e9; for (const cx of [-1, 1]) for (const cy of [-1, 1]) { const v = (cx * SS / 2 - m.x) * D.x + (cy * SS / 2 - m.y) * D.y; mx = Math.max(mx, v); mn = Math.min(mn, v); }
       s.peeled = clamp(mx / (mx - mn), 0, 1); if (self.onPeel) self.onPeel(s.peeled);
       if (s.peeled > 0.88) {                                       // it lets go of the card: now it's in your fingers, held just above the surface
-        s.state = 'held'; const p = onCardPlane(e, BZ - LIFT); s.tx = p ? p.x : s.x; s.ty = p ? p.y : s.y;
+        s.state = 'held'; s.layer = ++layers; const p = onCardPlane(e, BZ - LIFT); s.tx = p ? p.x : s.x; s.ty = p ? p.y : s.y;
         anims.push({ s, k: 'unfurl', t: 0, d: 0.22 }); if (self.onLift) self.onLift();
       }
     }
@@ -244,7 +249,7 @@
         else if (a.k === 'unfurl') { s.u.uFoldR.value = lerp(0.05, 0.4, e); s.u.uFoldP.value.addScaledVector(s.u.uFoldD.value, dt * 2.2); s.lift = lerp(0.006, LIFT, e); if (t >= 1) s.u.uPeel.value = 0; }
         else if (a.k === 'place') {                               // comes straight down where it was hovering, then a little press
           s.lift = lerp(a.l0, 0, t * t); s.tilt.multiplyScalar(1 - t);
-          if (t >= 1 && !a.patted) { a.patted = true; s.lift = 0; s.tilt.set(0, 0); s.state = 'stuck'; anims.push({ s, k: 'pat', t: 0, d: 0.16 }); if (self.onPress) self.onPress(1); }
+          if (t >= 1 && !a.patted) { a.patted = true; s.lift = 0; s.tilt.set(0, 0); s.state = 'stuck'; s.layer = ++layers; anims.push({ s, k: 'pat', t: 0, d: 0.16 }); if (self.onPress) self.onPress(1); }
         }
         else if (a.k === 'pat') { s.mesh.scale.setScalar(1 - 0.025 * Math.sin(t * Math.PI)); }
         else if (a.k === 'drop') { s.holder.scale.setScalar(1 - e); if (t >= 1) { card.remove(s.holder); stickers.splice(stickers.indexOf(s), 1); } }

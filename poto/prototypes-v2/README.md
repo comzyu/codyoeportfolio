@@ -17,5 +17,7 @@ Run: `python3 -m http.server` in this folder, open `/index.html`. Add `?lite` to
 
 Round 2 fixes (16 Nov, Cody's feedback): matte thin card with rounded soft edges; paper tooth and ink that follows it; yaw-only turning with limited tilt; stickers back-only, flush, contact shadow follows the peel, carried under the finger; pile handles rapid taps; exposure (tap + slide) on the camera, baked into the print.
 
+Round 3 (16 Nov): stickers stack (newest on top, peel top-first), develop 4 s with tap-to-skip, one folder open at a time. Watermark should become the app domain (see ../docs/NEXT_BUILDS.md).
+
 Not done yet: sound (hooks exist: `onFlip`, `onLand`, `onPeelStart`, `onLift`, `onPress`), typewriter and calligraphy as live input on the 3D card, load-a-roll and roll-complete in the new style, Cody's own sticker artwork (any transparent image can replace `PotoPaper.sticker`).
 Picks this was built from: Y3, L1, L9, R1, R4, R5, R7, R8, T1, P1, P2, P3, P5, D1, D3, D5, C2, C4, O1, O2, O5, J4, S2, M3 · W1 · dark camera.

@@ -129,7 +129,10 @@ const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2"
  ['Roll 01', 'Flashbulb', '27 frames · Aug', 'linear-gradient(90deg,#1b1b1c 0 30%,#E9E9EC 30% 72%,#D8553F 72%)', [2, 12, 6]], ['Trip', 'Hội An', '2 rolls · Jul', 'linear-gradient(90deg,#E8B44C 0 62%,#1b1b1c 62% 66%,#C8553A 66%)', [4, 1, 9]]].forEach(([n, look, meta, sw, ps]) => {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'roll'; b.setAttribute('aria-expanded', 'false');
   b.innerHTML = '<div class="folder"><div class="board"></div>' + ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + look.toUpperCase() + '</i></div>' + CLIP + '<span class="n">' + n.toUpperCase() + '</span></div><strong>' + look + '</strong><em>' + meta + '</em>';
-  b.onclick = () => { const o = b.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); }; $('rolls').appendChild(b); });
+  b.onclick = () => {                                          // one folder open at a time: opening this one closes the others
+    const o = !b.classList.contains('open');
+    document.querySelectorAll('.roll.open').forEach((r) => { r.classList.remove('open'); r.setAttribute('aria-expanded', 'false'); });
+    b.classList.toggle('open', o); b.setAttribute('aria-expanded', String(o)); }; $('rolls').appendChild(b); });
 </script>
 </body>
 </html>

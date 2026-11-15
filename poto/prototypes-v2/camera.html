@@ -71,7 +71,7 @@
   .acts button { position: relative; height: 46px; padding: 0 26px; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--on-dark); }
   .acts .keep { background: var(--on-dark); color: var(--dark); }
   .label { position: absolute; z-index: 10; left: 0; right: 0; bottom: calc(42px + env(safe-area-inset-bottom, 0px)); text-align: center; color: var(--on-dark-2); opacity: 0; transition: opacity .4s; }
-  .dev .label { opacity: 1; } .dev.ready .label { opacity: 0; }
+  .dev .label { opacity: 1; pointer-events: auto; } .dev.ready .label { opacity: 0; pointer-events: none; } .label { width: 100%; padding: 14px 0; color: var(--on-dark-2); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -101,7 +101,7 @@
     <a class="last" href="home.html" aria-label="Open the diary"><img id="lastimg" src="img/photo-05-s.jpg" alt=""></a>
   </div>
   <div class="scrim" id="scrim"></div>
-  <p class="label mono" id="label">Developing</p>
+  <button type="button" class="label mono" id="label" aria-label="Skip developing">Developing · tap to skip</button>
   <div class="print" id="print"><div class="sheet" id="sheet"><canvas id="cv" width="300" height="400" role="img" aria-label="Your photo, developing"></canvas><div class="cap mono"><span>Sunday · 15 Nov 2026</span><span>poto</span></div><div class="gloss" id="gloss"></div></div></div>
   <div class="acts glass dark" id="acts"><button type="button" class="toss" id="toss">Toss</button><button type="button" class="keep" id="keep">Keep</button></div>
 </main>
@@ -179,14 +179,16 @@ async function shoot() {
   // the print is pushed out of the camera: rises with weight, overshoots a little, settles a degree off true
   print.getAnimations().forEach((a) => a.cancel());
   print.animate([{ transform: 'translateY(120vh) rotate(-4deg)' }, { transform: 'translateY(-52%) rotate(' + (Math.random() * 2.4 - 1.2).toFixed(2) + 'deg)' }], { duration: reduced() ? 0 : 720, delay: reduced() ? 0 : 120, easing: 'cubic-bezier(.22,1.18,.36,1)', fill: 'forwards' });
-  const total = 8000, hold = 1700, t0 = performance.now(), ease = (t) => { const u = 1 - t; return 1 - u * u * (1 + 1.2 * t) * u ** 0.2; };
+  const total = 4000, hold = 800, t0 = performance.now(), ease = (t) => { const u = 1 - t; return 1 - u * u * (1 + 1.2 * t) * u ** 0.2; };
   cancelAnimationFrame(raf);
-  (function tick(now) { const ms = now - t0, p = reduced() ? Math.max(0, (ms - (total - 600)) / 600) : Math.min(1, Math.max(0, (ms - hold) / (total - hold)));
+  skip = false;
+  (function tick(now) { if (skip) { skip = false; draw(1, 0); sheet.classList.add('done'); app.classList.add('ready'); $('acts').classList.add('on'); return; } const ms = now - t0, p = reduced() ? Math.max(0, (ms - (total - 600)) / 600) : Math.min(1, Math.max(0, (ms - hold) / (total - hold)));
     draw(reduced() ? Math.min(1, p) : p * p * (3 - 2 * p), Math.floor(ms / 90)); if (ms < total) raf = requestAnimationFrame(tick); else { draw(1, 0); sheet.classList.add('done'); app.classList.add('ready'); $('acts').classList.add('on'); } })(t0);
 }
 // the print is an object: drag it and it tilts in your hand, gloss sliding across the emulsion
 const gloss = $('gloss'); let drag = null;
 function tilt(rx, ry) { sheet.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)'; gloss.style.opacity = Math.min(.7, Math.hypot(rx, ry) / 26); gloss.style.backgroundPosition = (50 - ry * 2.6) + '% 0'; }
+let skip = false; $('label').onclick = () => { skip = true; };
 sheet.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; sheet.setPointerCapture(e.pointerId); sheet.style.transition = 'none'; });
 sheet.addEventListener('pointermove', (e) => { if (!drag) return; tilt(Math.max(-24, Math.min(24, (drag.y - e.clientY) * 0.22)), Math.max(-30, Math.min(30, (e.clientX - drag.x) * 0.22))); });
 const rel = () => { if (!drag) return; drag = null; sheet.style.transition = 'transform .7s cubic-bezier(.3,1.5,.4,1)'; gloss.style.transition = 'opacity .5s'; tilt(0, 0); setTimeout(() => (gloss.style.transition = ''), 500); };
