@@ -260,30 +260,36 @@
 
     // every keystroke: wipe the message area back to clean paper and strike the whole message again, in one ink layer,
     // with the same recipe as the approved static card (the paper's valleys knocked out of the ink, worn ribbon, dents)
-    function redraw(glyphs) {
+    function redraw(glyphs) {                                   // wipe the message area to clean paper and strike every letter again
       t.c.drawImage(clean.col, R.x, R.y); t.h.drawImage(clean.hgt, R.x, R.y);
-      const L = mk(R.w, R.h).getContext('2d'); L.font = FONT; L.textBaseline = 'alphabetic';
-      t.h.save(); t.h.font = FONT; t.h.textBaseline = 'alphabetic';
-      for (const g of glyphs) {
-        if (g.ch === ' ') continue;
-        const p = at(g), press = 0.6 + hash(g.i * 5 + 7) * 0.4, rot = (hash(g.i * 5 + 9) - 0.5) * 0.035, weak = hash(g.i * 5 + 11) < 0.08 ? 0.5 : 1;
-        L.save(); L.translate(p.x - R.x, p.y - R.y); L.rotate(rot); L.fillStyle = ink;
-        L.globalAlpha = press * 0.18; L.filter = 'blur(1.2px)'; L.fillText(g.ch, 0.6, 0.4); L.filter = 'none'; L.globalAlpha = press * weak; L.fillText(g.ch, 0, 0); L.restore();
-        t.h.save(); t.h.translate(p.x, p.y); t.h.rotate(rot); t.h.globalAlpha = 0.5 * press; t.h.fillStyle = '#202020'; t.h.filter = 'blur(0.7px)'; t.h.fillText(g.ch, 0, 0); t.h.restore();
-      }
-      t.h.restore();
-      L.save(); L.globalCompositeOperation = 'destination-out'; L.translate(-R.x, -R.y); L.fillStyle = L.createPattern(t.stock.valleys, 'repeat'); L.fillRect(R.x, R.y, R.w, R.h);
-      for (let k = 0; k < glyphs.length * 22; k++) { L.fillStyle = 'rgba(0,0,0,' + (0.2 + hash(k * 7 + 3) * 0.5) + ')'; L.fillRect(R.x + hash(k * 13 + 1) * R.w, R.y + hash(k * 17 + 2) * R.h, 0.8 + hash(k * 19) * 1.8, 0.8 + hash(k * 23) * 1.4); }
-      L.restore();
-      t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, R.x, R.y); t.c.restore();
+      for (const g of glyphs) strike(g, true);
       P.normalRegion(t.hgt, t.nrm, R.x, R.y, R.w, R.h, NS);
+    }
+
+    // typing forward: strike only the new letter, same recipe, inside its own small rectangle (fast on a phone)
+    function strike(g, batch) {
+      if (g.ch === ' ') return;
+      const p = at(g), press = 0.6 + hash(g.i * 5 + 7) * 0.4, rot = (hash(g.i * 5 + 9) - 0.5) * 0.035, weak = hash(g.i * 5 + 11) < 0.08 ? 0.5 : 1;
+      const bx = Math.floor(p.x - 8), by = Math.floor(p.y - size - 6), bw = Math.ceil(adv + 20), bh = Math.ceil(size + 22);
+      const L = mk(bw, bh).getContext('2d'); L.font = FONT; L.textBaseline = 'alphabetic';
+      L.save(); L.translate(p.x - bx, p.y - by); L.rotate(rot); L.fillStyle = ink;
+      L.globalAlpha = press * 0.18; L.filter = 'blur(1.2px)'; L.fillText(g.ch, 0.6, 0.4); L.filter = 'none'; L.globalAlpha = press * weak; L.fillText(g.ch, 0, 0); L.restore();
+      L.save(); L.globalCompositeOperation = 'destination-out'; L.translate(-bx, -by); L.fillStyle = L.createPattern(t.stock.valleys, 'repeat'); L.fillRect(bx, by, bw, bh);
+      for (let k = 0; k < 22; k++) { L.fillStyle = 'rgba(0,0,0,' + (0.2 + hash(g.i * 97 + k * 7) * 0.5) + ')'; L.fillRect(bx + hash(g.i * 89 + k * 13) * bw, by + hash(g.i * 83 + k * 17) * bh, 0.8 + hash(g.i * 79 + k) * 1.8, 0.8 + hash(g.i * 73 + k) * 1.4); }
+      L.restore();
+      t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, bx, by); t.c.restore();
+      const D = mk(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.ch, 0, 0);
+      t.h.save(); t.h.globalAlpha = 0.5 * press; t.h.drawImage(D.canvas, bx, by); t.h.restore();                // the dent, blurred on a small canvas (blurring the big one is slow)
+      if (!batch) P.normalRegion(t.hgt, t.nrm, bx, by, bw, bh, NS);
     }
 
     /* set the whole message; returns { ok, newline, caret:{x,y,col,line} } */
     W.set = function (text) {
       const lay = W.layout(text); if (lay.caret.line >= W.lines || lay.glyphs.some((g) => g.line >= W.lines)) return { ok: false };
-      const nl = W.caret ? lay.caret.line > W.caret.line : false;
-      redraw(lay.glyphs);
+      const nl = W.caret ? lay.caret.line > W.caret.line : false, prev = W.laid;
+      const forward = prev.length <= lay.glyphs.length && prev.every((g, k) => { const n = lay.glyphs[k]; return n.i === g.i && n.ch === g.ch && n.line === g.line && n.col === g.col; });
+      if (forward && prev.length) for (const g of lay.glyphs.slice(prev.length)) strike(g);
+      else redraw(lay.glyphs);                                    // deleted, re-wrapped or first draw: start from clean paper
       W.laid = lay.glyphs; W.caret = { line: lay.caret.line, col: lay.caret.col, x: x0 + lay.caret.col * adv, y: y0 + lay.caret.line * lead };
       return { ok: true, dirty: true, newline: nl, caret: W.caret };
     };
