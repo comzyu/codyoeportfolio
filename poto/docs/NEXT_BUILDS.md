@@ -105,3 +105,15 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Limited shots + a beautiful camera + film looks = more real, genuine, aesthetic.
 - Must not die like Snapchat streaks (black screens): encourage, never punish. Needs reasons to come back even with few friends.
 - Money: events, film looks (cheap), possibly AI camera looks (Prequel-style, e.g. G7X flash). Needs more monetisation ideas.
+
+## Decisions (Cody, 17 Nov)
+- Microtransactions for small things: desk trinkets, stickers. An in-app currency earned by posting (streaks) and spent in the shop. Encourage daily posting.
+- Rolls have types: Wedding, Party, Travel (and more). A Travel roll ends with a medal/award, and needs proof you were really there (shot in-app at that place).
+- Importing photos is Plus only; free users must shoot with the Poto camera.
+- Events: guests MUST install the app (no QR web join). Friction is fine.
+- Visibility: friends only by default (like BeReal); public per post.
+- Printing real things: keep in the plan, not at launch. All digital first.
+- Limited-edition seasonal film drops, with seasonal shop items (exclusive, displayable that season).
+- No AI looks for now (no running costs); try to get there with our own filters.
+- Overnight developing vs instant: undecided.
+- No events quick-join, no AI, no physical at launch.
