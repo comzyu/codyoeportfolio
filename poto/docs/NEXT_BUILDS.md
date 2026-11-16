@@ -61,3 +61,10 @@ Open questions for Cody: canister label design per look; whether the month opens
 
 ## Next build: ask Cody for reference images first
 Candidates: the profile desk (#3), stamps cut from your own photo (#9).
+
+## Round after build 3 (Cody, 16 Nov)
+- Lag: blend modes and live backdrop blurs inside scrolling lists were the main cost. Glass grain, the camera-back leatherette and folder frost are now baked tiles (lib/texture.js); the disc is one canvas that only rotates; canisters are canvases (label redrawn at an offset to turn).
+- Texture: the paper maker from the postcard now textures the disc, calendar pages, canister labels and folder boards; film strip and frames have baked grain.
+- Calendar flips like a wall calendar (Aug–Nov 2026): the days page swings up over the rings and its back is next month's photo. Arrows or a sideways swipe.
+- Shares fill the frame (only the top bar and reply box kept clear). Month share: no cut-out letters, small "nov." like the app, days on frosted glass, backdrop = another photo from that month, black and white and frosted.
+- Next build: profile desk (#3) + stamps cut from your own photo (#9); references are on the Pinterest board.

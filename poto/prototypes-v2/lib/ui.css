@@ -45,8 +45,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 }
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;      /* the specular sweep across the top */
   background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0) 42%), radial-gradient(120% 90% at 50% 118%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%); mix-blend-mode: screen; opacity: .7; }
-.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .5; mix-blend-mode: overlay;      /* fine grain: glass that feels made, not flat */
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .35;      /* fine grain, baked (no blend mode: blending over a blurred backdrop re-renders on every scroll frame) */
+  background: var(--grain, none) 0 0 / 128px 128px; }
 .glass.dark { background: rgba(38, 38, 42, 0.52); --glass-edge: rgba(255,255,255,.14); color: var(--on-dark);
   box-shadow: inset 0 0 0 1px var(--glass-edge), inset 0 1.5px 0.5px rgba(255,255,255,.22), inset 0 -1px 1px rgba(0,0,0,.35), 0 12px 30px -10px rgba(0,0,0,.6); }
 .glass.dark::before { background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 46%); opacity: 1; mix-blend-mode: normal; }
@@ -72,12 +72,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
 .roll { position: relative; display: block; text-align: left; }
 .folder { position: relative; aspect-ratio: 1 / 0.86; }
-.folder .board { position: absolute; inset: 14% 0 0 0; border-radius: 16px; background: linear-gradient(180deg, #F4F3F0, #ECEBE7); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(20,20,30,.05), 0 14px 26px -14px rgba(20,20,30,.3); }
+.folder .board { position: absolute; inset: 14% 0 0 0; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(0,0,0,.035)), var(--paper-white, #F2F1EE) 0 0 / 256px 256px; box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(20,20,30,.05), 0 14px 26px -14px rgba(20,20,30,.3); }
 .folder .board::before { content: ""; position: absolute; left: 0; top: -15%; width: 44%; height: 22%; border-radius: 14px 14px 0 0; background: #F4F3F0; box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 rgba(20,20,30,.04), inset -1px 0 0 rgba(20,20,30,.04);
   clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%); }
 .folder .p { width: 46%; top: 3%; transition: transform .6s var(--spring); }
 .folder .p:nth-child(2) { left: 6%; transform: rotate(-7deg); } .folder .p:nth-child(3) { left: 28%; transform: rotate(2deg) translateY(-4%); } .folder .p:nth-child(4) { left: 50%; transform: rotate(8deg) translateY(2%); }
-.folder .pocket { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; border-radius: 16px; background: rgba(255,255,255,.46); -webkit-backdrop-filter: blur(9px) saturate(150%); backdrop-filter: blur(9px) saturate(150%);
+.folder .pocket { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; border-radius: 16px; background: rgba(250,250,248,.82) center / 100% 100%;   /* frost is baked by PotoTex.frostFolder: no live backdrop blur in a scrolling list */
+ 
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), inset 0 1.5px 0 #fff, inset 0 -8px 16px -8px rgba(20,20,30,.08), 0 -1px 3px rgba(20,20,30,.06); transition: transform .6s var(--spring); transform-origin: 50% 100%; }
 .folder .pocket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 40%); }
 .folder .clip { position: absolute; right: 10%; top: 27%; width: 10%; z-index: 3; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); transition: transform .6s var(--spring); }

@@ -24,25 +24,12 @@
 
   /* ---- a film canister, all CSS: metal caps, a printed label wrapped round a cylinder (the label slides sideways to "turn" it), shading for the curve ---- */
   .can { position: relative; width: 58px; height: 92px; flex: none; }
-  .can .cyl { position: absolute; left: 0; right: 0; top: 9px; bottom: 9px; overflow: hidden; border-radius: 2px; background: #ddd; }
-  .can .lab { position: absolute; top: 0; bottom: 0; left: 0; width: 300%; display: flex; will-change: transform; transform: translateX(-33.333%); }
-  .can .lab > span { flex: 1; position: relative; overflow: hidden; }
-  .can .lab b { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); font: 600 10px/1 var(--sans); letter-spacing: .12em; white-space: nowrap; }
-  .can .lab i { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font: 500 6.5px/1 var(--mono); letter-spacing: .1em; font-style: normal; opacity: .8; }
-  .can .cyl::after { content: ""; position: absolute; inset: 0; pointer-events: none;                    /* the curve: dark at the sides, a soft highlight a third in */
-    background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.08) 16%, rgba(255,255,255,.34) 30%, rgba(255,255,255,0) 46%, rgba(0,0,0,0) 62%, rgba(0,0,0,.22) 84%, rgba(0,0,0,.5)); }
-  .can .cap { position: absolute; left: -3%; right: -3%; height: 11px; border-radius: 3px;
-    background: linear-gradient(90deg, #56565b, #9c9ca2 12%, #f2f2f4 30%, #ffffff 36%, #c4c4c9 52%, #8a8a90 78%, #4b4b50); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.25); }
-  .can .cap.t { top: 0; } .can .cap.b { bottom: 0; }
-  .can .cap.t::before { content: ""; position: absolute; left: 34%; right: 34%; top: -6px; height: 7px; border-radius: 2px 2px 0 0;   /* the spool end */
-    background: linear-gradient(90deg, #2a2a2c, #6a6a70 40%, #2a2a2c); }
-  .can .lip { position: absolute; right: -2px; top: 22%; bottom: 22%; width: 4px; border-radius: 1px; background: #121213; box-shadow: inset -1px 0 0 rgba(255,255,255,.12); }   /* the felt light-trap */
+  .can canvas { position: absolute; inset: -6px 0 0 0; width: 100%; height: calc(100% + 6px); }   /* the spool end pokes 6px above the cap */
 
   /* ---- the camera back: the roll that's in. Dark like the camera, recessed chamber, film leader to the take-up spool ---- */
   .back { position: relative; margin-top: 18px; border-radius: 24px; padding: 16px 16px 14px; background: #121213; color: var(--on-dark);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 40px -22px rgba(0,0,0,.55); overflow: hidden; }
-  .back::before { content: ""; position: absolute; inset: 0; opacity: .45; pointer-events: none; mix-blend-mode: overlay;    /* leatherette */
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .8 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .back::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--grain, none) 0 0 / 96px 96px; opacity: .55; }   /* leatherette: baked grain, no blend mode */
   .chamber { position: relative; height: 112px; border-radius: 14px; background: linear-gradient(180deg, #0a0a0b, #19191b); box-shadow: inset 0 2px 8px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.05); display: flex; align-items: center; padding: 0 14px; gap: 0; }
   .chamber .slot { position: relative; width: 92px; height: 58px; flex: none; }
   .chamber .slot .can { position: absolute; left: 17px; top: -17px; transform: rotate(90deg); }
@@ -62,8 +49,6 @@
   .meta .frames { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; } .meta .frames i { display: block; height: 100%; background: var(--on-dark); border-radius: 2px; transition: width .6s var(--ease); }
   .back .act { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; }
   .back .act:disabled { opacity: .35; cursor: default; }
-  .rewinding .can .lab { animation: rewind .28s linear infinite; }
-  @keyframes rewind { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }
 
   /* ---- the shelf: canisters stand in a row on a white ledge. Native scroll (so momentum is the phone's), snapped one canister at a time ---- */
   .shelfwrap { position: relative; margin-top: 18px; }
@@ -98,7 +83,7 @@
   .dev .head h4 { margin: 4px 0 0; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -.03em; } .dev .head p { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
   .strip { margin: auto 0; overflow-x: auto; scrollbar-width: none; padding: 0 22px 10px; }
   .strip::-webkit-scrollbar { display: none; }
-  .film { position: relative; display: flex; gap: 8px; width: max-content; padding: 34px 12px; background: #141312; border-radius: 3px; transform: translateY(40px); opacity: 0; transition: transform .9s var(--spring), opacity .4s;
+  .film { position: relative; display: flex; gap: 8px; width: max-content; padding: 34px 12px; background: var(--grain, none) 0 0 / 128px 128px, linear-gradient(180deg, #1a1816, #121110 50%, #1a1816); border-radius: 3px; transform: translateY(40px); opacity: 0; transition: transform .9s var(--spring), opacity .4s;
     box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 18px 30px -16px rgba(0,0,0,.5); }
   .dev.out .film { transform: none; opacity: 1; }
   .film::before, .film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 8px;           /* sprocket holes */
@@ -106,6 +91,7 @@
   .film::before { top: 6px; } .film::after { bottom: 6px; }
   .film .f { position: relative; width: 136px; height: 184px; flex: none; background: #2a2622; border-radius: 1px; }
   .film .f img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 1.2s ease; }
+  .film .f::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--grain, none) 0 0 / 160px 160px; opacity: .5; }   /* film grain over each frame (baked tile, no blending) */
   .film .f.dv img { opacity: 1; }
   .film .f i { position: absolute; left: 0; top: -14px; font: 500 7.5px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; font-style: normal; white-space: nowrap; }
   .film .f u { position: absolute; left: 0; bottom: -14px; font: 500 7.5px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; text-decoration: none; white-space: nowrap; }
@@ -164,7 +150,10 @@
     <button type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/></svg>Rolls</button>
   </nav>
 </main>
+<script src="lib/paper.js"></script>
+<script src="lib/texture.js"></script>
 <script>
+PotoTex.install();
 const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
@@ -179,10 +168,38 @@ const LOOKS = [
 ];
 const byId = (id) => LOOKS.find((l) => l.id === id) || LOOKS[0];
 
-function canHTML(L, n) {
-  const face = '<span style="background:' + L.bg + ';color:' + L.ink + '"><b>' + L.id.toUpperCase() + '</b></span>';
-  const stripe = '<span style="background:linear-gradient(180deg,' + L.bg + ' 0 30%,' + L.band + ' 30% 46%,' + L.bg + ' 46%);color:' + L.ink + '"><i>' + (n || 27) + ' EXP · ' + L.iso + '</i></span>';
-  return '<div class="can"><div class="cyl"><div class="lab">' + stripe + face + stripe + '</div></div><i class="cap t"></i><i class="cap b"></i><i class="lip"></i></div>';
+// ---- a canister, drawn into a canvas once per look (label paper, print, brushed caps, the curve's shading). Turning it = redrawing the label offset.
+const CW = 58, CH = 98, RES = 3;                                  // css size incl. spool end; drawn at 3x so the front one stays sharp when it grows
+const sprites = {};
+function sprite(L) {
+  if (sprites[L.id]) return sprites[L.id];
+  const W = CW * RES, H = (CH - 6 - 18) * RES, lab = document.createElement('canvas'); lab.width = W * 3; lab.height = H; const x = lab.getContext('2d');
+  // the label: three faces round the can (stripe, name, stripe), printed on paper
+  x.fillStyle = L.bg; x.fillRect(0, 0, W * 3, H);
+  for (const f of [0, 2]) { x.fillStyle = L.band; x.fillRect(W * f, H * 0.3, W, H * 0.16); x.fillStyle = L.ink; x.globalAlpha = 0.8; x.font = '500 ' + 6.5 * RES + 'px "IBM Plex Mono", monospace'; x.textAlign = 'center'; x.fillText('27 EXP · ' + L.iso, W * f + W / 2, H - 7 * RES); x.globalAlpha = 1; }
+  x.save(); x.translate(W * 1.5, H / 2); x.rotate(-Math.PI / 2); x.fillStyle = L.ink; x.font = '600 ' + 10 * RES + 'px Inter, system-ui, sans-serif'; if (x.letterSpacing !== undefined) x.letterSpacing = 1.2 * RES + 'px';
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(L.id.toUpperCase(), 0, 0); x.restore();
+  const tile = PotoTex.paper(41, [255, 255, 255], { cloud: 0.06, light: 0.4 }); x.globalCompositeOperation = 'multiply'; x.fillStyle = x.createPattern(tile, 'repeat'); x.fillRect(0, 0, W * 3, H); x.globalCompositeOperation = 'source-over';
+  x.drawImage(PotoTex.grain(0.06, L.iso), 0, 0, W * 3, H);
+  // over the label: the curve, the caps, the light trap
+  const ov = document.createElement('canvas'); ov.width = W; ov.height = CH * RES; const o = ov.getContext('2d'), top = 6 * RES, cap = 11 * RES, y0 = top + cap - 2 * RES;
+  const sh = o.createLinearGradient(0, 0, W, 0); [[0, 'rgba(0,0,0,.45)'], [0.16, 'rgba(0,0,0,.08)'], [0.3, 'rgba(255,255,255,.32)'], [0.46, 'rgba(255,255,255,0)'], [0.62, 'rgba(0,0,0,0)'], [0.84, 'rgba(0,0,0,.22)'], [1, 'rgba(0,0,0,.52)']].forEach(([p, c]) => sh.addColorStop(p, c));
+  o.fillStyle = sh; o.fillRect(0, y0, W, H);
+  const metal = o.createLinearGradient(0, 0, W, 0); [[0, '#4b4b50'], [0.12, '#9c9ca2'], [0.3, '#eeeef0'], [0.36, '#ffffff'], [0.52, '#c4c4c9'], [0.78, '#8a8a90'], [1, '#46464b']].forEach(([p, c]) => metal.addColorStop(p, c));
+  const brush = PotoTex.brushed(W, cap, L.iso);
+  for (const cy of [top, CH * RES - cap]) { o.fillStyle = metal; o.beginPath(); o.roundRect(0, cy, W, cap, 3 * RES); o.fill(); o.drawImage(brush, 0, cy); o.fillStyle = 'rgba(255,255,255,.45)'; o.fillRect(2 * RES, cy + 0.6 * RES, W - 4 * RES, 0.8 * RES); o.fillStyle = 'rgba(0,0,0,.25)'; o.fillRect(2 * RES, cy + cap - 1.2 * RES, W - 4 * RES, 1 * RES); }
+  const sp = o.createLinearGradient(W * 0.34, 0, W * 0.66, 0); sp.addColorStop(0, '#2a2a2c'); sp.addColorStop(0.4, '#6a6a70'); sp.addColorStop(1, '#2a2a2c'); o.fillStyle = sp; o.beginPath(); o.roundRect(W * 0.34, 0, W * 0.32, top + 1 * RES, [2 * RES, 2 * RES, 0, 0]); o.fill();
+  o.fillStyle = '#121213'; o.fillRect(W - 3 * RES, y0 + H * 0.2, 4 * RES, H * 0.6);
+  return (sprites[L.id] = { lab, ov, W, H, y0 });
+}
+function makeCan(L) {
+  const el = document.createElement('div'); el.className = 'can'; const cv = document.createElement('canvas'); cv.width = CW * RES; cv.height = CH * RES; el.appendChild(cv);
+  const sp = sprite(L), x = cv.getContext('2d'); let last = null;
+  el.draw = (off) => { off = Math.round(off * 200) / 200; if (off === last) return; last = off;                  // off: 0 = name facing you, ±1 = turned a face away
+    x.clearRect(0, 0, cv.width, cv.height); const sx = ((1 + off) * sp.W % (sp.W * 3) + sp.W * 3) % (sp.W * 3);
+    x.save(); x.beginPath(); x.rect(0, sp.y0, sp.W, sp.H); x.clip(); x.drawImage(sp.lab, sx, 0, sp.W, sp.H, 0, sp.y0, sp.W, sp.H); if (sx + sp.W > sp.W * 3) x.drawImage(sp.lab, 0, 0, sp.W, sp.H, sp.W * 3 - sx, sp.y0, sp.W, sp.H); x.restore();
+    x.drawImage(sp.ov, 0, 0); };
+  el.draw(0); return el;
 }
 
 // ---- state ----
@@ -195,7 +212,7 @@ const save = () => { store.set('poto.roll', roll); store.set('poto.rolls', finis
 // ---- the camera back ----
 function renderBack(click) {
   const ch = $('chamber'), L = roll.look && byId(roll.look);
-  ch.classList.toggle('empty', !L); $('slot').innerHTML = L ? canHTML(L) : '';
+  ch.classList.toggle('empty', !L); $('slot').innerHTML = ''; if (L) $('slot').appendChild(makeCan(L));
   $('inname').textContent = L ? L.id : 'No film'; $('inshots').textContent = L ? roll.shot + ' / 27' : '';
   $('bar').style.width = (L ? roll.shot / 27 * 100 : 0) + '%'; $('finish').disabled = !L;
   $('leftlabel').textContent = L ? (27 - roll.shot) + ' left' : 'Empty';
@@ -208,19 +225,21 @@ function renderBack(click) {
 const shelf = $('shelf'), its = [];
 LOOKS.forEach((L, k) => {
   const it = document.createElement('div'); it.className = 'it'; it.setAttribute('role', 'option'); it.setAttribute('aria-label', L.id + ', ' + L.desc);
-  it.innerHTML = '<i class="floor"></i>' + canHTML(L); it.onclick = () => shelf.scrollTo({ left: it.offsetLeft - (shelf.clientWidth - it.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
-  shelf.appendChild(it); its.push({ el: it, can: it.querySelector('.can'), lab: it.querySelector('.lab'), floor: it.querySelector('.floor') });
+  it.innerHTML = '<i class="floor"></i>'; it.appendChild(makeCan(L)); it.onclick = () => shelf.scrollTo({ left: it.offsetLeft - (shelf.clientWidth - it.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+  shelf.appendChild(it); its.push({ el: it, can: it.querySelector('.can'), floor: it.querySelector('.floor'), c: 0, w: 84 });
 });
 let cur = -1, sraf = 0;
+function measureShelf() { its.forEach((o) => { o.w = o.el.offsetWidth; o.c = o.el.offsetLeft + o.w / 2; }); }   // read layout once, not every frame
+addEventListener('resize', () => { measureShelf(); shelfFrame(); });
 function shelfFrame() {
   sraf = 0; const mid = shelf.scrollLeft + shelf.clientWidth / 2;
   let best = 0, bd = 1e9;
   its.forEach((o, k) => {
-    const c = o.el.offsetLeft + o.el.offsetWidth / 2, d = (c - mid) / o.el.offsetWidth, a = Math.max(0, 1 - Math.abs(d));
+    const c = o.c, d = (c - mid) / o.w, a = Math.max(0, 1 - Math.abs(d));
     if (Math.abs(d) < bd) { bd = Math.abs(d); best = k; }
     // the one in front lifts, grows and turns; its label slides round to face you. The rest stand back, turned a little away.
     o.can.style.transform = 'translateY(' + (-14 * a).toFixed(1) + 'px) scale(' + (1 + 0.32 * a).toFixed(3) + ')';
-    o.lab.style.transform = 'translateX(' + (-33.333 + Math.max(-1, Math.min(1, d)) * 14).toFixed(2) + '%)';
+    o.can.draw(Math.max(-1, Math.min(1, d)) * 0.42);
     o.floor.style.transform = 'scale(' + (1 + 0.5 * a - 0.25 * a).toFixed(3) + ')'; o.floor.style.opacity = (1 - a * 0.45).toFixed(2);
   });
   if (best !== cur) { cur = best; its.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === cur))); renderPick(); }
@@ -246,8 +265,8 @@ $('load').onclick = () => {
   if (reduced || !src.animate) return done();
   slot.innerHTML = '';                                                // the old roll comes out (its frames stay in the diary)
   setTimeout(() => {
-    const b = slot.getBoundingClientRect(), fl = document.createElement('div'); fl.className = 'flyer'; fl.innerHTML = canHTML(L);
-    fl.style.width = '58px'; fl.style.height = '92px'; document.body.appendChild(fl);
+    const b = slot.getBoundingClientRect(), fl = document.createElement('div'); fl.className = 'flyer'; fl.appendChild(makeCan(L));
+    fl.style.width = '58px'; fl.style.height = '92px'; fl.firstChild.style.width = '58px'; fl.firstChild.style.height = '92px'; document.body.appendChild(fl);
     const s0 = a.width / 58, x0 = a.left + a.width / 2 - 29, y0 = a.top + a.height / 2 - 46, x1 = b.left + 46 - 29, y1 = b.top + 29 - 46;
     fl.animate([
       { transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(' + s0 + ') rotate(0deg)' },
@@ -259,8 +278,9 @@ $('load').onclick = () => {
 // ---- finish: rewind, then the roll comes out as a contact strip ----
 $('finish').onclick = () => {
   if (!roll.look) return; const L = byId(roll.look), ch = $('chamber');
-  roll.shot = 27; renderBack(); $('back').classList.add('rewinding'); ch.classList.add('empty');           // the leader winds back into the canister
-  setTimeout(() => { $('back').classList.remove('rewinding'); openStrip(L); }, reduced ? 0 : 1100);
+  roll.shot = 27; renderBack(); ch.classList.add('empty');
+  { const can = $('slot').querySelector('.can'), t0 = performance.now(); const spin = (t) => { if (!can || t - t0 > 1050) return; can.draw(((t - t0) / 140) % 3 - 1); requestAnimationFrame(spin); }; if (!reduced) requestAnimationFrame(spin); }           // the leader winds back into the canister
+  setTimeout(() => { openStrip(L); }, reduced ? 0 : 1100);
 };
 function openStrip(L) {
   const n = roll.n, film = $('film'), dev = $('dev'), ps = [];
@@ -296,14 +316,14 @@ function renderRolls() {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'roll' + (r.fresh ? ' fresh' : ''); b.setAttribute('aria-expanded', 'false');
     b.innerHTML = '<div class="folder"><div class="board"></div>' + r.ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy" style="filter:' + L.filt + '"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + L.id.toUpperCase() + '</i></div>' + CLIP + '<span class="n">ROLL ' + String(r.n).padStart(2, '0') + '</span></div><strong>' + L.id + '</strong><em>' + r.frames + ' frames · ' + r.when + '</em>';
     b.onclick = () => { const o = !b.classList.contains('open'); R.querySelectorAll('.roll.open').forEach((x) => { x.classList.remove('open'); x.setAttribute('aria-expanded', 'false'); }); b.classList.toggle('open', o); b.setAttribute('aria-expanded', String(o)); };
-    R.appendChild(b); delete r.fresh;
+    R.appendChild(b); PotoTex.frostFolder(b); delete r.fresh;
   });
   save();
 }
 
 renderRolls(); renderBack();
 // start the shelf on the roll that's in the camera (or the first)
-requestAnimationFrame(() => { const k = Math.max(0, LOOKS.findIndex((l) => l.id === roll.look)), it = its[k].el; shelf.scrollLeft = it.offsetLeft - (shelf.clientWidth - it.offsetWidth) / 2; shelfFrame(); });
+requestAnimationFrame(() => { measureShelf(); const k = Math.max(0, LOOKS.findIndex((l) => l.id === roll.look)), it = its[k].el; shelf.scrollLeft = it.offsetLeft - (shelf.clientWidth - it.offsetWidth) / 2; shelfFrame(); });
 </script>
 </body>
 </html>
