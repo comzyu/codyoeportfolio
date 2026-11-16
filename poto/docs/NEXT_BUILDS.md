@@ -83,3 +83,13 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - stamp.html: cut a stamp from a photo. Perforated frame over the photo (move, resize), Portrait/Square/Landscape, Printed/Plain. Cut punches the holes in sequence, the stamp lifts out and its shape is left in the photo. Stamps saved in 'poto.stamps' as transparent PNGs (real perforation holes); "Put on the desk" places it.
 - Shared: lib/canister.js (looks + canister drawing), lib/stamp.js (stamp renderer), surfaces in lib/texture.js.
 - Open for Cody: desk surface choice, stamp shapes and printing, who sees the desk, friend vs own photo marking.
+
+## Cody's notes, 17 Nov (after build 4) — to do once his Claude-in-Chrome references are in
+- **Postcard loading:** faster, and with character: skeleton loaders / something that feels like it's coming to life, not a progress bar. The postcard probably lives inside the diary; the app opens on the calendar + diary (to settle in the app layout talk).
+- **Camera:** make it look like Apple's Camera app, keep the liquid glass.
+- **Rolls:** no changes for now; suggest changes after the references.
+- **Desk resize bug:** fixed 17 Nov (objects now scale as one piece).
+- **Postcards on the desk look bad:** redo, using the references. The desk is what people see on your profile: it shows your character.
+- **The whole profile page IS the desk.** No username/options block above a separate desk frame. Name, stats and buttons sit on the desk (on top of or around the objects); users arrange them however they like.
+- **Add words (text) and little knick-knacks to the desk.** Placeholders now; real models later.
+- **Next step order:** look at the references and the build plan first, then recommend what to do next (UI/layout may come before more features).
