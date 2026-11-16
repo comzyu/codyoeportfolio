@@ -23,10 +23,22 @@
   .p img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.2); }
   .p::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,0) 38%); }
 
-  /* this week: prints dropped in a loose pile. Tap or flick the top one and it goes to the bottom. */
-  .pile { position: relative; height: 330px; margin-top: 18px; touch-action: pan-y; }
-  .pile .p { width: 47%; left: 26.5%; top: 6px; transition: transform .7s var(--spring), box-shadow .3s; cursor: grab; }
-  .pile .tag { position: absolute; left: 0; right: 0; bottom: -4px; text-align: center; color: var(--ink-3); }
+  /* this week: a catalogue you scroll sideways. The middle print faces you; the rest turn away like pages, and flutter when you scroll fast.
+     Underneath, a film strip shows every print at once. */
+  .cat { display: flex; overflow-x: auto; overflow-y: visible; scroll-snap-type: x mandatory; padding: 22px 24% 30px; margin-top: 4px; perspective: 1000px; perspective-origin: 50% 40%;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+  .cat::-webkit-scrollbar { display: none; }
+  .cat .c { flex: 0 0 52%; margin: 0 -7%; scroll-snap-align: center; position: relative; transform-style: preserve-3d; will-change: transform; cursor: pointer; }
+  .cat .c .p { position: relative; width: 100%; transition: box-shadow .3s; }
+  .cat .c .date { display: block; text-align: center; margin-top: 12px; color: var(--ink-3); opacity: 0; transition: opacity .25s; }
+  .cat .c.mid .date { opacity: 1; }
+  .film { position: relative; display: flex; gap: 3px; padding: 9px 8px; margin-top: 2px; border-radius: 6px; background: #1b1a19;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px -8px rgba(0,0,0,.5); }
+  .film::before, .film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 4px; background: repeating-linear-gradient(90deg, #f3f1ec 0 4px, transparent 4px 9px); opacity: .55; border-radius: 1px; }
+  .film::before { top: 2.5px; } .film::after { bottom: 2.5px; }
+  .film button { flex: 1; min-width: 0; padding: 0; aspect-ratio: 3 / 4; border-radius: 1px; overflow: hidden; opacity: .55; transition: opacity .2s, transform .3s var(--spring); }
+  .film button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .film button.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 1.5px #f3f1ec; }
 
   /* the month: mostly white. Days are tiny loose prints under small numerals. */
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 14px; margin-top: 18px; }
@@ -72,9 +84,10 @@
     <div class="pad">
       <div class="month"><h2>November</h2><span>2026</span></div>
       <p class="sub">31 kept. 13 left on Sunday.</p>
-      <h3>This week <small>Newest on top</small></h3>
+      <h3>This week <small id="count">Scroll · tap to open</small></h3>
     </div>
-    <div class="pile" id="pile"></div>
+    <div class="cat" id="cat" aria-label="This week's prints"></div>
+    <div class="pad"><div class="film" id="film" role="group" aria-label="All prints"></div></div>
     <div class="pad">
       <div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
       <div class="cal" id="cal"></div>
@@ -93,43 +106,46 @@ const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-re
 const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
 let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
-// ---- the pile ----
-let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]').slice(0, 4); } catch (e) {}
-const pile = $('pile'), order = [4, 9, 1, 6, 12, 3].slice(0, 6 - kept.length).map((n) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0 }))
-  .concat(kept.reverse()).map((o) => Object.assign(o, { r: (rnd() - 0.5) * 22, x: (rnd() - 0.5) * 34, y: (rnd() - 0.5) * 16 }));     // newest kept print ends up on top
-function layPile(drop) {
-  order.forEach((o, i) => { const depth = order.length - 1 - i;              // last in the list is on top
-    o.el.style.zIndex = i + 1; o.el.style.transform = 'translate(' + o.x + '%,' + (o.y + depth * -1.2) + '%) rotate(' + o.r + 'deg)'; });
-}
-order.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'p'; b.setAttribute('aria-label', 'Open as a postcard');
-  const sm = o.src.replace('.jpg', '-s.jpg'); b.innerHTML = '<span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')"></span>';
-  o.el = b; pile.appendChild(b);
-  // tap the top print: it lifts toward you and opens as a postcard. Swipe it sideways: it goes to the bottom of the pile.
-  let sx = null;
-  b.addEventListener('pointerdown', (e) => { sx = e.clientX; });
-  b.addEventListener('pointerup', (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (order[order.length - 1] !== o) return; if (Math.abs(dx) > 24) shuffle(); else open(o); });
-  if (kept.includes(o) && o === order[order.length - 1] && !reduced) b.animate([{ transform: 'translate(0,-140%) rotate(-14deg)', opacity: 0 }, { opacity: 1, offset: 0.4 }, { transform: 'translate(' + o.x + '%,' + o.y + '%) rotate(' + o.r + 'deg)', opacity: 1 }], { duration: 650, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+// ---- this week: the catalogue ----
+let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const items = kept.slice(0, 12).concat([4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10].map((n, k) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, 12);
+const cat = $('cat'), film = $('film'), look = (o) => 'transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')';
+let mid = 0, v = 0, lastX = 0, raf = 0;
+items.forEach((o, k) => {
+  const sm = o.src.replace('.jpg', '-s.jpg'), d = new Date(o.t || Date.now());
+  const c = document.createElement('div'); c.className = 'c'; c.setAttribute('role', 'button'); c.tabIndex = 0; c.setAttribute('aria-label', 'Print ' + (k + 1) + ' of ' + items.length);
+  c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="' + look(o) + '"></span></span><span class="date mono">' + DAYS[d.getDay()] + ' ' + d.getDate() + ' Nov</span>';
+  c.onclick = () => (k === mid ? open(o, c) : go(k)); c.onkeydown = (e) => { if (e.key === 'Enter') c.onclick(); };
+  o.el = c; cat.appendChild(c);
+  const f = document.createElement('button'); f.type = 'button'; f.setAttribute('aria-label', 'Go to print ' + (k + 1)); f.innerHTML = '<img src="' + sm + '" alt="" style="' + look(o) + '">'; f.onclick = () => go(k); film.appendChild(f);
 });
-function open(o) {
-  const b = o.el, q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
+$('count').textContent = items.length + ' prints · scroll';
+const go = (k) => { const c = items[k].el; cat.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - cat.clientWidth / 2, behavior: reduced ? 'auto' : 'smooth' }); };
+function frame() {
+  const x = cat.scrollLeft, w = items[0].el.offsetWidth || 1, cx = x + cat.clientWidth / 2;
+  v = v * 0.86 + (x - lastX) * 0.14; lastX = x;                                       // scroll speed, smoothed
+  let best = 0, bd = 1e9;
+  items.forEach((o, k) => {
+    const c = o.el, d = (c.offsetLeft + c.offsetWidth / 2 - cx) / w, a = Math.abs(d);
+    if (a < bd) { bd = a; best = k; }
+    if (reduced) { c.style.transform = 'scale(' + (1 - Math.min(a, 1) * 0.12) + ')'; return; }
+    const turn = Math.max(-64, Math.min(64, -d * 42 - v * 0.35));                    // pages turn away from the middle, and lean into a fast scroll
+    const flutter = Math.sin(performance.now() / 120 + k * 1.7) * Math.min(4, Math.abs(v) * 0.12);
+    c.style.transform = 'translateX(' + (-d * 6) + '%) rotateY(' + turn.toFixed(2) + 'deg) translateZ(' + (-a * 70).toFixed(1) + 'px) rotateZ(' + (d * 1.6 + flutter).toFixed(2) + 'deg)';
+    c.style.zIndex = 100 - Math.round(a * 10);
+  });
+  if (best !== mid) { mid = best; items.forEach((o, k) => { o.el.classList.toggle('mid', k === mid); film.children[k].classList.toggle('on', k === mid); }); }
+  raf = requestAnimationFrame(frame);
+}
+items[0].el.classList.add('mid'); film.children[0].classList.add('on'); frame();
+// tap the middle print: it comes toward you and opens as a postcard
+function open(o, b) {
+  const q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
   if (reduced) { location.href = 'postcard.html?' + q; return; }
-  b.style.transition = 'transform .38s cubic-bezier(.5,0,.2,1), box-shadow .38s'; b.style.zIndex = 60; b.style.transform = 'translate(0,-6%) scale(1.5) rotate(0deg)';
+  cancelAnimationFrame(raf); b.style.transition = 'transform .38s cubic-bezier(.5,0,.2,1)'; b.style.zIndex = 200; b.style.transform = 'translateY(-4%) scale(1.35)';
   document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => (location.href = 'postcard.html?' + q);
 }
-// one card moves at a time. Taps while a card is moving are counted and played after it, so fast tapping never tangles the pile.
-let moving = false, queued = 0;
-function shuffle() {
-  if (moving) { queued = Math.min(queued + 1, 2); return; }
-  moving = true; const o = order[order.length - 1], b = o.el, dir = rnd() > 0.5 ? 1 : -1;
-  // lift it off the top (above everything), swing it out, then tuck it under the rest
-  b.style.zIndex = 50; b.style.transition = reduced ? 'none' : 'transform .26s cubic-bezier(.4,0,.7,.2)'; b.style.transform = 'translate(' + dir * 112 + '%, -6%) rotate(' + dir * 22 + 'deg)';
-  setTimeout(() => {
-    order.pop(); order.unshift(o); o.r = (rnd() - 0.5) * 22; o.x = (rnd() - 0.5) * 34; o.y = (rnd() - 0.5) * 16;
-    b.style.transition = reduced ? 'none' : 'transform .5s cubic-bezier(.3,1.25,.5,1)'; layPile();                 // it slides back in underneath
-    setTimeout(() => { moving = false; if (queued) { queued--; shuffle(); } }, reduced ? 0 : 170);
-  }, reduced ? 0 : 250);
-}
-pile.insertAdjacentHTML('beforeend', '<p class="tag mono">Tap to open · swipe to shuffle</p>'); layPile();
 
 // ---- the month ----
 const PLAN = { 1: 1, 2: 1, 4: 2, 5: 1, 7: 2, 8: 1, 9: 1, 11: 2, 12: 1, 13: 1, 14: 2, 15: 1 }, cal = $('cal');

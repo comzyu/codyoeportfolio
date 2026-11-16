@@ -106,10 +106,12 @@
       t.h.fillStyle = 'rgb(120,120,120)'; t.h.fillRect(m, py, pw, ph);                                  // dead flat, a hair below the border
       const g = mk(TW, TH), gc = g.getContext('2d'); gc.fillStyle = '#000'; gc.fillRect(0, 0, TW, TH); gc.fillStyle = '#fff'; gc.fillRect(m, py, pw, ph); t.gloss = g;
     } else {
-      p.save(); p.globalCompositeOperation = 'soft-light'; p.globalAlpha = 0.55; p.fillStyle = p.createPattern(stock.height, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
-      p.save(); p.globalCompositeOperation = 'destination-out'; p.globalAlpha = 0.18; p.fillStyle = p.createPattern(stock.valleys, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
-      t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(pl, 0, 0); t.c.restore();
-      t.r.fillStyle = 'rgb(168,168,168)'; t.r.fillRect(m, py, pw, ph);                                 // satin over the image, still not glossy
+      // Cody, 16 Nov: the photo must stay clean. It's a photo app; texture or greying on the picture defeats the point.
+      // So the picture is printed flat and true: no paper tooth, no dents, no sheen. The paper texture lives in the white border only.
+      t.c.drawImage(pl, 0, 0);
+      t.r.fillStyle = 'rgb(248,248,248)'; t.r.fillRect(m, py, pw, ph);                                 // fully matte: no reflections on the picture
+      t.h.fillStyle = 'rgb(128,128,128)'; t.h.fillRect(m, py, pw, ph);                                 // dead flat: no paper bumps through the picture
+      const lit = mk(TW, TH), lc = lit.getContext('2d'); lc.fillStyle = '#000'; lc.fillRect(0, 0, TW, TH); lc.drawImage(pl, 0, 0); t.lit = lit;   // the picture glows a touch so light never greys it
     }
     t.c.fillStyle = 'rgba(80,77,72,.62)'; font(t.c, '500 19px "IBM Plex Mono", ui-monospace, monospace'); t.c.textBaseline = 'middle';
     const cy = py + ph + (TH - py - ph) / 2;
@@ -328,6 +330,7 @@
       const D = mk(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.direction = L.direction; D.textAlign = 'left'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.txt, 0, 0);
       t.h.save(); t.h.globalAlpha = 0.5 * press; t.h.drawImage(D.canvas, bx, by); t.h.restore();                // the dent, blurred on a small canvas (blurring the big one is slow)
       if (!batch) P.normalRegion(t.hgt, t.nrm, bx, by, bw, bh, NS);
+      return { x: bx, y: by, w: bw, h: bh };
     }
 
     /* set the whole message; returns { ok, newline, caret:{x,y,col,line} } */
@@ -335,11 +338,30 @@
       const lay = W.layout(text); if (lay.caret.line >= W.lines || lay.glyphs.some((g) => g.line >= W.lines)) return { ok: false };
       const nl = W.caret ? lay.caret.line > W.caret.line : false, prev = W.laid;
       const forward = prev.length <= lay.glyphs.length && prev.every((g, k) => { const n = lay.glyphs[k]; return n.i === g.i && n.txt === g.txt && n.line === g.line && Math.abs(n.x - g.x) < 0.01; });
-      if (forward && prev.length) for (const g of lay.glyphs.slice(prev.length)) strike(g);
-      else redraw(lay.glyphs);                                    // deleted, re-wrapped or first draw: start from clean paper
+      let dirty = null; const grow = (r) => { if (!r) return; if (!dirty) { dirty = Object.assign({}, r); return; } const x1 = Math.max(dirty.x + dirty.w, r.x + r.w), y1 = Math.max(dirty.y + dirty.h, r.y + r.h); dirty.x = Math.min(dirty.x, r.x); dirty.y = Math.min(dirty.y, r.y); dirty.w = x1 - dirty.x; dirty.h = y1 - dirty.y; };
+      if (forward && prev.length) for (const g of lay.glyphs.slice(prev.length)) grow(strike(g));
+      else { redraw(lay.glyphs); dirty = Object.assign({}, R); }                                    // deleted, re-wrapped or first draw: start from clean paper
       W.laid = lay.glyphs; W.caret = { line: lay.caret.line, rtl: lay.caret.rtl, x: x0 + lay.caret.x - (lay.caret.rtl ? adv : 0), y: y0 + lay.caret.line * lead };
       const used = lay.caret.rtl ? LW - lay.caret.x : lay.caret.x;
-      return { ok: true, dirty: true, newline: nl, caret: W.caret, nearEnd: used > LW - 5 * adv };
+      return { ok: true, dirty, newline: nl, caret: W.caret, nearEnd: used > LW - 5 * adv };
+    };
+    /* which part of the text is at a point on the card: { i: index into the text, on: true if right on a letter } */
+    W.indexAt = function (px, py) {
+      if (!W.laid.length) return { i: 0, on: false };
+      const maxLine = W.laid[W.laid.length - 1].line, line = Math.max(0, Math.min(maxLine, Math.floor((py - (y0 - size - 10)) / lead))), row = W.laid.filter((g) => g.line === line);
+      if (!row.length) { const after = W.laid.find((g) => g.line > line); return { i: after ? after.i : W.laid[W.laid.length - 1].i + W.laid[W.laid.length - 1].len, on: false }; }
+      const x = px - x0;
+      for (const g of row) if (x >= g.x - 2 && x <= g.x + g.w + 2) return { i: g.i, on: true, rtl: g.rtl };
+      const first = row.reduce((a, b) => (a.x < b.x ? a : b)), last = row.reduce((a, b) => (a.x > b.x ? a : b)), rtl = row[0].rtl;
+      const beforeStart = rtl ? x > last.x + last.w : x < first.x;
+      const startG = row[0], endG = row[row.length - 1];
+      return { i: beforeStart ? startG.i : endG.i + endG.len, on: false };
+    };
+    /* where the cursor sits for a given index (start of the letter at that index, or the end of the text) */
+    W.caretAt = function (index) {
+      const g = W.laid.find((q) => q.i >= index);
+      if (!g) return W.caret;
+      return { x: x0 + g.x + (g.rtl ? g.w - adv : 0), y: y0 + g.line * lead, line: g.line };
     };
     /* screen-space boxes for a selected range of the text (for the highlight): one box per line, in card pixels */
     W.boxes = function (s0, s1) {

@@ -143,8 +143,22 @@
     const mats = { front: new T.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.3, clearcoat: 0, clearcoatRoughness: 0.07 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
     const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); body.castShadow = true; body.receiveShadow = true; card.add(body);
     this.setFaces = function (front, back) {
-      if (front) { const m = mats.front; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
+      if (front) { const m = mats.front; m.emissive = new T.Color(0xffffff); m.emissiveMap = front.lit ? tex(front.lit, true) : null; m.emissiveIntensity = front.lit ? 0.3 : 0; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
       for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { if (!t) continue; m.map = tex(t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
+    };
+    // typing changes a small rectangle: send just that rectangle to the GPU instead of the whole 1024x1448 texture (twice) per key
+    this.updateBackRegion = function (r) {
+      const gl = renderer.getContext();
+      for (const tx of [mats.back.map, mats.back.normalMap]) {
+        const prop = renderer.properties.get(tx), c = tx.image;
+        if (!prop.__webglTexture || !r) { tx.needsUpdate = true; continue; }
+        const x = Math.max(0, Math.floor(r.x)), y = Math.max(0, Math.floor(r.y)), w = Math.min(c.width - x, Math.ceil(r.w)), h = Math.min(c.height - y, Math.ceil(r.h)); if (w <= 0 || h <= 0) continue;
+        const data = new Uint8Array(c.getContext('2d').getImageData(x, y, w, h).data.buffer);
+        renderer.state.bindTexture(gl.TEXTURE_2D, prop.__webglTexture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, tx.flipY); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, x, tx.flipY ? c.height - y - h : y, w, h, gl.RGBA, gl.UNSIGNED_BYTE, data);
+        if (tx.generateMipmaps) gl.generateMipmap(gl.TEXTURE_2D);
+      }
     };
     this.refreshBack = function () { mats.back.map.needsUpdate = true; mats.back.normalMap.needsUpdate = true;
     };
@@ -174,7 +188,7 @@
     function place(s, x, y, rot, lift) {
       // sticker-local -> card coordinates (the holder is turned to face out of the back), for the edge wrap
       const c = Math.cos(rot), sn = Math.sin(rot); s.u.uToCard.value.set(-c, sn, x, sn, c, y, 0, 0, 1); s.u.uFromCard.value.copy(s.u.uToCard.value).invert();
-      s.u.uBend.value = (CT + (s.layer || 0) * LAYER) / 2 + 0.0004; s.u.uWrap.value = s.state === 'stuck' || (s.state === 'placing' && lift < 0.004) ? 1 : 0;
+      s.u.uBend.value = (CT + (s.layer || 0) * LAYER + Math.max(0, lift)) / 2 + 0.0004; s.u.uWrap.value = s.state === 'stuck' || (s.state === 'placing' && lift < 0.004) ? 1 : 0;
       s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift - s.layer * LAYER); s.mesh.renderOrder = s.shadow.renderOrder = s.layer * 2 + (s.state === 'held' || s.state === 'placing' ? 1000 : 0); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
     this.addSticker = addSticker; this.stickers = stickers;
 
@@ -182,13 +196,13 @@
     const REST_YAW = 0.12, REST_PITCH = -0.06, ROLL = -0.012, MAX_PITCH = 0.3;
     // writing: the card turns to its back, lies square to you and comes closer, like pulling it into the typewriter
     let writing = false, wk = 0, camZ = 4.4;
-    this.writing = (on) => { writing = on; if (on && faceOf(yawT) !== 1) self.flip(1); };
+    this.writing = (on) => { writing = on; if (on && sel) select(null); if (on && faceOf(yawT) !== 1) self.flip(1); };
     this.nudge = (kind) => { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; if (kind === 'key') pv -= 0.32; else if (kind === 'return') yv += 0.9; else if (kind === 'bell') pv += 0.18; };
     let yaw = 0, pitch = REST_PITCH, yawT = 0, yv = 0, pv = 0, dragging = false, flipping = false, lastFace = 0;
     const faceOf = (y) => (((Math.round(y / Math.PI) % 2) + 2) % 2);
     this.face = () => faceOf(yawT);
     function setTarget(t) { yawT = t; const f = faceOf(t); if (f !== lastFace) { lastFace = f; flipping = true; if (self.onFlip) self.onFlip(f); } }
-    this.flip = function (to) { if (busySticker()) return; const n = Math.round(yawT / Math.PI); if (to === undefined || faceOf(yawT) !== to) setTarget((n + 1) * Math.PI); };
+    this.flip = function (to) { if (busySticker()) return; if (typeof select === 'function') select(null); const n = Math.round(yawT / Math.PI); if (to === undefined || faceOf(yawT) !== to) setTarget((n + 1) * Math.PI); };
     const busySticker = () => stickers.some((s) => s.state === 'held' || s.state === 'peeling' || s.state === 'placing');
 
     const ray = new T.Raycaster(), ndc = new V2();
@@ -210,18 +224,33 @@
     }
     function stickerLocal(s, e) { const p = onCardPlane(e, BZ); if (!p) return null; const l = s.holder.worldToLocal(card.localToWorld(p.clone())); return new V2(l.x, l.y); }
 
-    let ptr = null;
+    let ptr = null, sel = null;
     const dom = renderer.domElement; dom.style.touchAction = 'none';
+    /* sticker mode (Cody, 16 Nov): tap a sticker to select it. While one is selected the card stops turning, so any drag on the
+       card peels that sticker; nothing fights the flip. Tap empty card (or Done) to leave sticker mode. */
+    function select(s) { if (sel === s) return; sel = s; if (self.onSelect) self.onSelect(s); }
+    this.select = select; this.selected = () => sel;
+    const heldLoose = () => stickers.find((s) => s.state === 'held');
     dom.addEventListener('pointerdown', (e) => {
-      if (ptr) return; dom.setPointerCapture(e.pointerId); const hs = hitSticker(e);
-      ptr = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), lt: performance.now(), moved: false, st: hs };
-      dragging = !hs && !busySticker() && !writing; if (dragging) yv = 0; if (hs && self.onGrab) self.onGrab();
+      if (ptr) return; dom.setPointerCapture(e.pointerId);
+      const base = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), lt: performance.now(), moved: false };
+      if (writing) { ptr = Object.assign(base, { write: true }); dragging = false; if (self.onWritePointer) self.onWritePointer('down', e, false); return; }
+      let hs = null; const held = heldLoose();
+      if (held) hs = { s: held };                                                        // a sticker you lifted with "Peel off" goes where you touch next
+      else {
+        hs = hitSticker(e);
+        if (!hs && sel && sel.state === 'stuck') { const c = stickerLocal(sel, e); if (c) { c.clampScalar(-SS * 0.3, SS * 0.3); hs = { s: sel, p: c, viaSel: true }; } }
+      }
+      ptr = Object.assign(base, { st: hs });
+      if (hs && hs.s.state === 'held') dragSticker(hs, e);
+      dragging = !hs && !busySticker() && !sel; if (dragging) yv = 0; if (hs && self.onGrab) self.onGrab();
     });
     dom.addEventListener('pointermove', (e) => {
       if (!ptr || e.pointerId !== ptr.id) return;
       const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y, now = performance.now(), dt = Math.max(1, now - ptr.lt) / 1000; ptr.x = e.clientX; ptr.y = e.clientY; ptr.lt = now;
       if (Math.hypot(e.clientX - ptr.sx, e.clientY - ptr.sy) > 6) ptr.moved = true;
-      if (ptr.st) return dragSticker(ptr.st, e);
+      if (ptr.write) { if (self.onWritePointer) self.onWritePointer('move', e, ptr.moved); return; }
+      if (ptr.st) { if (!ptr.moved && ptr.st.s.state === 'stuck') return; return dragSticker(ptr.st, e); }
       if (!dragging) return;
       const k = 3.4 / Math.max(260, dom.clientWidth);                                  // a full-width drag turns it about 200 degrees
       yaw += dx * k; yv = lerp(yv, (dx * k) / dt, 0.5);
@@ -229,12 +258,29 @@
     });
     const up = (e) => {
       if (!ptr || e.pointerId !== ptr.id) return; const p = ptr; ptr = null;
-      if (p.st) return releaseSticker(p.st, e);
+      if (p.write) { if (self.onWritePointer) self.onWritePointer('up', e, p.moved); return; }
+      if (p.st) {
+        if (!p.moved && p.st.s.state === 'stuck') { select(p.st.viaSel || p.st.s === sel ? null : p.st.s); return; }   // a tap selects (or lets go)
+        return releaseSticker(p.st, e);
+      }
+      if (sel && !p.moved) { select(null); return; }
       if (!dragging) return; dragging = false;
-      if (!p.moved && performance.now() - p.t < 350) return writing ? (self.onTapWhileWriting && self.onTapWhileWriting()) : self.flip();
+      if (!p.moved && performance.now() - p.t < 350) return self.flip();
       const n = Math.round((yaw + clamp(yv, -14, 14) * 0.14) / Math.PI);                // a flick carries over to the other side; a slow drag settles back
       setTarget(n * Math.PI);
     };
+    // "Peel off": the sticker peels itself up and waits in the air; tap where it should go. "Remove": it peels off and drops away.
+    function autoPeel(then) {
+      const s = sel; if (!s || s.state !== 'stuck') return;
+      const D = new V2(0.92, 0.38).normalize(); s.state = 'peeling'; s.u.uPeel.value = 1; s.u.uFoldD.value.copy(D); s.u.uFoldR.value = 0.03; s.peeled = 0;
+      if (self.onPeelStart) self.onPeelStart();
+      anims.push({ s, k: 'autopeel', t: 0, d: 0.42, D, then });
+    }
+    this.peelSelected = () => autoPeel('hold');
+    this.removeSelected = () => autoPeel('remove');
+    this.stickerScreen = (s) => { card.updateMatrixWorld(); const r = dom.getBoundingClientRect(), c = s.holder.localToWorld(new V3()).project(camera), e = s.holder.localToWorld(new V3(SS * 0.5, 0, 0)).project(camera);
+      const px = (v) => ({ x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }), a = px(c), b = px(e); return { x: a.x, y: a.y, r: Math.hypot(b.x - a.x, b.y - a.y) }; };
+    this.screenToBack = (e) => { toNdc(e); const h = ray.intersectObject(body, false)[0]; if (!h || !h.face || h.face.materialIndex !== 2 || !h.uv) return null; return { x: h.uv.x * 1024, y: (1 - h.uv.y) * 1448 }; };
     dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', up);
 
     /* ---------- peel / lift / place ---------- */
@@ -273,6 +319,11 @@
       for (let i = anims.length - 1; i >= 0; i--) {
         const a = anims[i], s = a.s; a.t += dt; const t = clamp(a.t / a.d, 0, 1), e = 1 - Math.pow(1 - t, 3);
         if (a.k === 'relay') { s.u.uFoldP.value.copy(a.p0).addScaledVector(a.D, e * SS * 1.1); if (t >= 1) { s.u.uPeel.value = 0; s.state = 'stuck'; } }
+        else if (a.k === 'autopeel') {
+          s.u.uFoldP.value.copy(a.D).multiplyScalar(lerp(SS * 0.62, -SS * 0.66, e)); s.peeled = e; if (self.onPeel) self.onPeel(e);
+          if (t >= 1) { if (a.then === 'remove') { s.state = 'gone'; select(null); anims.push({ s, k: 'drop', t: 0, d: 0.22 }); if (self.onRemove) self.onRemove(s); }
+            else { s.state = 'held'; s.layer = ++layers; s.tx = s.x; s.ty = s.y; anims.push({ s, k: 'unfurl', t: 0, d: 0.22 }); if (self.onLift) self.onLift(); } }
+        }
         else if (a.k === 'unfurl') { s.u.uFoldR.value = lerp(0.05, 0.4, e); s.u.uFoldP.value.addScaledVector(s.u.uFoldD.value, dt * 2.2); s.lift = lerp(0.006, LIFT, e); if (t >= 1) s.u.uPeel.value = 0; }
         else if (a.k === 'place') {                               // comes straight down where it was hovering, then a little press
           s.lift = lerp(a.l0, 0, t * t); s.tilt.multiplyScalar(1 - t);
@@ -287,6 +338,7 @@
           const vx = s.tx - s.x, vy = s.ty - s.y, f = Math.min(1, dt * 18);
           s.x += vx * f; s.y += vy * f; s.tilt.set(clamp(-vy * 3, -0.35, 0.35), clamp(-vx * 3, -0.35, 0.35));
         }
+        if (s.state === 'stuck') { const want = s === sel ? 0.007 : 0; s.lift += (want - s.lift) * Math.min(1, dt * 14); if (Math.abs(s.lift - want) < 1e-5) s.lift = want; }
         if (s.state !== 'gone') place(s, s.x, s.y, s.rot, s.lift);
         const target = s.state === 'held' ? 0 : s.state === 'placing' ? 0.32 * (1 - s.lift / LIFT) : 0.32;
         const sm = s.shadow.material.uniforms.uOp; sm.value = lerp(sm.value, clamp(target, 0, 0.32), Math.min(1, dt * 14));
@@ -294,7 +346,7 @@
     }
 
     /* ---------- frame loop ---------- */
-    let last = performance.now(), raf = 0, visible = true, slow = 0;
+    let last = performance.now(), raf = 0, visible = true, slow = 0, shadowTick = 0;
     function frame(now) {
       raf = requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000), gap = now - last; last = now; if (!visible) return;
       if (!opts.lite && slow >= 0) { slow = gap > 45 ? slow + 1 : Math.max(0, slow - 1); if (slow > 40) { slow = -1; renderer.setPixelRatio(1); key.shadow.blurSamples = 8; key.shadow.radius = 10; resize(); } }
@@ -304,6 +356,7 @@
         if (flipping && Math.abs(yaw - yawT) < 0.004 && Math.abs(yv) < 0.05) { flipping = false; if (self.onLand) self.onLand(); }
       }
       wk += ((writing ? 1 : 0) - wk) * Math.min(1, dt * 6);
+      shadowTick = (shadowTick + 1) % 5; renderer.shadowMap.autoUpdate = !(writing && wk > 0.98); if (!renderer.shadowMap.autoUpdate && shadowTick === 0) renderer.shadowMap.needsUpdate = true;   // card is nearly still while writing: refresh shadows less often
       card.rotation.set(pitch, yaw + REST_YAW * (1 - wk), ROLL * (1 - wk), 'YXZ');
       camera.position.set(-0.11 * wk, -0.06 * wk, camZ * (1 - 0.2 * wk));
       stepAnims(dt); renderer.render(scene, camera);
