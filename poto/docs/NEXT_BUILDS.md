@@ -10,6 +10,8 @@ Written 16 Nov 2026 at the end of round two. Agreed so far: gallery white, dark 
 - **Platen: Paper & Ink** (App Store id6809529696), typewriter reference: no machine on screen; paper, ink and sound carry the feeling. Ink styles Fresh / Seasoned / Worn / Clean, embossed letter mark, corrections crossed out or erased, haptics Soft/Medium/Strong, bell Soft/Normal. Free with limits, one-time "Studio" unlock + small themed packs, no subscription. Use for build 1.
 - **Photo finish: matte** (Cody, 16 Nov). The picture itself is always clean and true-colour: no paper texture, greying or reflection on the photo. Texture lives in the border.
 - **Diary**: the pile is replaced by a sideways catalogue + film strip. The month view is for a later pass.
+- **Share formats**: Story 9:16 (1080x1920, card kept out of the top 250 px and bottom 340 px) and Post 4:5 (1080x1350); front, back or both; description + watermark always visible. Watermark text is a placeholder ("shot on poto · poto.app").
+- Cody's reference board: see docs/REFERENCES.md.
 - Prototypes live in `prototypes-v2/`. Round one (`prototypes/`, `docs/motion-spec.md` visuals) is superseded.
 
 ## Build order (each one is one session)

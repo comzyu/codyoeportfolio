@@ -191,6 +191,9 @@
       s.u.uBend.value = (CT + (s.layer || 0) * LAYER + Math.max(0, lift)) / 2 + 0.0004; s.u.uWrap.value = s.state === 'stuck' || (s.state === 'placing' && lift < 0.004) ? 1 : 0;
       s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift - s.layer * LAYER); s.mesh.renderOrder = s.shadow.renderOrder = s.layer * 2 + (s.state === 'held' || s.state === 'placing' ? 1000 : 0); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
     this.addSticker = addSticker; this.stickers = stickers;
+    // stickers as flat pieces on the back texture (for share images). The back's x is mirrored, so is the turn.
+    this.stickersFlat = () => stickers.filter((s) => s.state === 'stuck').sort((a, b) => a.layer - b.layer).map((s) => ({ img: s.mesh.material.map.image, foil: s.u.uFoilMap.value.image, finish: s.finish,
+      px: (0.5 - s.x / CW) * 1024, py: (0.5 - s.y / CH) * 1448, rot: s.rot, size: SS / CW * 1024 }));
 
     /* ---------- turning: yaw only (that's the flip), a little tilt that springs back, never upside down ---------- */
     const REST_YAW = 0.12, REST_PITCH = -0.06, ROLL = -0.012, MAX_PITCH = 0.3;
