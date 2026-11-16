@@ -263,7 +263,7 @@
         if (!p.moved && p.st.s.state === 'stuck') { select(p.st.viaSel || p.st.s === sel ? null : p.st.s); return; }   // a tap selects (or lets go)
         return releaseSticker(p.st, e);
       }
-      if (sel && !p.moved) { select(null); return; }
+      if (sel && !p.moved) { if (!busySticker()) select(null); return; }          // a tap on empty card lets go of the sticker (not while it's moving)
       if (!dragging) return; dragging = false;
       if (!p.moved && performance.now() - p.t < 350) return self.flip();
       const n = Math.round((yaw + clamp(yv, -14, 14) * 0.14) / Math.PI);                // a flick carries over to the other side; a slow drag settles back
@@ -277,7 +277,7 @@
       anims.push({ s, k: 'autopeel', t: 0, d: 0.42, D, then });
     }
     this.peelSelected = () => autoPeel('hold');
-    this.removeSelected = () => autoPeel('remove');
+    this.removeSelected = () => { const s = sel; if (s && s.state === 'held') { s.state = 'gone'; select(null); anims.push({ s, k: 'drop', t: 0, d: 0.22 }); if (self.onRemove) self.onRemove(s); } else autoPeel('remove'); };
     this.stickerScreen = (s) => { card.updateMatrixWorld(); const r = dom.getBoundingClientRect(), c = s.holder.localToWorld(new V3()).project(camera), e = s.holder.localToWorld(new V3(SS * 0.5, 0, 0)).project(camera);
       const px = (v) => ({ x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }), a = px(c), b = px(e); return { x: a.x, y: a.y, r: Math.hypot(b.x - a.x, b.y - a.y) }; };
     this.screenToBack = (e) => { toNdc(e); const h = ray.intersectObject(body, false)[0]; if (!h || !h.face || h.face.materialIndex !== 2 || !h.uv) return null; return { x: h.uv.x * 1024, y: (1 - h.uv.y) * 1448 }; };
