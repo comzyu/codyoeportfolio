@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>References</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* A reference board: a grid to browse and a spreadsheet to select from. Picks are saved to the artifact's database so Claude can read them. */
+  :root { --room: #FAFAF8; --ink: #141416; --ink-2: #6E6E73; --ink-3: #A9A9AE; --hair: rgba(20,20,22,.08); --card: #fff; --spring: cubic-bezier(.3,1.45,.45,1);
+    --sans: Inter, -apple-system, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --room: #111112; --ink: #F2F2F0; --ink-2: #A1A1A6; --ink-3: #6E6E73; --hair: rgba(255,255,255,.1); --card: #1B1B1D; color-scheme: dark; } }
+  :root[data-theme="dark"] { --room: #111112; --ink: #F2F2F0; --ink-2: #A1A1A6; --ink-3: #6E6E73; --hair: rgba(255,255,255,.1); --card: #1B1B1D; color-scheme: dark; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--room); color: var(--ink); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .mono { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+  main { max-width: 1240px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 140px max(16px, env(safe-area-inset-left, 0px)); }
+  .back { color: var(--ink-2); text-decoration: none; font-size: 13px; }
+  h1 { margin: 12px 0 6px; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -.035em; } h1 span { font-weight: 300; color: var(--ink-3); }
+  .lede { margin: 0; max-width: 64ch; color: var(--ink-2); }
+  .bar1 { display: flex; gap: 8px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1px var(--hair); }
+  .seg button { height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--room); }
+  select { height: 36px; border-radius: 999px; border: 0; padding: 0 12px; background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair); font: 500 12.5px var(--sans); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; margin: 12px -16px 0; padding: 4px 16px 10px; scrollbar-width: none; position: sticky; top: 0; z-index: 3; background: linear-gradient(var(--room) 80%, transparent); }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: none; height: 32px; padding: 0 13px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2); background: var(--card); box-shadow: inset 0 0 0 1px var(--hair); white-space: nowrap; }
+  .chips button[aria-pressed="true"] { background: var(--ink); color: var(--room); box-shadow: none; }
+  .chips button i { font-style: normal; opacity: .55; margin-left: 5px; font-size: 11px; }
+  /* grid */
+  .grid { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; } .grid .col { flex: 1; min-width: 0; }
+  .ref { position: relative; display: block; width: 100%; margin: 0 0 10px; border-radius: 12px; overflow: hidden; background: var(--card); transition: transform .25s var(--spring); }
+  .ref:active { transform: scale(.97); }
+  .pic { display: block; width: 100%; background-repeat: no-repeat; }
+  .pic.waiting { background-image: linear-gradient(105deg, rgba(128,128,128,.12) 35%, rgba(128,128,128,.04) 50%, rgba(128,128,128,.12) 65%) !important; background-size: 300% 100% !important; animation: shimmer 1.6s linear infinite; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+  .ref .n { position: absolute; left: 7px; bottom: 7px; padding: 3px 7px; border-radius: 999px; font: 500 10px/1 var(--mono); color: #fff; background: rgba(20,20,22,.5); }
+  .ck { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.75); box-shadow: 0 1px 3px rgba(0,0,0,.2); color: #141416; }
+  .ck svg { width: 14px; height: 14px; opacity: 0; }
+  .ref .ck { position: absolute; right: 8px; top: 8px; }
+  .on .ck { background: #141416; color: #fff; } .on .ck svg { opacity: 1; }
+  .ref.on { box-shadow: 0 0 0 3px var(--ink); }
+  /* spreadsheet */
+  .sheet { margin-top: 8px; overflow-x: auto; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--hair); background: var(--card); }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  th { position: sticky; top: 0; background: var(--card); text-align: left; font: 500 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 12px 10px; border-bottom: 1px solid var(--hair); cursor: pointer; white-space: nowrap; user-select: none; }
+  th[aria-sort="ascending"]::after { content: " ↑"; } th[aria-sort="descending"]::after { content: " ↓"; }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--hair); vertical-align: middle; font-size: 13px; }
+  tr.on td { background: rgba(128,128,128,.08); }
+  td .thumb { width: 56px; border-radius: 6px; cursor: zoom-in; display: block; }
+  td.num { font: 500 12px var(--mono); color: var(--ink-2); width: 56px; }
+  td.ckc { width: 44px; } td .ck { box-shadow: inset 0 0 0 1.5px var(--ink-3); background: transparent; } tr.on td .ck { background: var(--ink); color: var(--room); box-shadow: none; }
+  td.muted { color: var(--ink-2); }
+  /* bottom bar + viewer */
+  .bar { position: fixed; z-index: 6; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 18px; border-radius: 999px; max-width: calc(100vw - 24px);
+    background: color-mix(in srgb, var(--card) 72%, transparent); -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hair), 0 12px 30px -10px rgba(0,0,0,.25); }
+  .bar .st { font-size: 13px; color: var(--ink-2); white-space: nowrap; } .bar .st b { color: var(--ink); }
+  .bar button { height: 40px; padding: 0 16px; border-radius: 999px; font-size: 13.5px; font-weight: 500; white-space: nowrap; color: var(--ink-2); }
+  .bar .main { background: var(--ink); color: var(--room); }
+  .toast { position: fixed; z-index: 7; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 10px); opacity: 0; transition: .25s; padding: 9px 14px; border-radius: 999px; background: var(--ink); color: var(--room); font-size: 12.5px; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .view { position: fixed; inset: 0; z-index: 10; background: color-mix(in srgb, var(--room) 94%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .view.on { opacity: 1; pointer-events: auto; }
+  .view .big { width: min(92vw, 520px); max-height: 76vh; border-radius: 14px; background-repeat: no-repeat; box-shadow: 0 20px 50px -20px rgba(0,0,0,.4); }
+  .view .cap { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; text-align: center; color: var(--ink-3); }
+  .view .meta { position: absolute; left: 0; right: 0; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; gap: 8px; }
+  .view .meta button { height: 42px; padding: 0 18px; border-radius: 999px; font-size: 14px; font-weight: 500; background: var(--card); box-shadow: inset 0 0 0 1px var(--hair); }
+  .view .meta .pick { background: var(--ink); color: var(--room); box-shadow: none; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">‹ Back</a>
+  <h1>References <span id="count"></span></h1>
+  <p class="lede" id="lede"></p>
+  <div class="bar1"><div class="seg" role="group" aria-label="View" id="views"><button type="button" data-v="grid" aria-pressed="true">Grid</button><button type="button" data-v="table" aria-pressed="false">Spreadsheet</button></div><select id="sweep" aria-label="Sweep"></select></div>
+  <div class="chips" id="chips" role="group" aria-label="Filter by theme"></div>
+  <div id="out"></div>
+</main>
+<div class="bar"><span class="st" id="st"><b>0</b> picked</span><button type="button" id="only">Show picked</button><button type="button" id="copy">Copy</button><button type="button" class="main" id="send">Save picks</button></div>
+<div class="toast" id="toast"></div>
+<div class="view" id="view" role="dialog" aria-label="Reference"><span class="cap mono" id="vcap"></span><i class="big" id="vimg" role="img" aria-label="Reference, larger"></i><div class="meta"><button type="button" id="vprev" aria-label="Previous">‹</button><button type="button" id="vclose">Close</button><button type="button" class="pick" id="vpick">Pick</button><button type="button" id="vnext" aria-label="Next">›</button></div></div>
+<script>
+const REFS = /*REFS*/[];          // [{n, f (sheet), y, sh, w, h, theme, q (search), via, sweep}]
+const BOARD = /*BOARD*/'references';   // the picks document id in the artifact database
+const $ = (id) => document.getElementById(id);
+let picked = new Set(), theme = 'All', sweep = 'All', view = 'grid', onlyPicked = false, db = null, dirty = false, sort = { k: 'n', d: 1 };
+try { picked = new Set(JSON.parse(localStorage.getItem('refpicks:' + BOARD) || '[]')); } catch (e) {}
+const byN = new Map(REFS.map((r) => [r.n, r]));
+const sweeps = ['All', ...new Set(REFS.map((r) => r.sweep))];
+$('sweep').innerHTML = sweeps.map((s) => '<option>' + s + '</option>').join(''); $('sweep').hidden = sweeps.length <= 2;
+$('sweep').onchange = () => { sweep = $('sweep').value; chips(); render(); };
+$('count').textContent = REFS.length;
+$('lede').textContent = 'Every image was looked at before it went on the board. Tap one to look closer; tick the ones you like (grid or spreadsheet), then Save picks: Claude reads them from here.';
+const inSweep = (r) => sweep === 'All' || r.sweep === sweep;
+function chips() {
+  const ts = ['All', ...new Set(REFS.filter(inSweep).map((r) => r.theme))];
+  if (!ts.includes(theme)) theme = 'All';
+  $('chips').innerHTML = ts.map((t) => '<button type="button" data-t="' + t + '" aria-pressed="' + (t === theme) + '">' + t + '<i>' + REFS.filter((r) => inSweep(r) && (t === 'All' || r.theme === t)).length + '</i></button>').join('');
+}
+$('chips').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; theme = b.dataset.t; chips(); render(); };
+$('views').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; view = b.dataset.v; [...$('views').children].forEach((c) => c.setAttribute('aria-pressed', String(c === b))); render(); };
+const CK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const slice = (r) => 'background-size:100% ' + (r.sh / r.h * 100).toFixed(3) + '%;background-position:0 ' + (r.sh === r.h ? 0 : r.y / (r.sh - r.h) * 100).toFixed(3) + '%';
+const loaded = new Set();
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; io.unobserve(e.target); const r = byN.get(+e.target.dataset.n);
+  const show = () => { e.target.style.backgroundImage = 'url(' + r.f + ')'; e.target.classList.remove('waiting'); };
+  if (loaded.has(r.f)) return show(); const im = new Image(); im.onload = () => { loaded.add(r.f); show(); }; im.src = r.f; }), { rootMargin: '600px 0px' });
+const list = () => REFS.filter((r) => inSweep(r) && (theme === 'All' || r.theme === theme) && (!onlyPicked || picked.has(r.n)));
+function render() {
+  const L = list();
+  if (view === 'grid') {
+    const nc = innerWidth >= 1000 ? 5 : innerWidth >= 700 ? 4 : 2, cols = Array.from({ length: nc }, () => ({ h: 0, html: [] }));
+    for (const r of L) { const c = cols.reduce((a, b) => (b.h < a.h ? b : a)); c.html.push('<button type="button" class="ref' + (picked.has(r.n) ? ' on' : '') + '" data-n="' + r.n + '" aria-label="Reference ' + r.n + '"><i class="pic waiting" data-n="' + r.n + '" style="aspect-ratio:' + r.w + '/' + r.h + ';' + slice(r) + '"></i><span class="n">' + r.n + '</span><span class="ck" role="checkbox" aria-checked="' + picked.has(r.n) + '" aria-label="Pick ' + r.n + '">' + CK + '</span></button>'); c.h += r.h / r.w + 0.06; }
+    $('out').innerHTML = '<div class="grid">' + cols.map((c) => '<div class="col">' + c.html.join('') + '</div>').join('') + '</div>';
+  } else {
+    const k = sort.k, d = sort.d, S = L.slice().sort((a, b) => (k === 'picked' ? (picked.has(b.n) - picked.has(a.n)) : (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0)) * (k === 'picked' ? 1 : d) || a.n - b.n);
+    const th = (key, label) => '<th data-k="' + key + '" aria-sort="' + (sort.k === key ? (d > 0 ? 'ascending' : 'descending') : 'none') + '">' + label + '</th>';
+    $('out').innerHTML = '<div class="sheet"><table><thead><tr>' + th('picked', 'Pick') + th('n', '#') + '<th>Preview</th>' + th('theme', 'Theme') + th('q', 'Search') + th('via', 'Found via') + (sweeps.length > 2 ? th('sweep', 'Sweep') : '') + '</tr></thead><tbody>' +
+      S.map((r) => '<tr data-n="' + r.n + '" class="' + (picked.has(r.n) ? 'on' : '') + '"><td class="ckc"><span class="ck" role="checkbox" aria-checked="' + picked.has(r.n) + '" aria-label="Pick ' + r.n + '" tabindex="0">' + CK + '</span></td><td class="num">' + r.n + '</td><td><i class="pic thumb waiting" data-n="' + r.n + '" style="aspect-ratio:' + r.w + '/' + r.h + ';' + slice(r) + '"></i></td><td>' + r.theme + '</td><td class="muted">' + r.q + '</td><td class="muted">' + (r.via || '').replace('chip: ', '+ ') + '</td>' + (sweeps.length > 2 ? '<td class="muted">' + r.sweep + '</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
+  }
+  $('out').querySelectorAll('.pic').forEach((el) => io.observe(el));
+}
+$('out').onclick = (e) => {
+  const h = e.target.closest('th[data-k]'); if (h) { const k = h.dataset.k; sort = { k, d: sort.k === k ? -sort.d : 1 }; render(); return; }
+  const host = e.target.closest('[data-n]'); if (!host) return; const n = +host.closest('.ref, tr').dataset.n;
+  if (e.target.closest('.ck') || (view === 'table' && !e.target.closest('.thumb'))) { toggle(n); return; }
+  openView(n);
+};
+$('out').onkeydown = (e) => { if ((e.key === ' ' || e.key === 'Enter') && e.target.classList.contains('ck')) { e.preventDefault(); toggle(+e.target.closest('tr').dataset.n); } };
+function paint() { $('st').innerHTML = '<b>' + picked.size + '</b> picked'; try { localStorage.setItem('refpicks:' + BOARD, JSON.stringify([...picked])); } catch (e) {} }
+function toggle(n) {
+  picked.has(n) ? picked.delete(n) : picked.add(n); dirty = true;
+  $('out').querySelectorAll('[data-n="' + n + '"]').forEach((el) => { const row = el.closest('.ref, tr'); if (!row) return; row.classList.toggle('on', picked.has(n)); const c = row.querySelector('.ck'); if (c) c.setAttribute('aria-checked', String(picked.has(n))); });
+  paint(); autosave();
+}
+let vn = null;
+function openView(n) { const r = byN.get(n); vn = n; const v = $('vimg'); v.style.cssText = 'aspect-ratio:' + r.w + '/' + r.h + ';background-image:url(' + r.f + ');' + slice(r);
+  $('vcap').textContent = '#' + n + ' · ' + r.theme + ' · ' + r.q + (r.via && r.via !== 'search' ? ' · ' + r.via.replace('chip: ', '+ ') : ''); $('vpick').textContent = picked.has(n) ? 'Unpick' : 'Pick'; $('view').classList.add('on'); }
+const step = (d) => { const L = list(), i = L.findIndex((r) => r.n === vn); const r = L[i + d]; if (r) openView(r.n); };
+$('vprev').onclick = () => step(-1); $('vnext').onclick = () => step(1);
+$('vclose').onclick = () => $('view').classList.remove('on');
+$('view').onclick = (e) => { if (e.target === $('view')) $('view').classList.remove('on'); };
+$('vpick').onclick = () => { toggle(vn); $('vpick').textContent = picked.has(vn) ? 'Unpick' : 'Pick'; };
+addEventListener('keydown', (e) => { if (!$('view').classList.contains('on')) return; if (e.key === 'Escape') $('vclose').click(); if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1); if (e.key === ' ') { e.preventDefault(); $('vpick').click(); } });
+$('only').onclick = () => { onlyPicked = !onlyPicked; $('only').textContent = onlyPicked ? 'Show all' : 'Show picked'; render(); };
+const toast = (t) => { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); };
+$('copy').onclick = async () => { const s = 'Refs (' + BOARD + '): ' + [...picked].sort((a, b) => a - b).join(', '); try { await navigator.clipboard.writeText(s); toast('Copied. Paste it to Claude'); } catch (e) { prompt('Copy this and paste it to Claude', s); } };
+// picks live in the artifact's database (doc picks/<board>), saved a moment after each change, so Claude can read them
+let saveT = 0;
+const autosave = () => { if (!db) return; clearTimeout(saveT); saveT = setTimeout(saveNow, 900); };
+async function saveNow() { if (!db || !dirty) return; try { await db.doc('picks/' + BOARD).set({ ids: [...picked].sort((a, b) => a - b), at: Date.now() }); dirty = false; $('send').textContent = 'Saved'; } catch (e) { $('send').textContent = 'Save picks'; } }
+$('send').onclick = async () => { if (!db) { $('copy').click(); return; } dirty = true; await saveNow(); toast(dirty ? 'Couldn\'t save here. Use Copy instead' : 'Saved. Claude can read your ' + picked.size + ' picks'); };
+chips(); render(); paint();
+let rw = innerWidth; addEventListener('resize', () => { if (view === 'grid' && ((innerWidth >= 700) !== (rw >= 700) || (innerWidth >= 1000) !== (rw >= 1000))) render(); rw = innerWidth; });
+(async () => {
+  try { db = window.claude ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (!db) { $('send').textContent = 'Copy picks'; $('copy').hidden = true; return; }
+  try { const s = await db.doc('picks/' + BOARD).get(); if (s.exists && !dirty) { const d = s.data(); if (Array.isArray(d.ids)) { picked = new Set(d.ids); render(); paint(); $('send').textContent = 'Saved'; } } } catch (e) {}
+})();
+</script>
+</body>
+</html>
