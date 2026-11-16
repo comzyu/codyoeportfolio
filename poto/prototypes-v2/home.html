@@ -356,7 +356,7 @@ showMonth(); addEventListener('resize', sizeCal);
     }
     await document.fonts.ready;
     const c = PotoShare.month({ format: sh.fmt, photo: imgs.photo, backdrop: imgs.back, month: MNAME[M.m], year: 2026, lead: M.lead, days: M.days, cells: imgs.cells, today: M.today, left: M.kept + ' kept', right: MNAME[M.m].replace('.', '') + ' 2026', handle: '@cody', mark: 'poto.app' });
-    $('simg').src = c.toDataURL('image/jpeg', 0.92);
+    $('simg').src = c.toDataURL('image/jpeg', 0.96);
     const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min(st.clientWidth / F.w, (st.clientHeight - 20) / F.h);
     fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';
     $('zt').style.height = (sh.fmt === 'story' ? F.safeTop * k : 0) + 'px'; $('zb').style.height = (sh.fmt === 'story' ? F.safeBottom * k : 0) + 'px'; $('sguides').hidden = sh.fmt !== 'story';

@@ -149,8 +149,8 @@
     const mats = { front: new T.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.3, clearcoat: 0, clearcoatRoughness: 0.07 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
     const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); card.add(body);
     this.setFaces = function (front, back) {
-      if (front) { const m = mats.front; m.emissive = new T.Color(0xffffff); m.emissiveMap = front.lit ? tex(front.lit, true) : null; m.emissiveIntensity = front.lit ? 0.3 : 0; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
-      for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { if (!t) continue; m.map = tex(t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
+      if (front) { const m = mats.front; m.emissive = new T.Color(0xffffff); m.emissiveMap = front.lit ? tex(front.lit, true) : null; m.emissiveIntensity = front.lit ? (front.litFull ? 1 : 0.3) : 0; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
+      for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { if (!t) continue; m.map = tex(t.map3d || t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
     };
     // typing changes a small rectangle: send just that rectangle to the GPU instead of the whole 1024x1448 texture (twice) per key
     this.updateBackRegion = function (r) {

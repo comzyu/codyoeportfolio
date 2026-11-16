@@ -99,8 +99,9 @@
   const Q = new URLSearchParams(location.search), SRC = /^img\/photo-\d\d\.jpg$/.test(Q.get('src') || '') ? Q.get('src') : 'img/photo-04.jpg', ZOOM = Math.max(1, +Q.get('zoom') || 1), EV = Math.max(-2, Math.min(2, +Q.get('ev') || 0));
   const raw = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = SRC; });
   // re-make the print from the original: the same crop (zoom) and exposure you shot it with
-  const photo = document.createElement('canvas'); photo.width = 900; photo.height = 1200; { const x = photo.getContext('2d'), z = ZOOM > 1 ? ZOOM / 1.35 : 1, s = Math.max(900 / raw.width, 1200 / raw.height) * z;
-    if (EV) x.filter = 'brightness(' + Math.pow(2, EV * 0.75).toFixed(3) + ')'; x.drawImage(raw, (900 - raw.width * s) / 2, (1200 - raw.height * s) / 2, raw.width * s, raw.height * s); }
+  const PW = Math.min(1500, raw.width), PH = PW * 4 / 3;   // keep the photo at its own resolution (up to 1500 wide): no softening on the way in
+  const photo = document.createElement('canvas'); photo.width = PW; photo.height = PH; { const x = photo.getContext('2d'), z = ZOOM > 1 ? ZOOM / 1.35 : 1, s = Math.max(PW / raw.width, PH / raw.height) * z;
+    x.imageSmoothingQuality = 'high'; if (EV) x.filter = 'brightness(' + Math.pow(2, EV * 0.75).toFixed(3) + ')'; x.drawImage(raw, (PW - raw.width * s) / 2, (PH - raw.height * s) / 2, raw.width * s, raw.height * s); }
   if (document.referrer.includes('home.html')) document.querySelector('.top a').href = 'home.html';
 
   let W; const fronts = {};
@@ -130,8 +131,8 @@
   $('capL').oninput = capIn; $('capR').oninput = capIn;
   function renderShare() {
     const front = (fronts[$('finish').textContent === 'Gloss' ? 'gloss' : 'matte'] || fronts.matte).col;
-    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: sh.left, right: sh.right, handle: '@cody', mark: 'poto.app' });
-    $('simg').src = img.toDataURL('image/jpeg', 0.92);
+    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, photoRect: fronts.matte.photoRect, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: sh.left, right: sh.right, handle: '@cody', mark: 'poto.app' });
+    $('simg').src = img.toDataURL('image/jpeg', 0.96);
     const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min((st.clientWidth) / F.w, (st.clientHeight - 20) / F.h);
     fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';
     $('zt').style.height = (sh.fmt === 'story' ? F.safeTop * k : 0) + 'px'; $('zb').style.height = (sh.fmt === 'story' ? F.safeBottom * k : 0) + 'px'; $('sguides').hidden = sh.fmt !== 'story';

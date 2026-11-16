@@ -126,12 +126,18 @@
       t.h.fillStyle = 'rgb(128,128,128)'; t.h.fillRect(m, py, pw, ph);                                 // dead flat: no paper bumps through the picture
       const lit = mk(TW, TH), lc = lit.getContext('2d'); lc.fillStyle = '#000'; lc.fillRect(0, 0, TW, TH); lc.drawImage(pl, 0, 0); t.lit = lit;   // the picture glows a touch so light never greys it
     }
+    // Cody, 17 Nov: true colour, like Dazz and Retro. In 3D the picture must not be lit by the scene (lights shift and grey its colours),
+    // so the 3D colour map has the picture area black and the picture comes in through the emissive map at full strength:
+    // what you see is exactly the photo's pixels. The flat colour canvas (t.col, used for shares) keeps the picture as is.
+    const lit2 = mk(TW, TH), l2 = lit2.getContext('2d'); l2.fillStyle = '#000'; l2.fillRect(0, 0, TW, TH); l2.drawImage(pl, 0, 0); t.lit = lit2; t.litFull = true;
+    t.photoRect = { x: m / TW, y: py / TH, w: pw / TW, h: ph / TH };
     t.c.fillStyle = 'rgba(80,77,72,.62)'; font(t.c, '500 19px "IBM Plex Mono", ui-monospace, monospace'); t.c.textBaseline = 'middle';
     const cy = py + ph + (TH - py - ph) / 2;
     if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '2.2px';
     t.c.globalCompositeOperation = 'multiply'; t.c.fillText(caption.toUpperCase(), m + 4, cy);
     t.c.textAlign = 'right'; t.c.fillStyle = 'rgba(80,77,72,.3)'; if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '1px'; t.c.fillText('poto', TW - m - 4, cy);
     t.c.globalCompositeOperation = 'source-over';
+    const m3 = mk(TW, TH), c3 = m3.getContext('2d'); c3.drawImage(t.col, 0, 0); c3.fillStyle = '#000'; c3.fillRect(m, py, pw, ph); t.map3d = m3;
     return t;
   };
 

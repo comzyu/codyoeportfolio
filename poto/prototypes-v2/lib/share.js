@@ -15,12 +15,13 @@
   const ASPECT = 1448 / 1024;
 
   // one card: its face (front or back texture), any stickers on it, a soft two-part shadow
-  function card(ctx, face, stickers, cx, cy, w, rot) {
+  function card(ctx, face, stickers, cx, cy, w, rot, photo, pr) {
     const h = w * ASPECT, s = w / 1024;
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
     ctx.save(); ctx.shadowColor = 'rgba(25,22,18,.20)'; ctx.shadowBlur = w * 0.09; ctx.shadowOffsetY = w * 0.045; ctx.fillStyle = '#fff'; round(ctx, -w / 2, -h / 2, w, h, w * 0.012); ctx.fill(); ctx.restore();   // soft fall
     ctx.save(); ctx.shadowColor = 'rgba(25,22,18,.22)'; ctx.shadowBlur = w * 0.008; ctx.shadowOffsetY = w * 0.003; round(ctx, -w / 2, -h / 2, w, h, w * 0.012); ctx.fill(); ctx.restore();                         // contact
     ctx.save(); round(ctx, -w / 2, -h / 2, w, h, w * 0.012); ctx.clip(); ctx.drawImage(face, -w / 2, -h / 2, w, h);
+    if (photo && pr) { ctx.imageSmoothingQuality = 'high'; coverDraw(ctx, photo, -w / 2 + pr.x * w, -h / 2 + pr.y * h, pr.w * w, pr.h * h); }   // true colour, full resolution: the original photo, not the texture copy
     for (const st of stickers || []) {
       const sw = st.size * s; ctx.save(); ctx.translate(-w / 2 + st.px * s, -h / 2 + st.py * s); ctx.rotate(st.rot);
       ctx.save(); ctx.shadowColor = 'rgba(25,22,18,.32)'; ctx.shadowBlur = sw * 0.02; ctx.shadowOffsetX = sw * 0.01; ctx.shadowOffsetY = sw * 0.015; ctx.drawImage(st.img, -sw / 2, -sw / 2, sw, sw); ctx.restore();
@@ -59,7 +60,7 @@
     gx.putImageData(id, 0, 0); x.save(); x.fillStyle = x.createPattern(g, 'repeat'); x.fillRect(0, 0, F.w, F.h); x.restore();
     const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.3, F.w / 2, F.h / 2, F.h * 0.8); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,58,52,.10)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
   }
-  function coverDraw(x, im, dx, dy, dw, dh) { const k = Math.max(dw / im.width, dh / im.height), sw = dw / k, sh = dh / k; x.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh); }
+  function coverDraw(x, im, dx, dy, dw, dh) { x.imageSmoothingQuality = 'high'; const k = Math.max(dw / im.width, dh / im.height), sw = dw / k, sh = dh / k; x.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh); }
   function details(x, F, o, ex, y1) {
     const y2 = y1 + (o.format === 'story' ? 36 : 30);
     x.save(); x.fillStyle = '#141416'; x.textBaseline = 'middle';
@@ -128,12 +129,12 @@
     let w, h, ex;
     if (o.side !== 'both') {
       w = Math.min(F.w - M.side * 2, avail / ASPECT); h = w * ASPECT;
-      const y0 = M.top + (avail - h) / 2; card(x, o.side === 'back' ? o.back : o.front, o.side === 'back' ? o.stickers : [], F.w / 2, y0 + h / 2, w, -0.008);
+      const y0 = M.top + (avail - h) / 2; card(x, o.side === 'back' ? o.back : o.front, o.side === 'back' ? o.stickers : [], F.w / 2, y0 + h / 2, w, -0.008, o.side === 'back' ? null : o.photo, o.photoRect);
       ex = F.w / 2 - w / 2; details(x, F, o, ex, y0 + h + foot * 0.42);
     } else {                                            // the back tucked behind, the front laid over it
       w = Math.min(F.w * 0.8, avail / ASPECT / 1.14); h = w * ASPECT; const midY = M.top + avail / 2;
       card(x, o.back, o.stickers, F.w / 2 - w * 0.1, midY - w * 0.04, w, -0.05);
-      card(x, o.front, [], F.w / 2 + w * 0.08, midY + w * 0.04, w, 0.03);
+      card(x, o.front, [], F.w / 2 + w * 0.08, midY + w * 0.04, w, 0.03, o.photo, o.photoRect);
       ex = M.side; details(x, F, o, ex, midY + h * 0.54 + w * 0.04 + foot * 0.42);
     }
     return c;

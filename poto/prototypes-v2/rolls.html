@@ -95,7 +95,6 @@
   .film::before { top: 7px; } .film::after { bottom: 7px; }
   .film .f { position: relative; width: var(--fw); aspect-ratio: 3 / 4; flex: none; background: #2a2622; border-radius: 1px; scroll-snap-align: center; padding: 0; cursor: zoom-in; }
   .film .f img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 1.2s ease; }
-  .film .f::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--grain, none) 0 0 / 160px 160px; opacity: .45; }
   .film .f.dv img { opacity: 1; }
   .film .f i { position: absolute; left: 0; top: -17px; font: 500 9px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; font-style: normal; white-space: nowrap; }
   .film .f u { position: absolute; left: 0; bottom: -17px; font: 500 9px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; text-decoration: none; white-space: nowrap; }
@@ -368,7 +367,7 @@ function openStrip(L) {
   for (let k = 0; k < 27; k++) {
     const p = 1 + ((k * 7 + n * 3) % 12); if (k < 3) ps.push(p); frames.push(p);
     const f = document.createElement('button'); f.type = 'button'; f.className = 'f'; f.setAttribute('aria-label', 'Frame ' + (k + 1) + ', look closer');
-    f.innerHTML = '<i>POTO ' + L.id.toUpperCase() + ' ' + L.iso + '</i><img src="' + ph(p) + '" alt="" style="filter:' + L.filt + '" loading="lazy" draggable="false"><u>▸ ' + (k + 1) + '  ' + (k + 1) + 'A</u>';
+    f.innerHTML = '<i>POTO ' + L.id.toUpperCase() + ' ' + L.iso + '</i><img src="' + ph(p) + '" alt="" loading="lazy" draggable="false"><u>▸ ' + (k + 1) + '  ' + (k + 1) + 'A</u>';
     f.onclick = () => openView(k); film.appendChild(f);
   }
   dev.classList.remove('out', 'ready', 'filing'); dev.classList.add('on'); dev.setAttribute('aria-hidden', 'false'); $('strip').scrollLeft = 0;
@@ -381,7 +380,7 @@ function openStrip(L) {
 // the viewer: one frame big, swipe or arrows for the next
 let vk = 0;
 function openView(k) { vk = k; showView(); const v = $('view'); v.classList.add('on'); v.setAttribute('aria-hidden', 'false'); }
-function showView() { const im = $('vimg'); im.src = 'img/photo-' + String(frames[vk]).padStart(2, '0') + '.jpg'; im.style.filter = curL.filt; $('vn').textContent = (vk + 1) + ' / 27'; $('vp').disabled = vk === 0; $('vnx').disabled = vk === 26; }
+function showView() { const im = $('vimg'); im.src = 'img/photo-' + String(frames[vk]).padStart(2, '0') + '.jpg';  $('vn').textContent = (vk + 1) + ' / 27'; $('vp').disabled = vk === 0; $('vnx').disabled = vk === 26; }
 const vgo = (d) => { const k = Math.max(0, Math.min(26, vk + d)); if (k === vk) return; vk = k; const im = $('vimg'); im.style.opacity = 0; setTimeout(() => { showView(); im.style.opacity = 1; }, 120); };
 $('vp').onclick = () => vgo(-1); $('vnx').onclick = () => vgo(1);
 $('vx').onclick = () => { const v = $('view'); v.classList.remove('on'); v.setAttribute('aria-hidden', 'true'); };
@@ -429,7 +428,7 @@ function renderRolls() {
   finished.forEach((r) => {
     const L = byId(r.look), sw = 'linear-gradient(90deg,' + L.bg + ' 0 60%,#1b1b1c 60% 65%,' + L.band + ' 65%)';
     const b = document.createElement('button'); b.type = 'button'; b.className = 'roll' + (r.fresh ? ' fresh' : ''); b.setAttribute('aria-expanded', 'false');
-    b.innerHTML = '<div class="folder"><div class="board"></div>' + r.ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy" style="filter:' + L.filt + '"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + L.id.toUpperCase() + '</i></div>' + CLIP + '<span class="n">ROLL ' + String(r.n).padStart(2, '0') + '</span></div><strong>' + L.id + '</strong><em>' + r.frames + ' frames · ' + r.when + '</em>';
+    b.innerHTML = '<div class="folder"><div class="board"></div>' + r.ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + L.id.toUpperCase() + '</i></div>' + CLIP + '<span class="n">ROLL ' + String(r.n).padStart(2, '0') + '</span></div><strong>' + L.id + '</strong><em>' + r.frames + ' frames · ' + r.when + '</em>';
     b.onclick = () => { const o = !b.classList.contains('open'); R.querySelectorAll('.roll.open').forEach((x) => { x.classList.remove('open'); x.setAttribute('aria-expanded', 'false'); }); b.classList.toggle('open', o); b.setAttribute('aria-expanded', String(o)); };
     R.appendChild(b); PotoTex.frostFolder(b); delete r.fresh;
   });
