@@ -68,3 +68,12 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Calendar flips like a wall calendar (Aug–Nov 2026): the days page swings up over the rings and its back is next month's photo. Arrows or a sideways swipe.
 - Shares fill the frame (only the top bar and reply box kept clear). Month share: no cut-out letters, small "nov." like the app, days on frosted glass, backdrop = another photo from that month, black and white and frosted.
 - Next build: profile desk (#3) + stamps cut from your own photo (#9); references are on the Pinterest board.
+
+## Round of 17 Nov (Cody)
+- Photos: true colour, no filters on previews; three sizes (1200 full, 600 preview, 180 tiny for disc and calendar), progressive JPEG.
+- Every photo develops in (lib/develop.js): blank emulsion shimmer while loading, then pale-to-full colour. The postcard shows a developing print and a progress line while the 3D card is built.
+- Share background: smooth frosted glass (big blur, cool milky veil, diagonal sheen, very fine grain).
+- Dates on shares are fixed (from when the photo was taken, in the user's time zone, chosen at sign-up). Only the place can be edited.
+- The back has no address any more: a short handwritten note (two lines), editable (Write → Note).
+- Camera: shooting never waits. Shots drop into a tray undeveloped; develop them all together, toss any, keep the rest.
+- Open questions for Cody: how a friend's photo differs from your own (front marking, who the note is from); filters strength pass later; time zone setup in onboarding.

@@ -106,3 +106,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .share .x { height: 40px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; }
 .share .g { height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--hair); white-space: nowrap; }
 .share .g[aria-pressed="true"] { color: #c23b3b; border-color: rgba(225,60,60,.45); }
+
+/* ---- photos develop in (lib/develop.js) ---- */
+img.waiting { background: linear-gradient(105deg, #E7E4DD 35%, #F3F1EC 50%, #E7E4DD 65%) 0 0 / 300% 100%; animation: emulsion 1.6s linear infinite; }
+.on-dark img.waiting, img.waiting.dark { background-image: linear-gradient(105deg, #23201d 35%, #2f2b27 50%, #23201d 65%); }
+img.developed { animation: develop 1.4s cubic-bezier(.3,.6,.3,1) both; }
+@keyframes emulsion { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+@keyframes develop { 0% { filter: sepia(.35) saturate(.15) brightness(1.5) contrast(.5); opacity: .55; } 35% { opacity: 1; } 100% { filter: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { img.waiting, img.developed { animation: none; } }

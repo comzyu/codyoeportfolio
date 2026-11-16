@@ -6,6 +6,7 @@
 <title>Poto · Rolls</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
+<script src="lib/develop.js" defer></script>
 <style>
   /* Rolls. Film is a real object here: canisters stand on a shelf (board #20), the loaded one lies in the camera back,
      a finished roll comes out as a contact strip and gets filed in a frosted folder. */
@@ -155,10 +156,10 @@
 
   <section class="dev" id="dev" aria-label="Your finished roll" aria-hidden="true">
     <div class="head"><span class="mono soft" id="devk"></span><h4 id="devt"></h4><p id="devp"></p></div>
-    <div class="strip" id="strip"><div class="film" id="film"></div></div>
+    <div class="strip" id="strip"><div class="film on-dark" id="film"></div></div>
     <div class="foot"><p id="devhelp">Developing. Swipe along the strip.</p><button type="button" class="file" id="file">File it in the diary</button></div>
   </section>
-  <section class="view" id="view" aria-label="Frame" aria-hidden="true">
+  <section class="view on-dark" id="view" aria-label="Frame" aria-hidden="true">
     <img id="vimg" alt="">
     <button type="button" class="glass dark round vx" id="vx" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div class="vb"><button type="button" class="glass dark round" id="vp" aria-label="Previous frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="mono" id="vn"></span><button type="button" class="glass dark round" id="vnx" aria-label="Next frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div>

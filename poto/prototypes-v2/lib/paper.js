@@ -180,6 +180,7 @@
 
 
   /* BACK: uncoated card. Offset-printed rules, a stamp, a postmark struck over it, a typed message, a penned address. */
+  P._penned = penned;                       // the note writer (in the second block below) uses the same pen
   P.back = function (photo, o) {
     const stock = P.stock({ seed: 11, cloud: 0.09, tooth: 0.75, fibres: 80, flecks: 22, inkBite: 2.2 });
     const t = sheet('#FAF7F0', stock, 246, 0.85);
@@ -189,12 +190,13 @@
     c.save(); c.globalCompositeOperation = 'multiply';
     c.strokeStyle = 'rgba(90,84,76,.55)'; c.lineWidth = 1.5;
     c.beginPath(); c.moveTo(80, 1010); c.lineTo(TW - 80, 1010); c.stroke();
-    for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(250, 1122 + i * 84); c.lineTo(TW - 96, 1122 + i * 84); c.stroke(); }
+    for (let i = 0; i < 2; i++) { c.beginPath(); c.moveTo(250, 1122 + i * 84); c.lineTo(TW - 96, 1122 + i * 84); c.stroke(); }
     c.fillStyle = 'rgba(90,84,76,.75)'; font(c, '500 17px "IBM Plex Mono", ui-monospace, monospace'); if (c.letterSpacing !== undefined) c.letterSpacing = '7px';
     c.fillText('POST CARD', 86, 150); if (c.letterSpacing !== undefined) c.letterSpacing = '2px';
-    c.font = '500 14px "IBM Plex Mono", ui-monospace, monospace'; c.fillText('TO', 96, 1120); c.fillText(o.caption.toUpperCase(), 86, TH - 78);
+    c.font = '500 14px "IBM Plex Mono", ui-monospace, monospace'; c.fillText(o.noteLabel || 'NOTE', 96, 1120); c.fillText(o.caption.toUpperCase(), 86, TH - 78);
     c.restore();
-    penned(t, o.to[0], 262, 1112, 58, '#1c2947', -0.012); penned(t, o.to[1], 262, 1196, 52, '#1c2947', -0.006); penned(t, o.to[2], 262, 1280, 52, '#1c2947', 0.004);
+    // Cody, 17 Nov: no addresses. A short handwritten note (two lines), written by whoever made the card, editable.
+    (o.note || []).forEach((ln, i) => ln && penned(t, ln, 262, 1112 + i * 84, i ? 52 : 56, '#1c2947', [-0.012, -0.004][i]));
     // stamp + postmark are OFF by default (Cody, 16 Nov: keep the back minimal; decoration is up to the sender).
     // Kept here as an option: the plan is a postmark only when a card is actually mailed, and stamps as stickers/drops.
     if (!o.stamp) return t;
@@ -264,16 +266,27 @@
   };;
 
   P.backWriter = function (photo, o) {
-    const t = P.back(photo, Object.assign({}, o, { message: [] })), NS = 1.9;
+    const t = P.back(photo, Object.assign({}, o, { message: [], note: [] })), NS = 1.9;
     t.nrm = P.normalFromHeight(t.hgt, NS);
     const R = { x: 56, y: 540, w: 930, h: 440 }, clean = {};
     for (const k of ['col', 'hgt']) { const c = k === 'hgt' ? mkR(R.w, R.h) : mk(R.w, R.h); c.getContext('2d').drawImage(t[k], R.x, R.y, R.w, R.h, 0, 0, R.w, R.h); clean[k] = c; }
+    const NR = { x: 230, y: 1040, w: TW - 230 - 40, h: 220 }, nclean = {};
+    for (const k of ['col', 'hgt', 'rough']) { const c = k === 'hgt' ? mkR(NR.w, NR.h) : mk(NR.w, NR.h); c.getContext('2d').drawImage(t[k], NR.x, NR.y, NR.w, NR.h, 0, 0, NR.w, NR.h); nclean[k] = c; }
     const size = 37, lead = 60, x0 = 86, y0 = 610, ink = '#26231f';
     // Special Elite only covers Latin. Every other script falls back to a good system face for that script.
     const FONT = size + 'px "Special Elite", "Courier New", "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Noto Sans KR", "Geeza Pro", "Noto Naskh Arabic", "Kohinoor Devanagari", "Noto Sans Devanagari", "Tamil Sangam MN", "Noto Sans Tamil", serif';
     const m = mk(8, 8).getContext('2d'); m.font = FONT; const adv = m.measureText('m').width, wcache = new Map();
     const width = (s) => { let w = wcache.get(s); if (w == null) { w = m.measureText(s).width; wcache.set(s, w); } return w; };
     const W = { cols: 26, lines: 6, adv, lead, x0, y0, size, tex: t, laid: [] }, LW = W.cols * adv;
+    // the handwritten note: wipe its rectangle back to clean card, pen the new lines, refresh that rectangle's normals. Returns the rectangle to upload.
+    W.noteRect = NR; W.note = [];
+    W.setNote = function (lines) {
+      W.note = lines.slice(0, 2);
+      for (const k of ['col', 'hgt', 'rough']) { const x = t[k].getContext('2d'); x.clearRect(NR.x, NR.y, NR.w, NR.h); x.drawImage(nclean[k], NR.x, NR.y); }
+      W.note.forEach((ln, i) => ln && P._penned(t, ln.slice(0, 34), 262, 1112 + i * 84, i ? 52 : 56, '#1c2947', [-0.012, -0.004][i]));
+      P.normalRegion(t.hgt, t.nrm, NR.x - 2, NR.y - 2, NR.w + 4, NR.h + 4, NS);
+      return NR;
+    };
     W.lineWidth = LW;
 
     /* Every script gets proper spacing (Cody, 16 Nov):

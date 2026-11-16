@@ -6,6 +6,7 @@
 <title>Poto · The postcard</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;700&family=Special+Elite&family=La+Belle+Aurore&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
+<script src="lib/develop.js" defer></script>
 <style>
   #stage { position: absolute; inset: 0; }
   #stage canvas { display: block; width: 100%; height: 100%; }
@@ -46,6 +47,23 @@
   .dock { gap: 0; } .dock .sep { margin: 0; } .dock button { padding: 0 11px; gap: 6px; font-size: 13.5px; }
   .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
   .share .capedit { gap: 6px; width: 100%; max-width: 420px; } .share .capedit input { flex: 1; min-width: 0; height: 34px; border: 0; border-radius: 999px; padding: 0 14px; background: rgba(255,255,255,.7); font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair); }
+  /* while the card is built: the print you're about to hold, developing, with a thin progress line under it */
+  .boot { position: absolute; inset: 0; z-index: 9; display: grid; place-content: center; justify-items: center; gap: 22px; background: var(--room); transition: opacity .5s; }
+  .boot.gone { opacity: 0; pointer-events: none; }
+  .bcard { position: relative; width: min(72vw, 300px); aspect-ratio: 1024 / 1448; background: #FAF9F5 var(--paper-white, none) 0 0 / 256px 256px; border-radius: 3px; padding: 4.2% 4.2% 0;
+    box-shadow: 0 1px 2px rgba(20,20,30,.12), 0 22px 40px -22px rgba(20,20,30,.35); }
+  .bcard img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .bcard .bcap { position: absolute; left: 4.6%; bottom: 4%; font-size: 8px; color: var(--ink-3); }
+  .bbar { width: min(40vw, 160px); height: 2px; border-radius: 2px; background: var(--hair); overflow: hidden; } .bbar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .5s var(--ease); }
+  .bstep { color: var(--ink-3); }
+  /* the handwritten note editor */
+  .notebar { position: absolute; z-index: 9; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: min(92vw, 400px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 10px; border-radius: 22px; display: grid; gap: 6px; transition: opacity .25s, transform .4s var(--spring); }
+  .noting .notebar { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  .notebar input { height: 40px; border: 0; border-radius: 14px; padding: 0 14px; background: rgba(255,255,255,.75); font: 400 22px/1 "La Belle Aurore", cursive; color: #1c2947; box-shadow: inset 0 0 0 1px var(--hair); }
+  .notebar .row2 { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; } .notebar .row2 button { height: 34px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
+  .noting .dock, .noting .hint, .noting .tray, .noting .finish { opacity: 0 !important; pointer-events: none !important; }
+  .share .capedit .lock { flex: none; height: 34px; border-radius: 999px; padding: 0 14px; display: flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); letter-spacing: .06em; color: var(--ink-2); background: rgba(0,0,0,.035); white-space: nowrap; overflow: hidden; }
+  .share .capedit .lock svg { width: 12px; height: 12px; flex: none; }
 </style>
 </head>
 <body>
@@ -56,6 +74,7 @@
     <button type="button" class="glass finish" id="finish" aria-label="Photo finish">Matte</button>
   </header>
   <div id="stage" role="img" aria-label="A postcard you can turn, flip and put stickers on"></div>
+  <div class="boot" id="boot" aria-live="polite"><div class="bcard"><img id="bimg" alt=""><span class="bcap mono">developing</span></div><div class="bbar"><i id="bfill"></i></div><span class="bstep mono" id="bstep">Loading your photo</span></div>
   <div class="tray glass" id="tray" role="group" aria-label="Sticker finish">
     <button type="button" class="holo" data-f="holo"><i></i>Holographic</button>
     <button type="button" class="gloss" data-f="gloss"><i></i>Gloss</button>
@@ -64,9 +83,10 @@
   <p class="hint mono" id="hint">Drag to turn · tap to flip · peel a sticker off the back</p>
   <i class="cap" id="cap" aria-hidden="true"></i><i class="ring" id="ring" aria-hidden="true"></i>
   <p class="shint mono soft" id="shint">Drag to peel</p><div class="sbar glass" id="sbar" role="group" aria-label="Sticker"><button type="button" id="speel">Peel off</button><button type="button" id="sremove">Remove</button><button type="button" class="on" id="sdone">Done</button></div>
-  <div class="edit glass" id="edit" role="group" aria-label="Edit text"><button type="button" id="selall">Select all</button><button type="button" id="del" class="on" hidden>Delete</button><button type="button" id="unsel" hidden>Cancel</button></div>
+  <div class="edit glass" id="edit" role="group" aria-label="Edit text"><button type="button" id="selall">Select all</button><button type="button" id="notebtn">Note</button><button type="button" id="del" class="on" hidden>Delete</button><button type="button" id="unsel" hidden>Cancel</button></div>
   <div id="hls" aria-hidden="true"></div>
   <button type="button" class="done" id="done">Done</button><span class="left mono soft" id="left"></span>
+  <div class="notebar glass" id="notebar" role="group" aria-label="Handwritten note"><input id="n1" maxlength="34" aria-label="Note, first line" autocomplete="off" spellcheck="false"><input id="n2" maxlength="34" aria-label="Note, second line" autocomplete="off" spellcheck="false"><div class="row2"><span class="mono soft">Handwritten note</span><button type="button" id="ndone">Done</button></div></div>
   <textarea id="ta" maxlength="150" aria-label="Message on the back of the postcard" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
   <nav class="dock glass" aria-label="Postcard">
     <button type="button" id="flip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0114-3l2 2M20 15a8 8 0 01-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Flip</button>
@@ -79,14 +99,15 @@
   </nav>
   <section class="share" id="sharesheet" aria-label="Share" aria-hidden="true">
     <div class="row glass" role="group" aria-label="Format"><button type="button" data-fmt="story" aria-pressed="true">Story 9:16</button><button type="button" data-fmt="post" aria-pressed="false">Post 4:5</button></div>
-    <div class="row glass" role="group" aria-label="Side"><button type="button" data-side="front" aria-pressed="true">Front</button><button type="button" data-side="back" aria-pressed="false">Back</button><button type="button" data-side="both" aria-pressed="false">Both</button><button type="button" id="sedit" aria-pressed="false">Edit text</button></div>
-    <div class="row glass capedit" id="capedit" hidden><input id="capL" aria-label="Left line: date" maxlength="40"><input id="capR" aria-label="Right line: place" maxlength="30"></div>
+    <div class="row glass" role="group" aria-label="Side"><button type="button" data-side="front" aria-pressed="true">Front</button><button type="button" data-side="back" aria-pressed="false">Back</button><button type="button" data-side="both" aria-pressed="false">Both</button><button type="button" id="sedit" aria-pressed="false">Edit place</button></div>
+    <div class="row glass capedit" id="capedit" hidden><span class="lock" id="capL" title="Set by when the photo was taken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span id="capLt"></span></span><input id="capR" aria-label="Right line: place" maxlength="30"></div>
     <div class="stage" id="sstage"><div class="frame" id="sframe"><img id="simg" alt="The image to share"><i class="zone t" id="zt"></i><i class="zone b" id="zb"></i></div></div>
     <div class="foot"><button type="button" class="g" id="sguides" aria-pressed="false">Show safe zones</button><p id="shelp">Press and hold the picture to save it.</p><button type="button" class="x" id="sclose">Done</button></div>
   </section>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 <script src="lib/paper.js"></script>
+<script src="lib/texture.js"></script>
 <script src="lib/postcard3d.js"></script>
 <script src="lib/share.js"></script>
 <script>
@@ -97,7 +118,13 @@
   const fonts = ['37px "Special Elite"', '58px "La Belle Aurore"', '500 19px "IBM Plex Mono"', '700 120px "IBM Plex Mono"'];
   await Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
   const Q = new URLSearchParams(location.search), SRC = /^img\/photo-\d\d\.jpg$/.test(Q.get('src') || '') ? Q.get('src') : 'img/photo-04.jpg', ZOOM = Math.max(1, +Q.get('zoom') || 1), EV = Math.max(-2, Math.min(2, +Q.get('ev') || 0));
+  // the loader: show the small print right away (it's cached from the diary), develop it, step the progress line as the card is built
+  window.PotoTex && PotoTex.install();
+  const boot = $('boot'), step = (pct, txt) => new Promise((r) => { $('bfill').style.width = pct + '%'; if (txt) $('bstep').textContent = txt; requestAnimationFrame(() => setTimeout(r, 0)); });
+  $('bimg').src = SRC.replace('.jpg', '-s.jpg');
+  await step(12, 'Loading your photo');
   const raw = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = SRC; });
+  await step(38, 'Printing the front');
   // re-make the print from the original: the same crop (zoom) and exposure you shot it with
   const PW = Math.min(1500, raw.width), PH = PW * 4 / 3;   // keep the photo at its own resolution (up to 1500 wide): no softening on the way in
   const photo = document.createElement('canvas'); photo.width = PW; photo.height = PH; { const x = photo.getContext('2d'), z = ZOOM > 1 ? ZOOM / 1.35 : 1, s = Math.max(PW / raw.width, PH / raw.height) * z;
@@ -107,11 +134,16 @@
   let W; const fronts = {};
   const pc = new PotoPostcard(stage, { lite: /[?&]lite/.test(location.search) });
   window.pc = pc;
+  fronts.matte = PotoPaper.front(photo, 'Sunday · 15 Nov 2026', 'matte');
+  await step(66, 'Setting up the back');
   pc.setFaces(
-    (fronts.matte = PotoPaper.front(photo, 'Sunday · 15 Nov 2026', 'matte')),
-    (W = PotoPaper.backWriter(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], to: ['Dana Okafor', '14 Tiong Bahru Rd', 'Singapore 168732'], caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })).tex
+    fronts.matte,
+    (W = PotoPaper.backWriter(photo, { message: ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'], noteLabel: 'NOTE', caption: 'Shot on Sunday · frame 14 of 27', city: 'Singapore', look: 'Sunday', date: ['15 NOV', '2026'] })).tex
   );
-  pc.addSticker('star', 'holo', -0.29, 0.25, -0.16);              // back only. Card x is mirrored on the back: negative x is the right of the written side.
+  pc.addSticker('star', 'holo', -0.29, 0.25, -0.16);
+  // the note in handwriting: short, about the photo, not an address (Cody, 17 Nov)
+  pc.updateBackRegion(W.setNote(['a photo for you,', 'from cody']));
+  await step(100, 'Ready'); setTimeout(() => boot.classList.add('gone'), 250); setTimeout(() => boot.remove(), 900);              // back only. Card x is mirrored on the back: negative x is the right of the written side.
   const S = window.PotoSound || { play() {}, start() { return () => {}; } };
   pc.onFlip = (face, quiet) => { $('side').textContent = face ? 'Back' : 'Front'; if (!quiet) S.play('flip'); };
   pc.onLand = () => S.play('land');
@@ -125,10 +157,10 @@
   // ---- share: Story 9:16 or Post 4:5, front / back / both ----
   const sh = { fmt: 'story', side: 'front', left: 'Sunday · 15 Nov 2026', right: 'Singapore' }, sheet = $('sharesheet');
   // the line under the card: filled in from the photo (its date, its place) and editable here
-  $('capL').value = sh.left; $('capR').value = sh.right;
-  $('sedit').onclick = () => { const on = $('capedit').hidden; $('capedit').hidden = !on; $('sedit').setAttribute('aria-pressed', String(on)); if (on) $('capL').focus(); };
-  let capT = 0; const capIn = () => { sh.left = $('capL').value; sh.right = $('capR').value; clearTimeout(capT); capT = setTimeout(renderShare, 180); };
-  $('capL').oninput = capIn; $('capR').oninput = capIn;
+  $('capLt').textContent = sh.left.toUpperCase(); $('capR').value = sh.right;   // the date is fixed: it comes from when the photo was taken, in your time zone
+  $('sedit').onclick = () => { const on = $('capedit').hidden; $('capedit').hidden = !on; $('sedit').setAttribute('aria-pressed', String(on)); if (on) $('capR').focus(); };
+  let capT = 0; const capIn = () => { sh.right = $('capR').value; clearTimeout(capT); capT = setTimeout(renderShare, 180); };
+  $('capR').oninput = capIn;
   function renderShare() {
     const front = (fronts[$('finish').textContent === 'Gloss' ? 'gloss' : 'matte'] || fronts.matte).col;
     const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, photoRect: fronts.matte.photoRect, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: sh.left, right: sh.right, handle: '@cody', mark: 'poto.app' });
@@ -176,6 +208,12 @@
   $('del').onclick = () => { ta.focus({ preventScroll: true }); ta.setRangeText('', ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input')); buzz(10); };
   function stopWriting() { app.classList.remove('writing'); pc.writing(false); ta.blur(); cancelAnimationFrame(capRaf); }
   $('write').onclick = startWriting; $('done').onclick = stopWriting;
+  // the handwritten note: two short lines, written as you type
+  let nT = 0; const n1 = $('n1'), n2 = $('n2');
+  const noteIn = () => { clearTimeout(nT); nT = setTimeout(() => pc.updateBackRegion(W.setNote([n1.value, n2.value])), 90); };
+  n1.oninput = n2.oninput = noteIn; n1.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); n2.focus(); } }; n2.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); $('ndone').click(); } };
+  $('notebtn').onclick = () => { stopWriting(); n1.value = W.note[0] || ''; n2.value = W.note[1] || ''; app.classList.add('noting'); pc.writing(true); n1.focus({ preventScroll: true }); };
+  $('ndone').onclick = () => { app.classList.remove('noting'); pc.writing(false); n1.blur(); n2.blur(); };
   // ---- sticker mode ----
   let ringRaf = 0; const ring = $('ring');
   function trackRing() { const s = pc.selected(); cancelAnimationFrame(ringRaf); if (!s || s.state === 'gone') return; const q = pc.stickerScreen(s), r = q.r * 1.12;

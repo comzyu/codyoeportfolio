@@ -43,22 +43,19 @@
   // the backdrop: the photo, cover-fit, but turned into something else so it doesn't read as a double (Cody, 16 Nov):
   // black and white, softly blurred, darker, with film grain and a vignette
   function backdrop(x, F, ph) {
-    // Cody, 16 Nov: more frosted, more opaque, more texture, muted. Like the photo seen through thick frosted glass:
-    // black and white, very soft, washed with a milky white, then a two-scale frost texture (fine grain + soft mottling).
-    const cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.2;
-    x.fillStyle = '#E9E8E4'; x.fillRect(0, 0, F.w, F.h);
-    x.save(); x.filter = 'grayscale(1) contrast(.8) brightness(1.05) blur(' + Math.round(F.w * 0.06) + 'px)'; x.globalAlpha = 0.85; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
-    x.fillStyle = 'rgba(236,235,231,.62)'; x.fillRect(0, 0, F.w, F.h);
+    // Cody, 17 Nov: frosted GLASS, not paper. Glass diffuses light smoothly: the photo melts into soft, even shapes (big blur, no blotches),
+    // a cool milky veil sits over it, light catches a broad diagonal sheen, and there's only a whisper of very fine grain up close.
+    const cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.25;
+    x.fillStyle = '#E6E7E8'; x.fillRect(0, 0, F.w, F.h);
+    x.save(); x.filter = 'grayscale(1) contrast(.85) blur(' + Math.round(F.w * 0.075) + 'px)'; x.globalAlpha = 0.9; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
+    x.fillStyle = 'rgba(236,238,240,.58)'; x.fillRect(0, 0, F.w, F.h);                                   // the milky body of the glass, a touch cool
+    const sh = x.createLinearGradient(0, 0, F.w, F.h);                                                   // light across the pane
+    sh.addColorStop(0, 'rgba(255,255,255,.28)'); sh.addColorStop(0.38, 'rgba(255,255,255,.04)'); sh.addColorStop(0.62, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(255,255,255,.14)');
+    x.fillStyle = sh; x.fillRect(0, 0, F.w, F.h);
     let sd = 11; const r = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);
-    // soft mottling: a few hundred big faint blots, the uneven thickness of frosted glass
-    x.save(); x.filter = 'blur(' + Math.round(F.w * 0.02) + 'px)';
-    for (let i = 0; i < 260; i++) { x.fillStyle = r() > 0.5 ? 'rgba(255,255,255,.10)' : 'rgba(120,118,112,.07)'; x.beginPath(); x.arc(r() * F.w, r() * F.h, F.w * (0.02 + r() * 0.06), 0, Math.PI * 2); x.fill(); }
-    x.restore();
-    // fine frost grain
-    const g = mk(256, 256), gx = g.getContext('2d'), id = gx.createImageData(256, 256);
-    for (let i = 0; i < id.data.length; i += 4) { const v = r(); id.data[i] = id.data[i + 1] = id.data[i + 2] = v > 0.5 ? 255 : 60; id.data[i + 3] = Math.abs(v - 0.5) * 2 * 70; }
+    const g = mk(256, 256), gx = g.getContext('2d'), id = gx.createImageData(256, 256);                // fine, even, low: etched glass, not paper
+    for (let i = 0; i < id.data.length; i += 4) { const v = r(); id.data[i] = id.data[i + 1] = id.data[i + 2] = v > 0.5 ? 255 : 90; id.data[i + 3] = Math.abs(v - 0.5) * 2 * 22; }
     gx.putImageData(id, 0, 0); x.save(); x.fillStyle = x.createPattern(g, 'repeat'); x.fillRect(0, 0, F.w, F.h); x.restore();
-    const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.3, F.w / 2, F.h / 2, F.h * 0.8); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,58,52,.10)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
   }
   function coverDraw(x, im, dx, dy, dw, dh) { x.imageSmoothingQuality = 'high'; const k = Math.max(dw / im.width, dh / im.height), sw = dw / k, sh = dh / k; x.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh); }
   function details(x, F, o, ex, y1) {

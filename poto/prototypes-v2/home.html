@@ -6,6 +6,7 @@
 <title>Poto · Diary</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
+<script src="lib/develop.js" defer></script>
 <style>
   /* Gallery white. Type and glass stay quiet; prints and folders are the only things with material. */
   .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(120px + env(safe-area-inset-bottom, 0px)); }
@@ -130,6 +131,7 @@
 <script>
 const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 PotoTex.install();
+const th = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-t.jpg';   // tiny: disc windows, calendar days
 const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
 let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
@@ -217,7 +219,7 @@ const reel = $('reel'), wrap = $('reelwrap'), WIN = 12, STEP = 360 / WIN;
 // out of sight (at the bottom) are quietly reloaded as you spin, so the disc never runs out. Base (paper, print, label) is drawn once;
 // only the 12 windows are redrawn, and only when the print under the pointer changes.
 const disc = document.createElement('canvas'); reel.appendChild(disc);
-const discImgs = {}; const img = (k) => { if (!discImgs[k]) { const i = new Image(); i.decoding = 'async'; i.src = items[k].src.replace('.jpg', '-s.jpg'); i.onload = () => drawWindows(true); discImgs[k] = i; } return discImgs[k]; };
+const discImgs = {}; const img = (k) => { if (!discImgs[k]) { const i = new Image(); i.decoding = 'async'; i.src = items[k].src.replace('.jpg', '-t.jpg'); i.onload = () => drawWindows(true); discImgs[k] = i; } return discImgs[k]; };
 let paperTile = null, base = null, shownAt = null; setTimeout(() => { paperTile = PotoTex.paper(33, [246, 241, 230], { cloud: 0.06, light: 0.22 }); drawBase(); }, 0);
 const discDPR = () => Math.min(3, devicePixelRatio || 1);
 function drawBase() {
@@ -237,17 +239,19 @@ function drawBase() {
   drawWindows(true);
 }
 function drawWindows(force) {
-  if (!base) return; const at = Math.round(pos); if (!force && at === shownAt) return; shownAt = at;
+  if (!base) return; const at = Math.round(pos); if (!force && (N <= WIN || at === shownAt)) return; shownAt = at;
   const P = base.width, dpr = discDPR(), c = P / 2; if (disc.width !== P) disc.width = disc.height = P;
   const x = disc.getContext('2d'); x.clearRect(0, 0, P, P); x.drawImage(base, 0, 0);
   const ww = P * 0.15, wh = ww * 1.12, R = P * 0.395;
   for (let k = 0; k < WIN; k++) {
     // which print sits in window k right now: the one with index ≡ k (mod 12) nearest the pointer
-    let i = at + ((k - at) % WIN + WIN) % WIN; if (i - at > WIN / 2) i -= WIN;
+    // which print sits in window k: with 12 or fewer prints, always print k. With more, the print with index ≡ k (mod 12)
+    // nearest the pointer, so only windows on the far side (out of sight) ever change.
+    let i = k; if (N > WIN) { i = at + ((k - at) % WIN + WIN) % WIN; if (i - at > WIN / 2) i -= WIN; }
     const a = k * STEP * Math.PI / 180; x.save(); x.translate(c, c); x.rotate(a); x.translate(0, -R);
     x.beginPath(); x.roundRect(-ww / 2, -wh / 2, ww, wh, 3 * dpr);
     if (i >= 0 && i < N) {
-      x.fillStyle = '#1b1a19'; x.fill(); const im = img(i);
+      const im = img(i); x.fillStyle = im.complete && im.naturalWidth ? '#1b1a19' : '#DCD7CC'; x.fill();
       if (im.complete && im.naturalWidth) { const s = Math.max(ww / im.naturalWidth, wh / im.naturalHeight); x.save(); x.clip(); x.drawImage(im, -im.naturalWidth * s / 2, -im.naturalHeight * s / 2, im.naturalWidth * s, im.naturalHeight * s); x.restore(); }
       x.save(); x.clip(); x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 3 * dpr; x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 4 * dpr; x.stroke(); x.restore();
       x.restore();
@@ -301,7 +305,7 @@ function heroHTML(M) {
 function pageHTML(M) {
   let h = '<div class="page"><div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="cal">';
   for (let i = 0; i < M.lead; i++) h += '<span></span>';
-  for (let d = 1; d <= M.days; d++) { const has = !!M.plan[d]; h += (has ? '<button type="button" data-d="' + d + '" aria-label="' + d + ' ' + MNAME[M.m] + '"' : '<span') + ' class="d' + (has ? ' has' : '') + (d === M.today ? ' today' : '') + (d === M.hero ? ' sel' : '') + '">' + (has ? '<img src="' + ph(dayPhoto(d, M.m)) + '" alt="" loading="lazy" decoding="async">' : '') + '<b>' + d + '</b>' + (has ? '</button>' : '</span>'); }
+  for (let d = 1; d <= M.days; d++) { const has = !!M.plan[d]; h += (has ? '<button type="button" data-d="' + d + '" aria-label="' + d + ' ' + MNAME[M.m] + '"' : '<span') + ' class="d' + (has ? ' has' : '') + (d === M.today ? ' today' : '') + (d === M.hero ? ' sel' : '') + '">' + (has ? '<img src="' + th(dayPhoto(d, M.m)) + '" alt="" loading="lazy" decoding="async">' : '') + '<b>' + d + '</b>' + (has ? '</button>' : '</span>'); }
   for (let i = M.lead + M.days; i < 42; i++) h += '<span></span>';                // always six rows, so every page is the same height
   return h + '</div></div>';
 }
