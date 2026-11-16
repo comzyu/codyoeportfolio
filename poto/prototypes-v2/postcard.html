@@ -140,7 +140,7 @@
   const sh = { fmt: 'story', side: 'front' }, sheet = $('sharesheet');
   function renderShare() {
     const front = (fronts[$('finish').textContent === 'Gloss' ? 'gloss' : 'matte'] || fronts.matte).col;
-    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, back: W.tex.col, stickers: pc.stickersFlat(), caption: 'Sunday · 15 Nov 2026 · Singapore', mark: 'shot on poto · poto.app' });
+    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: 'Sunday · 15 Nov 2026', right: 'Singapore', handle: '@cody', mark: 'poto.app' });
     $('simg').src = img.toDataURL('image/jpeg', 0.92);
     const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min((st.clientWidth) / F.w, (st.clientHeight - 20) / F.h);
     fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';

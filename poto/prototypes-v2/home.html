@@ -29,8 +29,10 @@
   .cat:active { cursor: grabbing; }
   .cat .c { position: absolute; left: 50%; top: 14px; width: 168px; margin-left: -84px; transform-style: preserve-3d; will-change: transform; backface-visibility: hidden; }
   .cat .c .p { position: relative; width: 100%; }
-  .cat .c .p::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.06)); opacity: var(--shade, 0); }
-  .cat .c.r .p::before { background: linear-gradient(270deg, rgba(0,0,0,.28), rgba(0,0,0,.06)); }
+  /* shading on cards that turn away: its own layer, changed only through opacity (no repaint) */
+  .cat .c .sh { position: absolute; inset: 0; border-radius: 2.5px; z-index: 2; pointer-events: none; opacity: 0; will-change: opacity; background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(0,0,0,.05)); }
+  .cat .c .sh.r { background: linear-gradient(270deg, rgba(0,0,0,.3), rgba(0,0,0,.05)); }
+  .cat .c .p { box-shadow: 0 1px 2px rgba(20,20,30,.16), 0 14px 26px -14px rgba(20,20,30,.32); will-change: auto; }
   .cat .date { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; color: var(--ink-3); transition: opacity .2s; }
   .film { position: relative; display: flex; gap: 3px; padding: 9px 8px; margin-top: 2px; border-radius: 6px; background: #1b1a19;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px -8px rgba(0,0,0,.5); }
@@ -111,13 +113,14 @@ let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffff
 let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const items = kept.slice(0, 12).concat([4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10].map((n, k) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, 12);
-const cat = $('cat'), film = $('film'), N = items.length, look = (o) => 'transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')';
+const cat = $('cat'), film = $('film'), N = items.length, look = (o) => (o.zoom > 1 ? 'transform:scale(' + (o.zoom / 1.35).toFixed(3) + ');' : '') + (o.ev ? 'filter:brightness(' + Math.pow(2, o.ev * 0.75).toFixed(3) + ')' : '');   // no filter unless the exposure was changed: filters on many images are what make phones stutter
 const date = document.createElement('span'); date.className = 'date mono'; cat.appendChild(date);
 cat.tabIndex = 0; cat.setAttribute('role', 'listbox'); cat.setAttribute('aria-label', "This week's prints. Swipe, or use the arrow keys.");
 items.forEach((o, k) => {
   const sm = o.src.replace('.jpg', '-s.jpg');
   const c = document.createElement('div'); c.className = 'c'; c.setAttribute('role', 'option'); c.setAttribute('aria-label', 'Print ' + (k + 1) + ' of ' + N);
-  c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="' + look(o) + '"></span></span>';
+  c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" decoding="async" style="' + look(o) + '"></span><i class="sh"></i></span>';
+  o.sh = c.querySelector('.sh'); o.z = null; o.vis = null; o.r = null;
   o.el = c; cat.appendChild(c);
   const f = document.createElement('button'); f.type = 'button'; f.tabIndex = -1; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<img src="' + sm + '" alt="" style="' + look(o) + '">'; film.appendChild(f);
 });
@@ -129,11 +132,14 @@ const CW = 168, G1 = 128, G2 = 13, SPINE = 76;              // card width, gap t
 const clampPos = (p) => p < 0 ? p * 0.35 : p > N - 1 ? N - 1 + (p - N + 1) * 0.35 : p;   // past the ends it stretches, then springs back
 function layout() {
   for (let k = 0; k < N; k++) {
-    const c = items[k].el, d = k - pos, a = Math.abs(d), sg = Math.sign(d), near = Math.min(a, 1), far = Math.max(a - 1, 0);
-    if (a > 9) { c.style.visibility = 'hidden'; continue; } c.style.visibility = '';
+    const o = items[k], c = o.el, d = k - pos, a = Math.abs(d), sg = Math.sign(d), near = Math.min(a, 1), far = Math.max(a - 1, 0);
+    const vis = a <= 9; if (vis !== o.vis) { o.vis = vis; c.style.visibility = vis ? '' : 'hidden'; } if (!vis) continue;
     const x = sg * (near * G1 + far * G2), rot = -sg * near * SPINE, z = -near * 70 - far * 4, lift = (1 - near) * -6;
     c.style.transform = reduced ? 'translateX(' + x * 1.5 + 'px) scale(' + (1 - near * 0.2) + ')' : 'translate3d(' + x.toFixed(1) + 'px,' + lift.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + rot.toFixed(2) + 'deg)';
-    c.style.zIndex = 100 - Math.round(a * 4); c.classList.toggle('r', d < 0); c.style.setProperty('--shade', (near * 0.9).toFixed(2));
+    // only touch what changed: z-order and side flip rarely, shading through opacity (compositor-only)
+    const zi = 100 - Math.round(a * 4); if (zi !== o.z) { o.z = zi; c.style.zIndex = zi; }
+    const r = d < 0; if (r !== o.r) { o.r = r; o.sh.classList.toggle('r', r); }
+    o.sh.style.opacity = (near * 0.9).toFixed(2);
   }
   const cur = Math.max(0, Math.min(N - 1, Math.round(pos)));
   if (cur !== shown) {

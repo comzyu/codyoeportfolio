@@ -4,8 +4,8 @@
 (function () {
   const S = (window.PotoShare = {});
   const FORMATS = {
-    story: { w: 1080, h: 1920, safeTop: 250, safeBottom: 340, side: 64 },   // Story UI covers ~250 px at the top (bar, name) and ~340 px at the bottom (reply box)
-    post: { w: 1080, h: 1350, safeTop: 70, safeBottom: 70, side: 70 },      // 4:5 feed post: nothing overlaps, keep a calm margin
+    story: { w: 1080, h: 1920, safeTop: 250, safeBottom: 340, side: 70 },   // Story UI covers ~250 px at the top (bar, name) and ~340 px at the bottom (reply box)
+    post: { w: 1080, h: 1350, safeTop: 60, safeBottom: 34, side: 80 },      // 4:5 feed post: nothing overlaps, keep a calm margin
   };
   S.formats = FORMATS;
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -36,34 +36,35 @@
   }
   function round(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-  /* o: { format: 'story'|'post', side: 'front'|'back'|'both', front, back (canvases), stickers, caption, place, mark } */
+  /* o: { format: 'story'|'post', side: 'front'|'back'|'both', photo, front, back (canvases), stickers, left, right, mark }
+     Layout after Retro's shares (Cody, 16 Nov: "too much empty space"): the photo itself, enlarged and blurred, fills the frame;
+     the card sits big in the middle; one quiet line of details under it. */
   S.render = function (o) {
     const F = FORMATS[o.format], c = mk(F.w, F.h), x = c.getContext('2d');
-    // the room: gallery white, lit softly from the top left
-    x.fillStyle = '#F6F5F1'; x.fillRect(0, 0, F.w, F.h);
-    const lg = x.createRadialGradient(F.w * 0.2, F.h * 0.05, 0, F.w * 0.2, F.h * 0.05, F.h * 1.1); lg.addColorStop(0, 'rgba(255,255,255,.9)'); lg.addColorStop(1, 'rgba(232,229,222,.0)');
-    x.fillStyle = lg; x.fillRect(0, 0, F.w, F.h);
-    const top = F.safeTop, bottom = F.h - F.safeBottom, textH = o.format === 'story' ? 120 : 92, areaH = bottom - top - textH, midY = top + areaH / 2;
-    const both = o.side === 'both';
-    if (!both) {
-      const w = Math.min(F.w - F.side * 2, (areaH - 40) / ASPECT);
-      card(x, o.side === 'back' ? o.back : o.front, o.side === 'back' ? o.stickers : [], F.w / 2, midY, w, -0.012);
-    } else if (o.format === 'story') {                  // story: the back tucked behind and to the left, the front laid over it
-      const w = Math.min(F.w * 0.66, (areaH - 60) / ASPECT / 1.12);
-      card(x, o.back, o.stickers, F.w / 2 - w * 0.2, midY - w * 0.17, w, -0.075);
-      card(x, o.front, [], F.w / 2 + w * 0.17, midY + w * 0.17, w, 0.04);
-    } else {                                            // post: side by side, a little loose
-      const w = Math.min((F.w - F.side * 2 - 36) / 2, (areaH - 50) / ASPECT);
-      card(x, o.front, [], F.w / 2 - w / 2 - 18, midY - 6, w, -0.022);
-      card(x, o.back, o.stickers, F.w / 2 + w / 2 + 18, midY + 8, w, 0.018);
+    // 1. the backdrop: the same photo, cover-fit, heavily blurred, a little darker so the card lifts off it
+    const ph = o.photo, cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.15;
+    x.save(); x.filter = 'blur(' + Math.round(F.w * 0.045) + 'px) saturate(1.15)'; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
+    x.fillStyle = 'rgba(12,10,8,.22)'; x.fillRect(0, 0, F.w, F.h);
+    const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.25, F.w / 2, F.h / 2, F.h * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.28)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
+    // 2. the card(s), as big as the clear area allows
+    const foot = o.format === 'story' ? 96 : 76, top = F.safeTop, bottom = F.h - F.safeBottom - foot, areaH = bottom - top, midY = top + areaH / 2;
+    let w;
+    if (o.side !== 'both') {
+      w = Math.min(F.w - F.side * 2, (areaH - 24) / ASPECT);
+      card(x, o.side === 'back' ? o.back : o.front, o.side === 'back' ? o.stickers : [], F.w / 2, midY, w, -0.01);
+    } else {                                            // the back tucked behind, the front laid over it
+      w = Math.min(F.w * 0.74, (areaH - 30) / ASPECT / 1.1);
+      card(x, o.back, o.stickers, F.w / 2 - w * 0.13, midY - w * 0.06, w, -0.06);
+      card(x, o.front, [], F.w / 2 + w * 0.1, midY + w * 0.05, w, 0.035);
     }
-    // the description and the watermark: always inside the clear area, always big enough to read in the app
-    const ty = bottom - textH + (o.format === 'story' ? 44 : 34);
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#3b3a37';
-    x.font = '500 ' + (o.format === 'story' ? 30 : 26) + 'px "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '5px';
-    x.fillText(o.caption.toUpperCase(), F.w / 2, ty);
-    x.fillStyle = '#8e8c86'; x.font = '500 ' + (o.format === 'story' ? 26 : 22) + 'px "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '3px';
-    x.fillText(o.mark, F.w / 2, ty + (o.format === 'story' ? 50 : 42));
+    // 3. the details: under the card, left and right aligned to its edges, white on the blurred photo
+    const ex = Math.max(F.side, F.w / 2 - (o.side === 'both' ? w * 0.62 : w / 2)), y1 = bottom + foot * 0.45, y2 = y1 + (o.format === 'story' ? 36 : 30);
+    x.fillStyle = 'rgba(255,255,255,.92)'; x.textBaseline = 'middle'; x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 6;
+    const big = (o.format === 'story' ? 25 : 22) + 'px', small = (o.format === 'story' ? 21 : 18) + 'px';
+    x.font = '500 ' + big + ' "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '3px';
+    x.textAlign = 'left'; x.fillText(o.left.toUpperCase(), ex, y1); x.textAlign = 'right'; x.fillText(o.right.toUpperCase(), F.w - ex, y1);
+    x.fillStyle = 'rgba(255,255,255,.66)'; x.font = '500 ' + small + ' "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px';
+    x.textAlign = 'left'; x.fillText(o.handle, ex, y2); x.textAlign = 'right'; x.fillText(o.mark, F.w - ex, y2);
     if (x.letterSpacing !== undefined) x.letterSpacing = '0px';
     return c;
   };

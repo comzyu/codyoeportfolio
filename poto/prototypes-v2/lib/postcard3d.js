@@ -117,7 +117,7 @@
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setPixelRatio(opts.lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));   // 1.75x is sharp on a phone and ~25% fewer pixels than 2x
     renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.NoToneMapping;
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.VSMShadowMap;
+    renderer.shadowMap.enabled = false;   // no shadow-map pass (it drew the scene twice plus blur passes every frame): the card's shadow is a projected soft image below
     el.appendChild(renderer.domElement);
     const scene = new T.Scene(); scene.background = new T.Color(opts.background || '#FAFAF8');
     const camera = new T.PerspectiveCamera(28, 1, 0.1, 30); camera.position.set(0, 0, 4.4);
@@ -131,17 +131,23 @@
     })();
     scene.add(new T.HemisphereLight(0xffffff, 0xeeebe5, 1.3));
     // the key comes in low from the upper left, so the paper's tooth and the typewriter dents catch the light
-    const key = new T.DirectionalLight(0xfffcf6, 1.75); key.position.set(-2.4, 2.1, 2.7); key.castShadow = true;
+    const key = new T.DirectionalLight(0xfffcf6, 1.75); key.position.set(-2.4, 2.1, 2.7);
     key.shadow.mapSize.set(1024, 1024); key.shadow.radius = opts.lite ? 8 : 12; key.shadow.blurSamples = opts.lite ? 6 : 10;   // the shadow is soft anyway: a smaller map and fewer blur taps look the same and cost far less per frame key.shadow.bias = -0.0004;
     Object.assign(key.shadow.camera, { left: -1.8, right: 1.8, top: 2, bottom: -2, near: 0.5, far: 9 }); key.shadow.camera.updateProjectionMatrix(); scene.add(key);
-    const wall = new T.Mesh(new T.PlaneGeometry(14, 14), new T.ShadowMaterial({ opacity: 0.11, color: 0x20222a })); wall.position.z = -0.3; wall.receiveShadow = true; scene.add(wall);
+    // the card's shadow on the wall: a pre-blurred rounded rectangle, projected along the light onto the wall each frame (classic planar shadow).
+    // One textured quad instead of a shadow map: same soft look, a fraction of the cost.
+    const WALLZ = -0.3, shc = document.createElement('canvas'); shc.width = 256; shc.height = 340; { const g = shc.getContext('2d'); g.filter = 'blur(13px)'; g.fillStyle = '#000'; g.beginPath(); g.roundRect(46, 46, 164, 248, 6); g.fill(); }
+    const shTex = new T.CanvasTexture(shc), shadowQuad = new T.Mesh(new T.PlaneGeometry(CW * 256 / 164, CH * 340 / 248), new T.MeshBasicMaterial({ map: shTex, color: 0x20222a, transparent: true, opacity: 0.2, depthWrite: false, side: T.DoubleSide }));
+    shadowQuad.matrixAutoUpdate = false; scene.add(shadowQuad);
+    const Ld = new V3().copy(key.position).normalize().negate(), projM = new T.Matrix4();
+    { const t = -1 / Ld.z; projM.set(1, 0, -Ld.x / Ld.z, Ld.x * WALLZ / Ld.z, 0, 1, -Ld.y / Ld.z, Ld.y * WALLZ / Ld.z, 0, 0, 0, WALLZ + 0.001, 0, 0, 0, 1); }   // P' = P - Ld * (P.z - WALLZ) / Ld.z scene.add(wall);
 
     /* ---------- the card ---------- */
     const card = new T.Group(); scene.add(card);
     const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
     const edge = new T.MeshStandardMaterial({ color: 0xe9e4d9, roughness: 1, envMapIntensity: 0.2, side: T.DoubleSide });
     const mats = { front: new T.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.3, clearcoat: 0, clearcoatRoughness: 0.07 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
-    const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); body.castShadow = true; body.receiveShadow = true; card.add(body);
+    const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); card.add(body);
     this.setFaces = function (front, back) {
       if (front) { const m = mats.front; m.emissive = new T.Color(0xffffff); m.emissiveMap = front.lit ? tex(front.lit, true) : null; m.emissiveIntensity = front.lit ? 0.3 : 0; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
       for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { if (!t) continue; m.map = tex(t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
@@ -174,7 +180,7 @@
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uFoilMap; uniform float uFoil;').replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + FOIL_FRAG); };
       const mesh = new T.Mesh(new T.PlaneGeometry(SS, SS, 44, 44), mat);
       const dd = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: mat.map, alphaTest: 0.5 }), dm = new T.MeshDistanceMaterial({ map: mat.map, alphaTest: 0.5 });
-      dd.onBeforeCompile = dm.onBeforeCompile = (sh) => patchPeel(sh, u); mesh.customDepthMaterial = dd; mesh.customDistanceMaterial = dm; mesh.castShadow = true;
+      dd.onBeforeCompile = dm.onBeforeCompile = (sh) => patchPeel(sh, u); mesh.customDepthMaterial = dd; mesh.customDistanceMaterial = dm;
       // contact shadow: the sticker's own silhouette, barely blurred, a hair down-right of it (light is upper-left)
       const sc = document.createElement('canvas'); sc.width = sc.height = 256; const sx = sc.getContext('2d'); sx.filter = 'blur(2.5px)'; sx.drawImage(art.col, 4, 5, 250, 250);
       const shadow = new T.Mesh(new T.PlaneGeometry(SS, SS), new T.ShaderMaterial({ vertexShader: CONTACT_VS, fragmentShader: CONTACT_FS, transparent: true, depthWrite: false,
@@ -359,7 +365,7 @@
         if (flipping && Math.abs(yaw - yawT) < 0.004 && Math.abs(yv) < 0.05) { flipping = false; if (self.onLand) self.onLand(); }
       }
       wk += ((writing ? 1 : 0) - wk) * Math.min(1, dt * 6);
-      shadowTick = (shadowTick + 1) % 5; renderer.shadowMap.autoUpdate = !(writing && wk > 0.98); if (!renderer.shadowMap.autoUpdate && shadowTick === 0) renderer.shadowMap.needsUpdate = true;   // card is nearly still while writing: refresh shadows less often
+      card.updateMatrixWorld(); shadowQuad.matrix.multiplyMatrices(projM, card.matrixWorld); { const nz = Math.abs(new V3(0, 0, 1).transformDirection(card.matrixWorld).dot(Ld)), f = Math.min(1, Math.max(0, (nz - 0.25) / 0.45)); shadowQuad.material.opacity = 0.2 * f * f * (3 - 2 * f); }   // nearly edge-on to the light, a soft shadow thins to nothing
       card.rotation.set(pitch, yaw + REST_YAW * (1 - wk), ROLL * (1 - wk), 'YXZ');
       camera.position.set(-0.11 * wk, -0.06 * wk, camZ * (1 - 0.2 * wk));
       stepAnims(dt); renderer.render(scene, camera);
