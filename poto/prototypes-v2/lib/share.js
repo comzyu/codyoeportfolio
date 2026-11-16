@@ -43,8 +43,11 @@
     const F = FORMATS[o.format], c = mk(F.w, F.h), x = c.getContext('2d');
     // 1. the backdrop: the same photo, cover-fit, heavily blurred, a little darker so the card lifts off it
     const ph = o.photo, cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.15;
-    x.save(); x.filter = 'blur(' + Math.round(F.w * 0.045) + 'px) saturate(1.15)'; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
-    x.fillStyle = 'rgba(12,10,8,.22)'; x.fillRect(0, 0, F.w, F.h);
+    // Cody, 16 Nov: the same photo twice read as a double. So the backdrop is turned into something else: black and white, softly blurred, with film grain.
+    x.save(); x.filter = 'grayscale(1) contrast(1.08) blur(' + Math.round(F.w * 0.03) + 'px)'; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
+    x.fillStyle = 'rgba(12,12,12,.30)'; x.fillRect(0, 0, F.w, F.h);
+    { const g = mk(256, 256), gx = g.getContext('2d'), id = gx.createImageData(256, 256); for (let i = 0; i < id.data.length; i += 4) { const v = 128 + (Math.random() - 0.5) * 140; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } gx.putImageData(id, 0, 0);
+      x.save(); x.globalCompositeOperation = 'overlay'; x.globalAlpha = 0.32; x.fillStyle = x.createPattern(g, 'repeat'); x.fillRect(0, 0, F.w, F.h); x.restore(); }
     const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.25, F.w / 2, F.h / 2, F.h * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.28)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
     // 2. the card(s), as big as the clear area allows
     const foot = o.format === 'story' ? 96 : 76, top = F.safeTop, bottom = F.h - F.safeBottom - foot, areaH = bottom - top, midY = top + areaH / 2;

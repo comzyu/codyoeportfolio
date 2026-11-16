@@ -34,23 +34,47 @@
   .cat .c .sh.r { background: linear-gradient(270deg, rgba(0,0,0,.3), rgba(0,0,0,.05)); }
   .cat .c .p { box-shadow: 0 1px 2px rgba(20,20,30,.16), 0 14px 26px -14px rgba(20,20,30,.32); will-change: auto; }
   .cat .date { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; color: var(--ink-3); transition: opacity .2s; }
-  .film { position: relative; display: flex; gap: 3px; padding: 9px 8px; margin-top: 2px; border-radius: 6px; background: #1b1a19;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px -8px rgba(0,0,0,.5); }
-  .film::before, .film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 4px; background: repeating-linear-gradient(90deg, #f3f1ec 0 4px, transparent 4px 9px); opacity: .55; border-radius: 1px; }
-  .film::before { top: 2.5px; } .film::after { bottom: 2.5px; }
-  .film { touch-action: none; cursor: ew-resize; }
-  .film button { flex: 1; min-width: 0; padding: 0; aspect-ratio: 3 / 4; border-radius: 1px; overflow: hidden; opacity: .55; transition: opacity .2s, transform .3s var(--spring); pointer-events: none; }
-  .film button img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .film button.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 1.5px #f3f1ec; }
+  /* the reel: a photo disc you spin (Cody's board #5). Each window holds a print; the one under the pointer is "in the projector". */
+  .reelwrap { position: relative; display: grid; place-items: center; margin: 8px 0 4px; }
+  .reel { position: relative; width: min(84vw, 330px); aspect-ratio: 1; border-radius: 50%; touch-action: none; cursor: grab; will-change: transform;
+    background: radial-gradient(circle at 50% 50%, #f7f3ea 0 14%, #efe9dc 14.5% 15%, #f7f3ea 15.5% 100%);
+    box-shadow: inset 0 0 0 1px rgba(60,50,40,.10), inset 0 2px 1px rgba(255,255,255,.9), 0 2px 3px rgba(20,20,30,.12), 0 22px 40px -22px rgba(20,20,30,.38); }
+  .reel::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: .55; mix-blend-mode: multiply;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .4  0 0 0 0 .32  0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .reel .hole { position: absolute; left: 50%; top: 50%; width: 7%; aspect-ratio: 1; margin: -3.5% 0 0 -3.5%; border-radius: 50%; background: var(--room); box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
+  .reel .ring { position: absolute; inset: 7%; border-radius: 50%; border: 1px solid rgba(46,86,160,.28); pointer-events: none; }
+  .reel .ring.in { inset: 31%; }
+  .reel .label { position: absolute; left: 50%; top: 50%; width: 34%; transform: translate(-50%, -50%); text-align: center; color: #2e56a0; pointer-events: none; }
+  .reel .label b { display: block; font: 600 15px/1 var(--sans); letter-spacing: -.01em; margin: 5px 0 3px; } .reel .label i { display: block; font: 500 7.5px/1.3 var(--mono); letter-spacing: .14em; text-transform: uppercase; font-style: normal; }
+  .reel .w { position: absolute; left: 50%; top: 50%; width: 15%; aspect-ratio: 1 / 1.12; margin: -8.4% 0 0 -7.5%; border-radius: 3px; overflow: hidden; background: #1b1a19; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+  .reel .w img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .82; transition: opacity .25s, filter .25s; }
+  .reel .n { position: absolute; left: 50%; top: 50%; font: 500 8px/1 var(--mono); color: #2e56a0; opacity: .75; pointer-events: none; }
+  .reel .w.on img { opacity: 1; filter: brightness(1.12); }
+  .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border: 8px solid transparent; border-top: 11px solid var(--ink); border-bottom: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,.2)); z-index: 2; }
+  .lamp { position: absolute; top: -2px; left: 50%; width: 34%; height: 46%; transform: translateX(-50%); pointer-events: none; z-index: 1; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(60% 46% at 50% 18%, rgba(255,246,220,.55), rgba(255,246,220,0) 70%); mix-blend-mode: screen; }
+  .reelwrap.lit .lamp { opacity: 1; }
 
   /* the month: mostly white. Days are tiny loose prints under small numerals. */
-  .cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 14px; margin-top: 18px; }
-  .cal .d { position: relative; aspect-ratio: 1 / 1.34; }
-  .cal .d b { position: absolute; left: 50%; top: 0; transform: translateX(-50%); font: 500 10px/12px var(--sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
-  .cal .d.today b { color: #fff; background: var(--ink); border-radius: 999px; padding: 0 5px; }
-  .cal .d .p { position: absolute; width: 64%; left: 18%; top: 17px; padding: 5% 5% 14%; border-radius: 1.5px; box-shadow: 0 .5px 1px rgba(20,20,30,.22), 0 4px 8px -3px rgba(20,20,30,.25); }
-  .cal .d .p + .p { z-index: -1; }
-  .dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-top: 22px; text-align: center; color: var(--ink-3); }
+  /* the month (board #15): one big photo on top, a ring binding, then the days, each a photo */
+  .mcal { margin-top: 26px; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--hair), 0 20px 40px -26px rgba(20,20,30,.35); }
+  .mcal .hero { position: relative; aspect-ratio: 4 / 3.1; background: #111; overflow: hidden; }
+  .mcal .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s; }
+  .mcal .hero .m { position: absolute; left: 18px; top: 14px; color: #fff; font: 400 26px/1 var(--sans); letter-spacing: -.01em; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+  .mcal .hero .y { position: absolute; right: 18px; top: 18px; color: rgba(255,255,255,.85); font: 500 11px/1 var(--mono); letter-spacing: .12em; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
+  .mcal .hero .d { position: absolute; left: 18px; bottom: 26px; color: rgba(255,255,255,.92); font: 500 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
+  .mcal .rings { position: relative; height: 22px; margin-top: -11px; display: flex; justify-content: space-between; padding: 0 9%; z-index: 2; pointer-events: none; }
+  .mcal .rings i { width: 9px; height: 22px; border-radius: 6px; border: 2px solid #b9b9bf; border-left-color: #e9e9ee; border-right-color: #8f8f96; background: transparent; box-shadow: 0 1px 1px rgba(0,0,0,.15); }
+  .mcal .rings i:nth-child(n+4):nth-child(-n+5) { visibility: hidden; }
+  .mcal .body { padding: 10px 12px 14px; }
+  .dow { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; color: var(--ink-3); padding: 6px 0 6px; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--hair); border-left: 1px solid var(--hair); }
+  .cal > * { position: relative; aspect-ratio: 1; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); overflow: hidden; }
+  .cal .d { cursor: pointer; padding: 0; background: none; } .cal .d img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cal .d b { position: absolute; right: 3px; top: 2px; z-index: 1; font: 500 9px/11px var(--sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .cal .d.has b { color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.6); }
+  .cal .d.today::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--ink); }
+  .cal .d.sel::before { content: ""; position: absolute; inset: 0; z-index: 2; box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3.5px var(--ink); }
 
   /* rolls: each finished roll is a folder. Back board with a tab, prints inside, a frosted front pocket that really blurs what's behind it. */
   .rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
@@ -90,10 +114,11 @@
       <h3>This week <small id="count">Scroll · tap to open</small></h3>
     </div>
     <div class="cat" id="cat" aria-label="This week's prints"></div>
-    <div class="pad"><div class="film" id="film" role="group" aria-label="All prints"></div></div>
+    <div class="pad"><div class="reelwrap" id="reelwrap"><i class="pointer" aria-hidden="true"></i><i class="lamp" aria-hidden="true"></i><div class="reel" id="reel" role="slider" tabindex="0" aria-label="Photo disc. Spin to go through the prints." aria-valuemin="1"></div></div></div>
     <div class="pad">
-      <div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-      <div class="cal" id="cal"></div>
+      <div class="mcal"><div class="hero" id="hero"><img id="heroimg" alt=""><span class="m">nov.</span><span class="y">2026</span><span class="d" id="herod"></span></div>
+        <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="body"><div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="cal" id="cal"></div></div></div>
       <h3>Rolls <small>Tap to look inside</small></h3>
       <div class="rolls" id="rolls"></div>
     </div>
@@ -113,7 +138,7 @@ let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffff
 let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const items = kept.slice(0, 12).concat([4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10].map((n, k) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, 12);
-const cat = $('cat'), film = $('film'), N = items.length, look = (o) => (o.zoom > 1 ? 'transform:scale(' + (o.zoom / 1.35).toFixed(3) + ');' : '') + (o.ev ? 'filter:brightness(' + Math.pow(2, o.ev * 0.75).toFixed(3) + ')' : '');   // no filter unless the exposure was changed: filters on many images are what make phones stutter
+const cat = $('cat'), N = items.length, look = (o) => (o.zoom > 1 ? 'transform:scale(' + (o.zoom / 1.35).toFixed(3) + ');' : '') + (o.ev ? 'filter:brightness(' + Math.pow(2, o.ev * 0.75).toFixed(3) + ')' : '');   // no filter unless the exposure was changed: filters on many images are what make phones stutter
 const date = document.createElement('span'); date.className = 'date mono'; cat.appendChild(date);
 cat.tabIndex = 0; cat.setAttribute('role', 'listbox'); cat.setAttribute('aria-label', "This week's prints. Swipe, or use the arrow keys.");
 items.forEach((o, k) => {
@@ -122,7 +147,6 @@ items.forEach((o, k) => {
   c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" decoding="async" style="' + look(o) + '"></span><i class="sh"></i></span>';
   o.sh = c.querySelector('.sh'); o.z = null; o.vis = null; o.r = null;
   o.el = c; cat.appendChild(c);
-  const f = document.createElement('button'); f.type = 'button'; f.tabIndex = -1; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<img src="' + sm + '" alt="" style="' + look(o) + '">'; film.appendChild(f);
 });
 $('count').textContent = N + ' prints · swipe';
 
@@ -130,7 +154,7 @@ $('count').textContent = N + ' prints · swipe';
 let pos = 0, vel = 0, target = null, dragging = false, raf = 0, shown = -1;
 const CW = 168, G1 = 128, G2 = 13, SPINE = 76;              // card width, gap to first neighbour, spacing between spines, how far a spine turns
 const clampPos = (p) => p < 0 ? p * 0.35 : p > N - 1 ? N - 1 + (p - N + 1) * 0.35 : p;   // past the ends it stretches, then springs back
-function layout() {
+let layout = function () {
   for (let k = 0; k < N; k++) {
     const o = items[k], c = o.el, d = k - pos, a = Math.abs(d), sg = Math.sign(d), near = Math.min(a, 1), far = Math.max(a - 1, 0);
     const vis = a <= 9; if (vis !== o.vis) { o.vis = vis; c.style.visibility = vis ? '' : 'hidden'; } if (!vis) continue;
@@ -145,7 +169,7 @@ function layout() {
   if (cur !== shown) {
     if (shown !== -1 && !reduced) try { navigator.vibrate && navigator.vibrate(3); } catch (e) {}     // a soft tick as each print passes
     shown = cur; const d = new Date(items[cur].t || Date.now()); date.textContent = DAYS[d.getDay()] + ' ' + d.getDate() + ' Nov · ' + (cur + 1) + ' / ' + N;
-    [...film.children].forEach((f, k) => f.classList.toggle('on', k === cur)); cat.setAttribute('aria-activedescendant', ''); items.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === cur)));
+    reelShow(cur); cat.setAttribute('aria-activedescendant', ''); items.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === cur)));
   }
 }
 function tick(now) {
@@ -186,11 +210,29 @@ const release = (e) => {
 cat.addEventListener('pointerup', release); cat.addEventListener('pointercancel', release);
 cat.addEventListener('wheel', (e) => { e.preventDefault(); target = null; vel += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.02; wake(); }, { passive: false });
 cat.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(Math.round(pos) + 1); else if (e.key === 'ArrowLeft') go(Math.round(pos) - 1); else if (e.key === 'Enter') open(items[Math.round(pos)], items[Math.round(pos)].el); });
-// the film strip: drag along it to scrub through every print
-const scrub = (e) => { const r = film.getBoundingClientRect(); go(Math.round(((e.clientX - r.left - 8) / (r.width - 16)) * (N - 1))); };
-film.addEventListener('pointerdown', (e) => { film.setPointerCapture(e.pointerId); film.scrubbing = true; scrub(e); });
-film.addEventListener('pointermove', (e) => { if (film.scrubbing) scrub(e); });
-film.addEventListener('pointerup', () => (film.scrubbing = false)); film.addEventListener('pointercancel', () => (film.scrubbing = false));
+// ---- the reel (board #5): spin the disc; it clicks round one window at a time, and the stack above follows like a projector ----
+const reel = $('reel'), wrap = $('reelwrap'), STEP = 360 / N, wins = [];
+reel.innerHTML = '<i class="ring"></i><i class="ring in"></i><i class="hole"></i><span class="label"><i>poto · reel</i><b>This week</b><i>' + N + ' frames · nov 2026</i></span>';
+items.forEach((o, k) => {
+  const a = k * STEP, w = document.createElement('span'); w.className = 'w'; w.innerHTML = '<img src="' + o.src.replace('.jpg', '-s.jpg') + '" alt="" draggable="false" decoding="async">';
+  w.style.transform = 'rotate(' + a + 'deg) translateY(-235%)'; reel.appendChild(w); wins.push(w);
+  const n = document.createElement('span'); n.className = 'n'; n.textContent = k + 1; n.style.transform = 'translate(-50%,-50%) rotate(' + (a + STEP / 2) + 'deg) translateY(-' + (reel.offsetWidth * 0.36 || 118) + 'px)'; reel.appendChild(n);
+});
+let reelShown = -1;
+function reelShow(k) { if (k === reelShown) return; if (wins[reelShown]) wins[reelShown].classList.remove('on'); reelShown = k; if (wins[k]) wins[k].classList.add('on'); reel.setAttribute('aria-valuenow', k + 1); }
+// one source of truth: pos (the stack's float index). The disc angle is -pos * STEP, set every frame by the stack's own loop.
+const _layout = layout; layout = function () { _layout(); reel.style.transform = 'rotate(' + (-pos * STEP).toFixed(2) + 'deg)'; wrap.classList.toggle('lit', target == null && Math.abs(vel) < 0.05 && !spin); };
+let spin = null;
+const ang = (e) => { const r = reel.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI; };
+reel.addEventListener('pointerdown', (e) => { reel.setPointerCapture(e.pointerId); spin = { a: ang(e), p: pos, t: performance.now(), last: pos }; target = null; vel = 0; dragging = true; wake(); });
+reel.addEventListener('pointermove', (e) => {
+  if (!spin) return; let d = ang(e) - spin.a; d = ((d + 540) % 360) - 180;                               // shortest way round
+  const now = performance.now(), np = clampPos(spin.p - (d / STEP)); if (Math.abs(d) > 170) { spin.a = ang(e); spin.p = pos; return; }
+  vel = vel * 0.6 + ((np - spin.last) / Math.max(0.008, (now - spin.t) / 1000)) * 0.4; spin.last = np; spin.t = now; pos = np;
+});
+const spinEnd = () => { if (!spin) return; spin = null; dragging = false; vel = Math.max(-24, Math.min(24, vel)); wake(); };
+reel.addEventListener('pointerup', spinEnd); reel.addEventListener('pointercancel', spinEnd);
+reel.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(Math.round(pos) + 1); else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(Math.round(pos) - 1); });
 layout();
 // tap the middle print: it comes toward you and opens as a postcard
 function open(o, b) {
@@ -200,12 +242,23 @@ function open(o, b) {
   document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => (location.href = 'postcard.html?' + q);
 }
 
-// ---- the month ----
-const PLAN = { 1: 1, 2: 1, 4: 2, 5: 1, 7: 2, 8: 1, 9: 1, 11: 2, 12: 1, 13: 1, 14: 2, 15: 1 }, cal = $('cal');
+// ---- the month (board #15): the big photo on top is the day you pick ----
+const PLAN = { 1: 1, 2: 1, 4: 2, 5: 1, 7: 2, 8: 1, 9: 1, 11: 2, 12: 1, 13: 1, 14: 2, 15: 1 }, cal = $('cal'), DOWN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayPhoto = (d) => 1 + ((d * 5) % 12);
+function pickDay(d, cell) {
+  const img = $('heroimg'), src = 'img/photo-' + String(dayPhoto(d)).padStart(2, '0') + '.jpg';
+  cal.querySelectorAll('.sel').forEach((c) => c.classList.remove('sel')); if (cell) cell.classList.add('sel');
+  $('herod').textContent = DOWN[new Date(2026, 10, d).getDay()] + ' ' + d + ' · ' + PLAN[d] + (PLAN[d] > 1 ? ' prints' : ' print');
+  if (img.getAttribute('src') === src) return; img.style.opacity = 0; setTimeout(() => { img.src = src; img.onload = () => (img.style.opacity = 1); }, reduced ? 0 : 200);
+}
 for (let i = 0; i < 6; i++) cal.appendChild(document.createElement('span'));
-for (let d = 1; d <= 30; d++) { const c = document.createElement('div'); c.className = 'd' + (d === 15 ? ' today' : ''); c.innerHTML = '<b>' + d + '</b>';
-  for (let k = 0; k < (PLAN[d] || 0); k++) c.insertAdjacentHTML('beforeend', '<span class="p" style="transform:rotate(' + ((rnd() - 0.5) * 16).toFixed(1) + 'deg) translate(' + (k * 14 - 2) + '%,' + (k * -6) + '%)"><img src="' + ph(1 + ((d * 5 + k * 3) % 12)) + '" alt="" loading="lazy"></span>');
-  cal.appendChild(c); }
+for (let d = 1; d <= 30; d++) {
+  const has = !!PLAN[d], c = document.createElement(has ? 'button' : 'span'); c.className = 'd' + (has ? ' has' : '') + (d === 15 ? ' today' : '');
+  c.innerHTML = (has ? '<img src="' + ph(dayPhoto(d)) + '" alt="" loading="lazy" decoding="async">' : '') + '<b>' + d + '</b>';
+  if (has) { c.type = 'button'; c.setAttribute('aria-label', d + ' November'); c.onclick = () => pickDay(d, c); }
+  cal.appendChild(c);
+}
+pickDay(15, cal.querySelector('.today'));
 
 // ---- rolls as folders ----
 const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.4" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';

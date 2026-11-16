@@ -61,7 +61,7 @@
       if (!gl_FrontFacing) { diffuseColor.rgb = vec3(0.90, 0.895, 0.88); roughnessFactor = 0.85; metalnessFactor = 0.0; }
     }`;
   /* contact shadow under a stuck sticker. Hidden past the fold line, so when you peel, it goes with the lifted part. */
-  const CONTACT_VS = `varying vec2 vUv; varying vec2 vP; void main() { vUv = uv; vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+  const CONTACT_VS = `uniform vec3 uSh; varying vec2 vUv; varying vec2 vP; void main() { vUv = uv; vP = position.xy * uSh.z + uSh.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
   const CONTACT_FS = `uniform sampler2D uMap; uniform float uOp; uniform vec2 uFoldP; uniform vec2 uFoldD; uniform float uPeel; uniform mat3 uToCard; uniform vec2 uHalf; varying vec2 vUv; varying vec2 vP;
     void main() { vec2 cc = (uToCard * vec3(vP, 1.0)).xy; if (abs(cc.x) > uHalf.x || abs(cc.y) > uHalf.y) discard; float a = texture2D(uMap, vUv).a; float keep = uPeel > 0.5 ? 1.0 - smoothstep(-0.03, 0.004, dot(vP - uFoldP, uFoldD)) : 1.0; gl_FragColor = vec4(0.09, 0.08, 0.07, a * uOp * keep); }`;
 
@@ -138,7 +138,7 @@
     // One textured quad instead of a shadow map: same soft look, a fraction of the cost.
     const WALLZ = -0.3, shc = document.createElement('canvas'); shc.width = 256; shc.height = 340; { const g = shc.getContext('2d'); g.filter = 'blur(13px)'; g.fillStyle = '#000'; g.beginPath(); g.roundRect(46, 46, 164, 248, 6); g.fill(); }
     const shTex = new T.CanvasTexture(shc), shadowQuad = new T.Mesh(new T.PlaneGeometry(CW * 256 / 164, CH * 340 / 248), new T.MeshBasicMaterial({ map: shTex, color: 0x20222a, transparent: true, opacity: 0.2, depthWrite: false, side: T.DoubleSide }));
-    shadowQuad.matrixAutoUpdate = false; scene.add(shadowQuad);
+    shadowQuad.matrixAutoUpdate = false; shadowQuad.visible = false;   // Cody, 16 Nov: no wall shadow at all (it read as a blob). Kept switched off in case it's wanted later.
     const Ld = new V3().copy(key.position).normalize().negate(), projM = new T.Matrix4();
     { const t = -1 / Ld.z; projM.set(1, 0, -Ld.x / Ld.z, Ld.x * WALLZ / Ld.z, 0, 1, -Ld.y / Ld.z, Ld.y * WALLZ / Ld.z, 0, 0, 0, WALLZ + 0.001, 0, 0, 0, 1); }   // P' = P - Ld * (P.z - WALLZ) / Ld.z scene.add(wall);
 
@@ -184,7 +184,7 @@
       // contact shadow: the sticker's own silhouette, barely blurred, a hair down-right of it (light is upper-left)
       const sc = document.createElement('canvas'); sc.width = sc.height = 256; const sx = sc.getContext('2d'); sx.filter = 'blur(2.5px)'; sx.drawImage(art.col, 4, 5, 250, 250);
       const shadow = new T.Mesh(new T.PlaneGeometry(SS, SS), new T.ShaderMaterial({ vertexShader: CONTACT_VS, fragmentShader: CONTACT_FS, transparent: true, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, uniforms: { uMap: { value: tex(sc) }, uOp: { value: 0.32 }, uFoldP: u.uFoldP, uFoldD: u.uFoldD, uPeel: u.uPeel, uToCard: u.uToCard, uHalf: u.uHalf } }));
+        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, uniforms: { uMap: { value: tex(sc) }, uOp: { value: 0.32 }, uFoldP: u.uFoldP, uFoldD: u.uFoldD, uPeel: u.uPeel, uToCard: u.uToCard, uHalf: u.uHalf, uSh: { value: new V3(0, 0, 1) } } }));
       const holder = new T.Group(); holder.add(shadow); holder.add(mesh); shadow.position.z = 0.0003; mesh.position.z = 0.0006;
       const s = { holder, mesh, shadow, u, kind, finish, lift: 0, state: 'stuck', rot, x, y, tilt: new V2(), layer: ++layers };
       place(s, x, y, rot, 0); card.add(holder); stickers.push(s); return s;
@@ -349,7 +349,9 @@
         }
         if (s.state === 'stuck') { const want = s === sel ? 0.007 : 0; s.lift += (want - s.lift) * Math.min(1, dt * 14); if (Math.abs(s.lift - want) < 1e-5) s.lift = want; }
         if (s.state !== 'gone') place(s, s.x, s.y, s.rot, s.lift);
-        const target = s.state === 'held' ? 0 : s.state === 'placing' ? 0.32 * (1 - s.lift / LIFT) : 0.32;
+        // the shadow stays on the card while the sticker lifts: it slides away from the light, grows and fades a little. One quad, no extra pass.
+        const up = Math.max(0, s.lift); s.shadow.position.set(up * 0.55, -up * 0.75, -up + 0.0003); s.shadow.scale.setScalar(1 + up * 3.2); s.shadow.material.uniforms.uSh.value.set(up * 0.55, -up * 0.75, 1 + up * 3.2);
+        const target = s.state === 'held' || s.state === 'placing' ? 0.32 * (1 - Math.min(0.55, up / LIFT * 0.55)) : 0.32;
         const sm = s.shadow.material.uniforms.uOp; sm.value = lerp(sm.value, clamp(target, 0, 0.32), Math.min(1, dt * 14));
       }
     }
@@ -365,7 +367,7 @@
         if (flipping && Math.abs(yaw - yawT) < 0.004 && Math.abs(yv) < 0.05) { flipping = false; if (self.onLand) self.onLand(); }
       }
       wk += ((writing ? 1 : 0) - wk) * Math.min(1, dt * 6);
-      card.updateMatrixWorld(); shadowQuad.matrix.multiplyMatrices(projM, card.matrixWorld); { const nz = Math.abs(new V3(0, 0, 1).transformDirection(card.matrixWorld).dot(Ld)), f = Math.min(1, Math.max(0, (nz - 0.25) / 0.45)); shadowQuad.material.opacity = 0.2 * f * f * (3 - 2 * f); }   // nearly edge-on to the light, a soft shadow thins to nothing
+      // (wall shadow switched off)
       card.rotation.set(pitch, yaw + REST_YAW * (1 - wk), ROLL * (1 - wk), 'YXZ');
       camera.position.set(-0.11 * wk, -0.06 * wk, camZ * (1 - 0.2 * wk));
       stepAnims(dt); renderer.render(scene, camera);
