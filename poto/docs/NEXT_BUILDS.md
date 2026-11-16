@@ -93,3 +93,15 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - **The whole profile page IS the desk.** No username/options block above a separate desk frame. Name, stats and buttons sit on the desk (on top of or around the objects); users arrange them however they like.
 - **Add words (text) and little knick-knacks to the desk.** Placeholders now; real models later.
 - **Next step order:** look at the references and the build plan first, then recommend what to do next (UI/layout may come before more features).
+
+## Product vision (Cody, 17 Nov) — the brief for Phase 1
+- Feels like BeReal / Snapchat for friends, but personal and calm, not "too social". Mostly friends, sometimes public.
+- Every post is a postcard: a photo with a handwritten note; you can turn it, write on it, decorate it, keep it, display it on your desk.
+- Daily: open to see what friends posted and what they sent you; post your own day (lunch, sky, anything).
+- Very shareable to Instagram / TikTok: a single postcard, a weekly photo dump, a month view, your desk.
+- Events (weddings, parties, birthdays, trips, couples): everyone captures memories together. Paid per event, like Kahoot.
+- A portfolio for anyone: the effects and framing make any photo look good; the desk is your creative profile, shareable.
+- A digital journal / junk journal / scrapbook; stamps you make become objects and things you send.
+- Limited shots + a beautiful camera + film looks = more real, genuine, aesthetic.
+- Must not die like Snapchat streaks (black screens): encourage, never punish. Needs reasons to come back even with few friends.
+- Money: events, film looks (cheap), possibly AI camera looks (Prequel-style, e.g. G7X flash). Needs more monetisation ideas.
