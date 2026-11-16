@@ -165,7 +165,7 @@ async function shoot() {
   if (busy) return; busy = true; curtain(160); count = count >= 27 ? 1 : count + 1; setTimeout(() => roll(count), 240);
   // grab exactly what the viewfinder showed
   const im = new Image(); im.src = scene.src; await im.decode();
-  const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1; lastShot = { src: scene.getAttribute('src'), zoom: z, ev, look: 'Sunday', t: Date.now() }; const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const s = Math.max(W / im.width, H / im.height) * z, dw = im.width * s, dh = im.height * s; if (ev) x.filter = 'brightness(' + evGain().toFixed(3) + ')'; x.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh); x.filter = 'none';   // the print gets the exposure you set
   const px = x.getImageData(0, 0, W, H).data, img = ctx.createImageData(W, H), d = img.data, late = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) { late[i] = 1 - (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) / 255; d[i * 4 + 3] = 255; }
@@ -193,10 +193,14 @@ sheet.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clien
 sheet.addEventListener('pointermove', (e) => { if (!drag) return; tilt(Math.max(-24, Math.min(24, (drag.y - e.clientY) * 0.22)), Math.max(-30, Math.min(30, (e.clientX - drag.x) * 0.22))); });
 const rel = () => { if (!drag) return; drag = null; sheet.style.transition = 'transform .7s cubic-bezier(.3,1.5,.4,1)'; gloss.style.transition = 'opacity .5s'; tilt(0, 0); setTimeout(() => (gloss.style.transition = ''), 500); };
 sheet.addEventListener('pointerup', rel); sheet.addEventListener('pointercancel', rel);
+let lastShot = null;
 function leave(kind) {
   cancelAnimationFrame(raf); $('acts').classList.remove('on'); const cur = getComputedStyle(print).transform;
   const to = kind === 'keep' ? 'translate(34vw, 46vh) scale(.14) rotate(8deg)' : 'translate(-130vw, 4vh) rotate(-26deg)';
-  if (kind === 'keep') $('lastimg').src = cv.toDataURL('image/jpeg', 0.8);
+  if (kind === 'keep') {
+    $('lastimg').src = cv.toDataURL('image/jpeg', 0.8);
+    try { const k = JSON.parse(localStorage.getItem('poto.kept') || '[]'); k.unshift(Object.assign({ id: Date.now() }, lastShot)); localStorage.setItem('poto.kept', JSON.stringify(k.slice(0, 20))); } catch (e) {}
+  }
   print.animate([{ transform: cur }, { transform: to }], { duration: reduced() ? 0 : kind === 'keep' ? 520 : 460, easing: kind === 'keep' ? 'cubic-bezier(.5,0,.2,1)' : 'cubic-bezier(.6,0,1,1)', fill: 'forwards' }).onfinish = () => { app.classList.remove('dev', 'ready'); busy = false;
     if (kind === 'keep' && !reduced()) document.querySelector('.last').animate([{ transform: 'rotate(4deg) scale(1.25)' }, { transform: 'rotate(4deg) scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3,1.6,.5,1)' }); };
 }

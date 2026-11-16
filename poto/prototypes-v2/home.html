@@ -94,13 +94,28 @@ const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
 let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
 // ---- the pile ----
-const pile = $('pile'), order = [4, 9, 1, 6, 12, 3].map((n) => ({ n, r: (rnd() - 0.5) * 22, x: (rnd() - 0.5) * 34, y: (rnd() - 0.5) * 16 }));
+let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]').slice(0, 4); } catch (e) {}
+const pile = $('pile'), order = [4, 9, 1, 6, 12, 3].slice(0, 6 - kept.length).map((n) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0 }))
+  .concat(kept.reverse()).map((o) => Object.assign(o, { r: (rnd() - 0.5) * 22, x: (rnd() - 0.5) * 34, y: (rnd() - 0.5) * 16 }));     // newest kept print ends up on top
 function layPile(drop) {
   order.forEach((o, i) => { const depth = order.length - 1 - i;              // last in the list is on top
     o.el.style.zIndex = i + 1; o.el.style.transform = 'translate(' + o.x + '%,' + (o.y + depth * -1.2) + '%) rotate(' + o.r + 'deg)'; });
 }
-order.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'p'; b.setAttribute('aria-label', 'Photo'); b.innerHTML = '<img src="' + ph(o.n) + '" alt="" draggable="false">'; o.el = b; pile.appendChild(b);
-  b.onclick = shuffle; });
+order.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'p'; b.setAttribute('aria-label', 'Open as a postcard');
+  const sm = o.src.replace('.jpg', '-s.jpg'); b.innerHTML = '<span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')"></span>';
+  o.el = b; pile.appendChild(b);
+  // tap the top print: it lifts toward you and opens as a postcard. Swipe it sideways: it goes to the bottom of the pile.
+  let sx = null;
+  b.addEventListener('pointerdown', (e) => { sx = e.clientX; });
+  b.addEventListener('pointerup', (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (order[order.length - 1] !== o) return; if (Math.abs(dx) > 24) shuffle(); else open(o); });
+  if (kept.includes(o) && o === order[order.length - 1] && !reduced) b.animate([{ transform: 'translate(0,-140%) rotate(-14deg)', opacity: 0 }, { opacity: 1, offset: 0.4 }, { transform: 'translate(' + o.x + '%,' + o.y + '%) rotate(' + o.r + 'deg)', opacity: 1 }], { duration: 650, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+});
+function open(o) {
+  const b = o.el, q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
+  if (reduced) { location.href = 'postcard.html?' + q; return; }
+  b.style.transition = 'transform .38s cubic-bezier(.5,0,.2,1), box-shadow .38s'; b.style.zIndex = 60; b.style.transform = 'translate(0,-6%) scale(1.5) rotate(0deg)';
+  document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => (location.href = 'postcard.html?' + q);
+}
 // one card moves at a time. Taps while a card is moving are counted and played after it, so fast tapping never tangles the pile.
 let moving = false, queued = 0;
 function shuffle() {
@@ -114,7 +129,7 @@ function shuffle() {
     setTimeout(() => { moving = false; if (queued) { queued--; shuffle(); } }, reduced ? 0 : 170);
   }, reduced ? 0 : 250);
 }
-pile.insertAdjacentHTML('beforeend', '<p class="tag mono">6 from this week</p>'); layPile();
+pile.insertAdjacentHTML('beforeend', '<p class="tag mono">Tap to open · swipe to shuffle</p>'); layPile();
 
 // ---- the month ----
 const PLAN = { 1: 1, 2: 1, 4: 2, 5: 1, 7: 2, 8: 1, 9: 1, 11: 2, 12: 1, 13: 1, 14: 2, 15: 1 }, cal = $('cal');

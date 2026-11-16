@@ -90,7 +90,7 @@
   const font = (ctx, f) => { ctx.font = f; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'; };
 
   /* FRONT: the photo printed onto the same card stock, satin finish. You can see the stock through the print. */
-  P.front = function (photo, caption) {
+  P.front = function (photo, caption, finish) {          // finish: 'matte' (printed on the card stock) or 'gloss' (instant-film style: smooth, glossy picture, matte border)
     const stock = P.stock({ seed: 31, cloud: 0.05, tooth: 0.45, fibres: 30, flecks: 6, inkBite: 2 });
     const t = sheet('#FAF9F5', stock, 214, 0.55);
     const m = Math.round(TW * 0.042), pw = TW - m * 2, ph = Math.round(pw * 4 / 3), py = m;
@@ -98,10 +98,19 @@
     const pl = mk(TW, TH), p = pl.getContext('2d');
     p.drawImage(photo, (photo.width - sw) / 2, (photo.height - sh) / 2, sw, sh, m, py, pw, ph);
     // printed, not pasted: the stock's tone and tooth show through the ink a little
-    p.save(); p.globalCompositeOperation = 'soft-light'; p.globalAlpha = 0.55; p.fillStyle = p.createPattern(stock.height, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
-    p.save(); p.globalCompositeOperation = 'destination-out'; p.globalAlpha = 0.18; p.fillStyle = p.createPattern(stock.valleys, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
-    t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(pl, 0, 0); t.c.restore();
-    t.r.fillStyle = 'rgb(168,168,168)'; t.r.fillRect(m, py, pw, ph);                                   // satin over the image, still not glossy
+    if (finish === 'gloss') {
+      // instant-film style: the picture sits under a smooth glossy layer, so no paper texture shows through it and it catches reflections
+      t.c.drawImage(pl, 0, 0);
+      t.c.save(); t.c.strokeStyle = 'rgba(0,0,0,.18)'; t.c.lineWidth = 1.5; t.c.strokeRect(m - 0.5, py - 0.5, pw + 1, ph + 1); t.c.restore();     // the edge of the emulsion window
+      t.r.fillStyle = 'rgb(46,46,46)'; t.r.fillRect(m, py, pw, ph);
+      t.h.fillStyle = 'rgb(120,120,120)'; t.h.fillRect(m, py, pw, ph);                                  // dead flat, a hair below the border
+      const g = mk(TW, TH), gc = g.getContext('2d'); gc.fillStyle = '#000'; gc.fillRect(0, 0, TW, TH); gc.fillStyle = '#fff'; gc.fillRect(m, py, pw, ph); t.gloss = g;
+    } else {
+      p.save(); p.globalCompositeOperation = 'soft-light'; p.globalAlpha = 0.55; p.fillStyle = p.createPattern(stock.height, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
+      p.save(); p.globalCompositeOperation = 'destination-out'; p.globalAlpha = 0.18; p.fillStyle = p.createPattern(stock.valleys, 'repeat'); p.fillRect(m, py, pw, ph); p.restore();
+      t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(pl, 0, 0); t.c.restore();
+      t.r.fillStyle = 'rgb(168,168,168)'; t.r.fillRect(m, py, pw, ph);                                 // satin over the image, still not glossy
+    }
     t.c.fillStyle = 'rgba(80,77,72,.62)'; font(t.c, '500 19px "IBM Plex Mono", ui-monospace, monospace'); t.c.textBaseline = 'middle';
     const cy = py + ph + (TH - py - ph) / 2;
     if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '2.2px';
@@ -237,26 +246,64 @@
     t.nrm = P.normalFromHeight(t.hgt, NS);
     const R = { x: 56, y: 540, w: 930, h: 440 }, clean = {};
     for (const k of ['col', 'hgt']) { const c = mk(R.w, R.h); c.getContext('2d').drawImage(t[k], R.x, R.y, R.w, R.h, 0, 0, R.w, R.h); clean[k] = c; }
-    const size = 37, lead = 60, x0 = 86, y0 = 610, ink = '#26231f', FONT = size + 'px "Special Elite", "Courier New", monospace';
-    const m = mk(8, 8).getContext('2d'); m.font = FONT; const adv = m.measureText('m').width;
-    const W = { cols: 26, lines: 6, adv, lead, x0, y0, size, tex: t, laid: [] };
+    const size = 37, lead = 60, x0 = 86, y0 = 610, ink = '#26231f';
+    // Special Elite only covers Latin. Every other script falls back to a good system face for that script.
+    const FONT = size + 'px "Special Elite", "Courier New", "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Noto Sans KR", "Geeza Pro", "Noto Naskh Arabic", "Kohinoor Devanagari", "Noto Sans Devanagari", "Tamil Sangam MN", "Noto Sans Tamil", serif';
+    const m = mk(8, 8).getContext('2d'); m.font = FONT; const adv = m.measureText('m').width, wcache = new Map();
+    const width = (s) => { let w = wcache.get(s); if (w == null) { w = m.measureText(s).width; wcache.set(s, w); } return w; };
+    const W = { cols: 26, lines: 6, adv, lead, x0, y0, size, tex: t, laid: [] }, LW = W.cols * adv;
+    W.lineWidth = LW;
 
-    // typewriter wrap: break at the last space once a line is full; a hard return starts a new line
+    /* Every script gets proper spacing (Cody, 16 Nov):
+       - each unit is measured in the font it will actually be drawn in, so wide characters (Chinese, Japanese, Korean) never overlap
+       - scripts whose letters join or stack (Arabic, Hebrew, Devanagari, Tamil and the other Indic scripts, Thai, Khmer, Myanmar)
+         are drawn a whole word at a time, so they're shaped correctly; the rest are drawn one character (grapheme) at a time
+       - Chinese, Japanese and Thai have no spaces, so a line may break between any two characters; everything else breaks at spaces
+       - a paragraph that starts in Arabic or Hebrew runs right to left */
+    const SHAPED = /[֐-ࣿऀ-෿฀-๿က-႟ក-៿יִ-﷿ﹰ-﻿]/;
+    const RTL = /[֐-ࣿיִ-﷿ﹰ-﻿]/, STRONG = /[A-Za-zÀ-ɏͰ-ϿЀ-ӿ֐-ࣿऀ-෿฀-๿぀-ヿ㐀-鿿가-힯יִ-﷿ﹰ-﻿]/;
+    const ANYBREAK = /[฀-๿⺀-⿿　-ヿ㐀-䶿一-鿿豈-﫿＀-￯]/;
+    const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+    const graphemes = (str) => seg ? [...seg.segment(str)].map((x) => x.segment) : Array.from(str);
+
     W.layout = function (text) {
-      const out = []; let line = 0, col = 0, lastSpace = -1;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === '\n') { line++; col = 0; lastSpace = -1; continue; }
-        if (col >= W.cols) {
-          if (lastSpace >= 0 && ch !== ' ') { const moved = out.splice(lastSpace + 1); line++; col = 0; for (const g of moved) { g.line = line; g.col = col++; out.push(g); } }
-          else { line++; col = 0; }
-          lastSpace = -1; if (ch === ' ') continue;
+      const out = []; let line = 0, caretX = 0, caretRtl = false, i = 0;
+      const paras = text.split('\n');
+      paras.forEach((para, pi) => {
+        const strong = para.match(STRONG), rtl = !!(strong && RTL.test(strong[0]));
+        // 1. units: spaces, whole words for shaped scripts, single graphemes otherwise
+        const units = []; let k = i;
+        for (const gch of graphemes(para)) {
+          const sp = /^\s+$/.test(gch), shaped = !sp && SHAPED.test(gch), last = units[units.length - 1];
+          if (shaped && last && last.shaped && !last.space) { last.txt += gch; last.len += gch.length; }
+          else units.push({ txt: gch, i: k, len: gch.length, space: sp, shaped, anyBreak: ANYBREAK.test(gch) });
+          k += gch.length;
         }
-        const g = { ch, i, line, col }; out.push(g); if (ch === ' ') lastSpace = out.length - 1; col++;
-      }
-      return { glyphs: out, caret: { line, col } };
+        // spaces: the typewriter's wide space for Latin text, a natural one for other scripts
+        const letters = para.replace(/\s/g, ''), latin = (para.match(/[A-Za-z\u00C0-\u024F]/g) || []).length > letters.length * 0.5;
+        units.forEach((u) => (u.w = u.space ? (latin ? adv : adv * 0.45) : width(u.txt)));
+        // 2. greedy lines, breaking at the last space (or anywhere in Chinese/Japanese/Thai)
+        let row = [], x = 0;
+        const flush = () => { if (rtl) for (const u of row) u.x = LW - u.x - u.w; row.forEach((u) => { u.line = line; u.rtl = rtl; out.push(u); }); row = []; };
+        for (const u of units) {
+          if (u.space && x + u.w > LW) { flush(); line++; x = 0; continue; }          // a space at the end of a full line just becomes the line break
+          const hang = /^[，。、．！？：；）」』】〕〉》,.!?:;)\]}…ー・]$/.test(u.txt);           // closing punctuation never starts a line: it hangs in the margin
+          if (!u.space && x + u.w > LW && row.length && !hang) {
+            let b = -1; for (let q = row.length - 1; q >= 0; q--) { if (row[q].space) { b = q; break; } if (row[q].anyBreak || u.anyBreak) { b = q; break; } }
+            let carry = [];
+            if (b >= 0 && b < row.length - 1) { carry = row.splice(b + 1); if (row[b].space) row.splice(b, 1); }
+            else if (b >= 0 && row[b].space) row.splice(b, 1);
+            flush(); line++; x = 0; for (const c of carry) { c.x = x; x += c.w; row.push(c); }
+          }
+          u.x = x; x += u.w; row.push(u);
+        }
+        caretX = rtl ? LW - x : x; caretRtl = rtl; flush();
+        i += para.length + 1; if (pi < paras.length - 1) { line++; caretX = 0; caretRtl = false; }
+      });
+      return { glyphs: out.filter((u) => !u.space), caret: { line, x: caretX, rtl: caretRtl } };
     };
-    const at = (g) => ({ x: x0 + g.col * adv + (hash(g.i * 3 + 1) - 0.5) * 1.6, y: y0 + g.line * lead + (hash(g.i * 3 + 2) - 0.5) * 2.4 });
+    const at = (g) => ({ x: x0 + g.x + (hash(g.i * 3 + 1) - 0.5) * 1.6, y: y0 + g.line * lead + (hash(g.i * 3 + 2) - 0.5) * 2.4 });
+    W.font = FONT;
 
     // every keystroke: wipe the message area back to clean paper and strike the whole message again, in one ink layer,
     // with the same recipe as the approved static card (the paper's valleys knocked out of the ink, worn ribbon, dents)
@@ -268,17 +315,17 @@
 
     // typing forward: strike only the new letter, same recipe, inside its own small rectangle (fast on a phone)
     function strike(g, batch) {
-      if (g.ch === ' ') return;
-      const p = at(g), press = 0.6 + hash(g.i * 5 + 7) * 0.4, rot = (hash(g.i * 5 + 9) - 0.5) * 0.035, weak = hash(g.i * 5 + 11) < 0.08 ? 0.5 : 1;
-      const bx = Math.floor(p.x - 8), by = Math.floor(p.y - size - 6), bw = Math.ceil(adv + 20), bh = Math.ceil(size + 22);
-      const L = mk(bw, bh).getContext('2d'); L.font = FONT; L.textBaseline = 'alphabetic';
+      if (g.space) return;
+      const p = at(g), press = 0.6 + hash(g.i * 5 + 7) * 0.4, rot = (hash(g.i * 5 + 9) - 0.5) * (g.w > adv * 2 ? 0.012 : 0.035), weak = hash(g.i * 5 + 11) < 0.08 ? 0.5 : 1;
+      const bx = Math.floor(p.x - 10), by = Math.floor(p.y - size - 16), bw = Math.ceil(g.w + 24), bh = Math.ceil(size + 40);
+      const L = mk(bw, bh).getContext('2d'); L.font = FONT; L.textBaseline = 'alphabetic'; L.direction = g.rtl ? 'rtl' : 'ltr'; L.textAlign = 'left';
       L.save(); L.translate(p.x - bx, p.y - by); L.rotate(rot); L.fillStyle = ink;
-      L.globalAlpha = press * 0.18; L.filter = 'blur(1.2px)'; L.fillText(g.ch, 0.6, 0.4); L.filter = 'none'; L.globalAlpha = press * weak; L.fillText(g.ch, 0, 0); L.restore();
+      L.globalAlpha = press * 0.18; L.filter = 'blur(1.2px)'; L.fillText(g.txt, 0.6, 0.4); L.filter = 'none'; L.globalAlpha = press * weak; L.fillText(g.txt, 0, 0); L.restore();
       L.save(); L.globalCompositeOperation = 'destination-out'; L.translate(-bx, -by); L.fillStyle = L.createPattern(t.stock.valleys, 'repeat'); L.fillRect(bx, by, bw, bh);
       for (let k = 0; k < 22; k++) { L.fillStyle = 'rgba(0,0,0,' + (0.2 + hash(g.i * 97 + k * 7) * 0.5) + ')'; L.fillRect(bx + hash(g.i * 89 + k * 13) * bw, by + hash(g.i * 83 + k * 17) * bh, 0.8 + hash(g.i * 79 + k) * 1.8, 0.8 + hash(g.i * 73 + k) * 1.4); }
       L.restore();
       t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, bx, by); t.c.restore();
-      const D = mk(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.ch, 0, 0);
+      const D = mk(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.direction = L.direction; D.textAlign = 'left'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.txt, 0, 0);
       t.h.save(); t.h.globalAlpha = 0.5 * press; t.h.drawImage(D.canvas, bx, by); t.h.restore();                // the dent, blurred on a small canvas (blurring the big one is slow)
       if (!batch) P.normalRegion(t.hgt, t.nrm, bx, by, bw, bh, NS);
     }
@@ -287,11 +334,18 @@
     W.set = function (text) {
       const lay = W.layout(text); if (lay.caret.line >= W.lines || lay.glyphs.some((g) => g.line >= W.lines)) return { ok: false };
       const nl = W.caret ? lay.caret.line > W.caret.line : false, prev = W.laid;
-      const forward = prev.length <= lay.glyphs.length && prev.every((g, k) => { const n = lay.glyphs[k]; return n.i === g.i && n.ch === g.ch && n.line === g.line && n.col === g.col; });
+      const forward = prev.length <= lay.glyphs.length && prev.every((g, k) => { const n = lay.glyphs[k]; return n.i === g.i && n.txt === g.txt && n.line === g.line && Math.abs(n.x - g.x) < 0.01; });
       if (forward && prev.length) for (const g of lay.glyphs.slice(prev.length)) strike(g);
       else redraw(lay.glyphs);                                    // deleted, re-wrapped or first draw: start from clean paper
-      W.laid = lay.glyphs; W.caret = { line: lay.caret.line, col: lay.caret.col, x: x0 + lay.caret.col * adv, y: y0 + lay.caret.line * lead };
-      return { ok: true, dirty: true, newline: nl, caret: W.caret };
+      W.laid = lay.glyphs; W.caret = { line: lay.caret.line, rtl: lay.caret.rtl, x: x0 + lay.caret.x - (lay.caret.rtl ? adv : 0), y: y0 + lay.caret.line * lead };
+      const used = lay.caret.rtl ? LW - lay.caret.x : lay.caret.x;
+      return { ok: true, dirty: true, newline: nl, caret: W.caret, nearEnd: used > LW - 5 * adv };
+    };
+    /* screen-space boxes for a selected range of the text (for the highlight): one box per line, in card pixels */
+    W.boxes = function (s0, s1) {
+      const byLine = new Map();
+      for (const g of W.laid) if (g.i < s1 && g.i + g.len > s0) { const b = byLine.get(g.line) || { line: g.line, x0: 1e9, x1: -1e9 }; b.x0 = Math.min(b.x0, g.x); b.x1 = Math.max(b.x1, g.x + g.w); byLine.set(g.line, b); }
+      return [...byLine.values()].map((b) => ({ x: x0 + b.x0 - 3, y: y0 + b.line * lead - size - 2, w: b.x1 - b.x0 + 6, h: size + 14 }));
     };
     W.set(o.message.join('\n'));
     return W;

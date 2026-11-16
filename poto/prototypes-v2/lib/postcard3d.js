@@ -16,6 +16,22 @@
   /* ---------- sticker shader pieces: a cylinder curl about a fold line + holographic foil ---------- */
   const PEEL_PARS = `
     uniform vec2 uFoldP; uniform vec2 uFoldD; uniform float uFoldR; uniform float uPeel;
+    uniform mat3 uToCard; uniform mat3 uFromCard; uniform vec2 uHalf; uniform float uBend; uniform float uWrap;
+    // a stuck sticker that hangs past the card's edge bends round the edge (radius = half the card's thickness) and lies on the other face
+    vec3 wrapEdge(vec3 p, inout vec3 n) {
+      if (uWrap < 0.5) return p;
+      vec2 c = (uToCard * vec3(p.xy, 1.0)).xy; float z = p.z; float r = uBend, arc = 3.14159265 * r;
+      for (int a = 0; a < 2; a++) {
+        float h = a == 0 ? uHalf.x : uHalf.y, v = a == 0 ? c.x : c.y, o = abs(v) - h, sg = v < 0.0 ? -1.0 : 1.0;
+        if (o > 0.0) {
+          vec2 dirH = (uFromCard * vec3(a == 0 ? vec2(sg, 0.0) : vec2(0.0, sg), 0.0)).xy;
+          if (o < arc) { float th = o / r; v = sg * (h + r * sin(th)); z -= r * (1.0 - cos(th)); n = normalize(vec3(dirH * sin(th), cos(th))); }
+          else { v = sg * (h - (o - arc)); z -= 2.0 * r; n = vec3(0.0, 0.0, -1.0); }
+          if (a == 0) c.x = v; else c.y = v;
+        }
+      }
+      return vec3((uFromCard * vec3(c, 1.0)).xy, z);
+    }
     vec3 peelPos(vec3 p, out vec3 n) {
       n = vec3(0.0, 0.0, 1.0);
       float d = dot(p.xy - uFoldP, uFoldD);
@@ -27,7 +43,7 @@
   function patchPeel(shader, u) {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\n' + PEEL_PARS)
-      .replace('void main() {', 'void main() {\n vec3 peelN; vec3 peelP = peelPos(position, peelN);')
+      .replace('void main() {', 'void main() {\n vec3 peelN; vec3 peelP = peelPos(position, peelN); peelP = wrapEdge(peelP, peelN);')
       .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = peelN;')
       .replace('#include <begin_vertex>', 'vec3 transformed = peelP;');
   }
@@ -46,8 +62,8 @@
     }`;
   /* contact shadow under a stuck sticker. Hidden past the fold line, so when you peel, it goes with the lifted part. */
   const CONTACT_VS = `varying vec2 vUv; varying vec2 vP; void main() { vUv = uv; vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-  const CONTACT_FS = `uniform sampler2D uMap; uniform float uOp; uniform vec2 uFoldP; uniform vec2 uFoldD; uniform float uPeel; varying vec2 vUv; varying vec2 vP;
-    void main() { float a = texture2D(uMap, vUv).a; float keep = uPeel > 0.5 ? 1.0 - smoothstep(-0.03, 0.004, dot(vP - uFoldP, uFoldD)) : 1.0; gl_FragColor = vec4(0.09, 0.08, 0.07, a * uOp * keep); }`;
+  const CONTACT_FS = `uniform sampler2D uMap; uniform float uOp; uniform vec2 uFoldP; uniform vec2 uFoldD; uniform float uPeel; uniform mat3 uToCard; uniform vec2 uHalf; varying vec2 vUv; varying vec2 vP;
+    void main() { vec2 cc = (uToCard * vec3(vP, 1.0)).xy; if (abs(cc.x) > uHalf.x || abs(cc.y) > uHalf.y) discard; float a = texture2D(uMap, vUv).a; float keep = uPeel > 0.5 ? 1.0 - smoothstep(-0.03, 0.004, dot(vP - uFoldP, uFoldD)) : 1.0; gl_FragColor = vec4(0.09, 0.08, 0.07, a * uOp * keep); }`;
 
   /* ---------- the card: a thin slab with rounded corners and a softly rolled edge ---------- */
   function axis(len, n, m) {
@@ -110,7 +126,7 @@
     (function env() {
       const s = new T.Scene(); s.add(new T.Mesh(new T.BoxGeometry(10, 10, 10), new T.MeshBasicMaterial({ color: 0x6f6f72, side: T.BackSide })));
       const panel = (w, h, x, y, z, c) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: c, side: T.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m); };
-      panel(5, 2.2, -2.5, 4.2, 2.5, 0xb8b8b8); panel(1.4, 5, 4.6, 1, 2.5, 0xa9a59f); panel(6, 1, 0, -1.5, 4.8, 0x9ea4ad);
+      panel(5, 2.2, -2.5, 4.2, 2.5, 0xb8b8b8); panel(1.6, 3.2, -3.2, 1.2, 3.6, 0xf2efe8);   // a soft window: what a glossy print catches when you tilt it panel(1.4, 5, 4.6, 1, 2.5, 0xa9a59f); panel(6, 1, 0, -1.5, 4.8, 0x9ea4ad);
       const pm = new T.PMREMGenerator(renderer); scene.environment = pm.fromScene(s, 0.06).texture; pm.dispose();
     })();
     scene.add(new T.HemisphereLight(0xffffff, 0xeeebe5, 1.3));
@@ -124,10 +140,11 @@
     const card = new T.Group(); scene.add(card);
     const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.anisotropy = renderer.capabilities.getMaxAnisotropy(); if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
     const edge = new T.MeshStandardMaterial({ color: 0xe9e4d9, roughness: 1, envMapIntensity: 0.2, side: T.DoubleSide });
-    const mats = { front: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.45 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
+    const mats = { front: new T.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.3, clearcoat: 0, clearcoatRoughness: 0.07 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
     const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); body.castShadow = true; body.receiveShadow = true; card.add(body);
     this.setFaces = function (front, back) {
-      for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { m.map = tex(t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
+      if (front) { const m = mats.front; m.clearcoat = front.gloss ? 1 : 0; m.clearcoatMap = front.gloss ? tex(front.gloss) : null; m.envMapIntensity = front.gloss ? 0.6 : 0.3; }
+      for (const [m, t, k] of [[mats.front, front, 1.3], [mats.back, back, 1.9]]) { if (!t) continue; m.map = tex(t.col, true); m.roughnessMap = tex(t.rough); m.normalMap = tex(t.nrm || PotoPaper.normalFromHeight(t.hgt, k)); m.needsUpdate = true; }
     };
     this.refreshBack = function () { mats.back.map.needsUpdate = true; mats.back.normalMap.needsUpdate = true;
     };
@@ -135,7 +152,7 @@
     /* ---------- stickers (back only) ---------- */
     const stickers = []; const SS = 0.34, BZ = -CT / 2;
     function addSticker(kind, finish, x, y, rot) {
-      const art = PotoPaper.sticker(kind), u = { uFoldP: { value: new V2(9, 9) }, uFoldD: { value: new V2(1, 0) }, uFoldR: { value: 0.035 }, uPeel: { value: 0 }, uFoilMap: { value: tex(art.foil) }, uFoil: { value: finish === 'holo' ? 1 : 0 } };
+      const art = PotoPaper.sticker(kind), u = { uToCard: { value: new T.Matrix3() }, uFromCard: { value: new T.Matrix3() }, uHalf: { value: new V2(CW / 2, CH / 2) }, uBend: { value: CT / 2 }, uWrap: { value: 1 }, uFoldP: { value: new V2(9, 9) }, uFoldD: { value: new V2(1, 0) }, uFoldR: { value: 0.035 }, uPeel: { value: 0 }, uFoilMap: { value: tex(art.foil) }, uFoil: { value: finish === 'holo' ? 1 : 0 } };
       const mat = new T.MeshPhysicalMaterial({ map: tex(art.col, true), alphaTest: 0.5, side: T.DoubleSide, roughness: finish === 'matte' ? 0.9 : 0.34, metalness: 0,
         clearcoat: finish === 'matte' ? 0 : finish === 'holo' ? 0.45 : 0.9, clearcoatRoughness: finish === 'holo' ? 0.25 : 0.12, normalMap: tex(PotoPaper.normalFromHeight(art.hgt, 5)), envMapIntensity: 0.95,
         polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
@@ -147,14 +164,18 @@
       // contact shadow: the sticker's own silhouette, barely blurred, a hair down-right of it (light is upper-left)
       const sc = document.createElement('canvas'); sc.width = sc.height = 256; const sx = sc.getContext('2d'); sx.filter = 'blur(2.5px)'; sx.drawImage(art.col, 4, 5, 250, 250);
       const shadow = new T.Mesh(new T.PlaneGeometry(SS, SS), new T.ShaderMaterial({ vertexShader: CONTACT_VS, fragmentShader: CONTACT_FS, transparent: true, depthWrite: false,
-        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, uniforms: { uMap: { value: tex(sc) }, uOp: { value: 0.32 }, uFoldP: u.uFoldP, uFoldD: u.uFoldD, uPeel: u.uPeel } }));
+        polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, uniforms: { uMap: { value: tex(sc) }, uOp: { value: 0.32 }, uFoldP: u.uFoldP, uFoldD: u.uFoldD, uPeel: u.uPeel, uToCard: u.uToCard, uHalf: u.uHalf } }));
       const holder = new T.Group(); holder.add(shadow); holder.add(mesh); shadow.position.z = 0.0003; mesh.position.z = 0.0006;
       const s = { holder, mesh, shadow, u, kind, finish, lift: 0, state: 'stuck', rot, x, y, tilt: new V2(), layer: ++layers };
       place(s, x, y, rot, 0); card.add(holder); stickers.push(s); return s;
     }
     // stacking: each sticker sits a hair above the ones put down before it, so the latest is always on top and nothing clips
     let layers = 0; const LAYER = 0.0007;
-    function place(s, x, y, rot, lift) { s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift - s.layer * LAYER); s.mesh.renderOrder = s.shadow.renderOrder = s.layer * 2 + (s.state === 'held' || s.state === 'placing' ? 1000 : 0); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
+    function place(s, x, y, rot, lift) {
+      // sticker-local -> card coordinates (the holder is turned to face out of the back), for the edge wrap
+      const c = Math.cos(rot), sn = Math.sin(rot); s.u.uToCard.value.set(-c, sn, x, sn, c, y, 0, 0, 1); s.u.uFromCard.value.copy(s.u.uToCard.value).invert();
+      s.u.uBend.value = (CT + (s.layer || 0) * LAYER) / 2 + 0.0004; s.u.uWrap.value = s.state === 'stuck' || (s.state === 'placing' && lift < 0.004) ? 1 : 0;
+      s.x = x; s.y = y; s.rot = rot; s.holder.position.set(x, y, BZ - lift - s.layer * LAYER); s.mesh.renderOrder = s.shadow.renderOrder = s.layer * 2 + (s.state === 'held' || s.state === 'placing' ? 1000 : 0); s.holder.rotation.set(s.tilt.x, Math.PI + s.tilt.y, 0); s.holder.rotateZ(rot); }
     this.addSticker = addSticker; this.stickers = stickers;
 
     /* ---------- turning: yaw only (that's the flip), a little tilt that springs back, never upside down ---------- */
@@ -241,7 +262,7 @@
       const s = h.s;
       if (s.state === 'peeling') { anims.push({ s, k: 'relay', t: 0, d: 0.2, p0: s.u.uFoldP.value.clone(), D: s.u.uFoldD.value.clone() }); s.state = 'placing'; if (self.onPress) self.onPress(0.5); }
       else if (s.state === 'held') {
-        const inside = Math.abs(s.tx) < CW / 2 - 0.07 && Math.abs(s.ty) < CH / 2 - 0.07;
+        const inside = Math.abs(s.tx) < CW / 2 - 0.02 && Math.abs(s.ty) < CH / 2 - 0.02;              // centre on the card: whatever hangs over the edge wraps round it
         if (!inside) { s.state = 'gone'; anims.push({ s, k: 'drop', t: 0, d: 0.22 }); if (self.onRemove) self.onRemove(s); return; }
         s.state = 'placing'; s.rot += (Math.random() - 0.5) * 0.12;                // it never goes down perfectly straight
         anims.push({ s, k: 'place', t: 0, d: 0.2, l0: s.lift });
