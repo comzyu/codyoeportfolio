@@ -45,6 +45,7 @@
   /* four actions: tighter so the bar fits a 360 px phone */
   .dock { gap: 0; } .dock .sep { margin: 0; } .dock button { padding: 0 11px; gap: 6px; font-size: 13.5px; }
   .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
+  .share .capedit { gap: 6px; width: 100%; max-width: 420px; } .share .capedit input { flex: 1; min-width: 0; height: 34px; border: 0; border-radius: 999px; padding: 0 14px; background: rgba(255,255,255,.7); font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); box-shadow: inset 0 0 0 1px var(--hair); }
 </style>
 </head>
 <body>
@@ -78,7 +79,8 @@
   </nav>
   <section class="share" id="sharesheet" aria-label="Share" aria-hidden="true">
     <div class="row glass" role="group" aria-label="Format"><button type="button" data-fmt="story" aria-pressed="true">Story 9:16</button><button type="button" data-fmt="post" aria-pressed="false">Post 4:5</button></div>
-    <div class="row glass" role="group" aria-label="Side"><button type="button" data-side="front" aria-pressed="true">Front</button><button type="button" data-side="back" aria-pressed="false">Back</button><button type="button" data-side="both" aria-pressed="false">Both</button></div>
+    <div class="row glass" role="group" aria-label="Side"><button type="button" data-side="front" aria-pressed="true">Front</button><button type="button" data-side="back" aria-pressed="false">Back</button><button type="button" data-side="both" aria-pressed="false">Both</button><button type="button" id="sedit" aria-pressed="false">Edit text</button></div>
+    <div class="row glass capedit" id="capedit" hidden><input id="capL" aria-label="Left line: date" maxlength="40"><input id="capR" aria-label="Right line: place" maxlength="30"></div>
     <div class="stage" id="sstage"><div class="frame" id="sframe"><img id="simg" alt="The image to share"><i class="zone t" id="zt"></i><i class="zone b" id="zb"></i></div></div>
     <div class="foot"><button type="button" class="g" id="sguides" aria-pressed="false">Show safe zones</button><p id="shelp">Press and hold the picture to save it.</p><button type="button" class="x" id="sclose">Done</button></div>
   </section>
@@ -120,10 +122,15 @@
 
   $('flip').onclick = () => pc.flip();
   // ---- share: Story 9:16 or Post 4:5, front / back / both ----
-  const sh = { fmt: 'story', side: 'front' }, sheet = $('sharesheet');
+  const sh = { fmt: 'story', side: 'front', left: 'Sunday · 15 Nov 2026', right: 'Singapore' }, sheet = $('sharesheet');
+  // the line under the card: filled in from the photo (its date, its place) and editable here
+  $('capL').value = sh.left; $('capR').value = sh.right;
+  $('sedit').onclick = () => { const on = $('capedit').hidden; $('capedit').hidden = !on; $('sedit').setAttribute('aria-pressed', String(on)); if (on) $('capL').focus(); };
+  let capT = 0; const capIn = () => { sh.left = $('capL').value; sh.right = $('capR').value; clearTimeout(capT); capT = setTimeout(renderShare, 180); };
+  $('capL').oninput = capIn; $('capR').oninput = capIn;
   function renderShare() {
     const front = (fronts[$('finish').textContent === 'Gloss' ? 'gloss' : 'matte'] || fronts.matte).col;
-    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: 'Sunday · 15 Nov 2026', right: 'Singapore', handle: '@cody', mark: 'poto.app' });
+    const img = PotoShare.render({ format: sh.fmt, side: sh.side, front, back: W.tex.col, stickers: pc.stickersFlat(), photo, left: sh.left, right: sh.right, handle: '@cody', mark: 'poto.app' });
     $('simg').src = img.toDataURL('image/jpeg', 0.92);
     const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min((st.clientWidth) / F.w, (st.clientHeight - 20) / F.h);
     fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';

@@ -41,44 +41,52 @@
 
   // the backdrop: the photo, cover-fit, but turned into something else so it doesn't read as a double (Cody, 16 Nov):
   // black and white, softly blurred, darker, with film grain and a vignette
-  function backdrop(x, F, ph, frost) {
-    const cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.15;
-    x.save(); x.filter = 'grayscale(1) contrast(1.08) blur(' + Math.round(F.w * (frost ? 0.045 : 0.03)) + 'px)'; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
-    x.fillStyle = frost ? 'rgba(232,232,230,.16)' : 'rgba(12,12,12,.30)'; x.fillRect(0, 0, F.w, F.h);   // frosted: a milky veil instead of darkening
-    const g = mk(256, 256), gx = g.getContext('2d'), id = gx.createImageData(256, 256); for (let i = 0; i < id.data.length; i += 4) { const v = 128 + (Math.random() - 0.5) * 140; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } gx.putImageData(id, 0, 0);
-    x.save(); x.globalCompositeOperation = 'overlay'; x.globalAlpha = 0.32; x.fillStyle = x.createPattern(g, 'repeat'); x.fillRect(0, 0, F.w, F.h); x.restore();
-    const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.25, F.w / 2, F.h / 2, F.h * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.28)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
+  function backdrop(x, F, ph) {
+    // Cody, 16 Nov: more frosted, more opaque, more texture, muted. Like the photo seen through thick frosted glass:
+    // black and white, very soft, washed with a milky white, then a two-scale frost texture (fine grain + soft mottling).
+    const cover = Math.max(F.w / ph.width, F.h / ph.height) * 1.2;
+    x.fillStyle = '#E9E8E4'; x.fillRect(0, 0, F.w, F.h);
+    x.save(); x.filter = 'grayscale(1) contrast(.8) brightness(1.05) blur(' + Math.round(F.w * 0.06) + 'px)'; x.globalAlpha = 0.85; x.drawImage(ph, (F.w - ph.width * cover) / 2, (F.h - ph.height * cover) / 2, ph.width * cover, ph.height * cover); x.restore();
+    x.fillStyle = 'rgba(236,235,231,.62)'; x.fillRect(0, 0, F.w, F.h);
+    let sd = 11; const r = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);
+    // soft mottling: a few hundred big faint blots, the uneven thickness of frosted glass
+    x.save(); x.filter = 'blur(' + Math.round(F.w * 0.02) + 'px)';
+    for (let i = 0; i < 260; i++) { x.fillStyle = r() > 0.5 ? 'rgba(255,255,255,.10)' : 'rgba(120,118,112,.07)'; x.beginPath(); x.arc(r() * F.w, r() * F.h, F.w * (0.02 + r() * 0.06), 0, Math.PI * 2); x.fill(); }
+    x.restore();
+    // fine frost grain
+    const g = mk(256, 256), gx = g.getContext('2d'), id = gx.createImageData(256, 256);
+    for (let i = 0; i < id.data.length; i += 4) { const v = r(); id.data[i] = id.data[i + 1] = id.data[i + 2] = v > 0.5 ? 255 : 60; id.data[i + 3] = Math.abs(v - 0.5) * 2 * 70; }
+    gx.putImageData(id, 0, 0); x.save(); x.fillStyle = x.createPattern(g, 'repeat'); x.fillRect(0, 0, F.w, F.h); x.restore();
+    const vg = x.createRadialGradient(F.w / 2, F.h / 2, F.h * 0.3, F.w / 2, F.h / 2, F.h * 0.8); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,58,52,.10)'); x.fillStyle = vg; x.fillRect(0, 0, F.w, F.h);
   }
   function coverDraw(x, im, dx, dy, dw, dh) { const k = Math.max(dw / im.width, dh / im.height), sw = dw / k, sh = dh / k; x.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, dx, dy, dw, dh); }
   function details(x, F, o, ex, y1) {
     const y2 = y1 + (o.format === 'story' ? 36 : 30);
-    x.save(); x.fillStyle = 'rgba(255,255,255,.92)'; x.textBaseline = 'middle'; x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 6;
+    x.save(); x.fillStyle = '#141416'; x.textBaseline = 'middle';
     const big = (o.format === 'story' ? 25 : 22) + 'px', small = (o.format === 'story' ? 21 : 18) + 'px';
     x.font = '500 ' + big + ' "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '3px';
     x.textAlign = 'left'; x.fillText(o.left.toUpperCase(), ex, y1); x.textAlign = 'right'; x.fillText(o.right.toUpperCase(), F.w - ex, y1);
-    x.fillStyle = 'rgba(255,255,255,.66)'; x.font = '500 ' + small + ' "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px';
+    x.fillStyle = 'rgba(20,20,22,.55)'; x.font = '500 ' + small + ' "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px';
     x.textAlign = 'left'; x.fillText(o.handle, ex, y2); x.textAlign = 'right'; x.fillText(o.mark, F.w - ex, y2);
     if (x.letterSpacing !== undefined) x.letterSpacing = '0px'; x.restore();
   }
 
   /* the monthly recap (board #4, #15): the calendar as in the app, filling the frame. Hero photo on top with a small "nov.",
-     ring binding, then the days on a frosted, translucent page. The backdrop is another photo from the month, black and white and frosted.
+     ring binding, then the days on plain white. The backdrop is another photo from the month, black and white behind frosted glass.
      o: { format, photo (hero), backdrop, month, year, lead, days, cells: {day: image}, today, left, right, handle, mark } */
   S.month = function (o) {
     const F = FORMATS[o.format], c = mk(F.w, F.h), x = c.getContext('2d'), M = FILL[o.format];
-    backdrop(x, F, o.backdrop || o.photo, true);
+    backdrop(x, F, o.backdrop || o.photo);
     const foot = o.format === 'story' ? 92 : 72, avail = F.h - M.top - M.bottom - foot, rows = 6;
     let w = F.w - M.side * 2, pad = w * 0.035, cell = (w - pad * 2) / 7, dowH = w * 0.06, gridH = pad * 0.8 + dowH + rows * cell + pad;
     let heroH = avail - gridH;
     if (heroH < w * 0.5) { w = avail / (0.5 + (0.035 * 1.8 + 0.06) + rows / 7 * (1 - 0.07)); pad = w * 0.035; cell = (w - pad * 2) / 7; dowH = w * 0.06; gridH = pad * 0.8 + dowH + rows * cell + pad; heroH = w * 0.5; }
     const h = heroH + gridH, x0 = (F.w - w) / 2, y0 = M.top + (avail - h) / 2, r = w * 0.035, seam = y0 + heroH;
     // one soft shadow under the whole calendar
-    x.save(); x.shadowColor = 'rgba(0,0,0,.3)'; x.shadowBlur = w * 0.06; x.shadowOffsetY = w * 0.03; x.fillStyle = 'rgba(0,0,0,.25)'; round(x, x0, y0, w, h, r); x.fill(); x.restore();
+    x.save(); x.shadowColor = 'rgba(0,0,0,.3)'; x.shadowBlur = w * 0.06; x.shadowOffsetY = w * 0.03; x.fillStyle = '#fff'; round(x, x0, y0, w, h, r); x.fill(); x.restore();
     x.save(); round(x, x0, y0, w, h, r); x.clip();
     coverDraw(x, o.photo, x0, y0, w, heroH);
-    // the days page: frosted glass. The (already blurred) backdrop shows through, lifted with a milky white, a bright top edge
-    x.fillStyle = 'rgba(255,255,255,.74)'; x.fillRect(x0, seam, w, gridH);
-    const sheen = x.createLinearGradient(0, seam, 0, seam + gridH); sheen.addColorStop(0, 'rgba(255,255,255,.35)'); sheen.addColorStop(0.3, 'rgba(255,255,255,0)'); x.fillStyle = sheen; x.fillRect(x0, seam, w, gridH);
+    x.fillStyle = '#FFFFFF'; x.fillRect(x0, seam, w, gridH);                       // Cody: the page is plain white, so only the photos speak
     const gx = x0 + pad, gy = seam + pad * 0.8 + dowH;
     x.fillStyle = 'rgba(20,20,22,.45)'; x.font = '500 ' + Math.round(w * 0.022) + 'px "IBM Plex Mono", ui-monospace, monospace'; x.textAlign = 'center'; x.textBaseline = 'middle';
     'MTWTFSS'.split('').forEach((d, i) => x.fillText(d, gx + cell * (i + 0.5), seam + pad * 0.8 + dowH * 0.55));
@@ -94,14 +102,14 @@
     for (let i = 0; i <= 7; i++) { x.beginPath(); x.moveTo(gx + i * cell, gy); x.lineTo(gx + i * cell, gy + rows * cell); x.stroke(); }
     for (let j = 0; j <= rows; j++) { x.beginPath(); x.moveTo(gx, gy + j * cell); x.lineTo(gx + w - pad * 2, gy + j * cell); x.stroke(); }
     x.restore();
-    x.save(); round(x, x0 + 0.5, y0 + 0.5, w - 1, h - 1, r); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 1.5; x.stroke(); x.restore();   // glass rim
-    // ring binding on the seam
+        // ring binding on the seam
     const rw = w * 0.02, rh = w * 0.055;
     for (let i = 0; i < 8; i++) { if (i === 3 || i === 4) continue; const rx = x0 + w * 0.09 + i * (w * 0.82 / 7);
       x.save(); x.lineWidth = rw * 0.4; const g = x.createLinearGradient(rx - rw, 0, rx + rw, 0); g.addColorStop(0, '#e9e9ee'); g.addColorStop(0.5, '#b9b9bf'); g.addColorStop(1, '#7f7f86'); x.strokeStyle = g;
       x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 3; x.shadowOffsetY = 1; round(x, rx - rw / 2, seam - rh / 2, rw, rh, rw / 2); x.stroke(); x.restore(); }
     // the month, small and quiet, like the app: "nov." top left, the year top right
-    x.save(); x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 10; x.textBaseline = 'top';
+    x.save(); round(x, x0, y0, w, h, r); x.clip(); const sc = x.createLinearGradient(0, y0, 0, y0 + heroH * 0.32); sc.addColorStop(0, 'rgba(0,0,0,.42)'); sc.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = sc; x.fillRect(x0, y0, w, heroH * 0.32); x.restore();
+    x.save(); x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 14; x.shadowOffsetY = 2; x.textBaseline = 'top';
     x.font = '400 ' + Math.round(w * 0.075) + 'px Inter, system-ui, sans-serif'; x.textAlign = 'left'; x.fillText(o.month, x0 + w * 0.05, y0 + w * 0.04);
     x.fillStyle = 'rgba(255,255,255,.88)'; x.font = '500 ' + Math.round(w * 0.03) + 'px "IBM Plex Mono", ui-monospace, monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '3px';
     x.textAlign = 'right'; x.fillText(String(o.year), x0 + w * 0.95, y0 + w * 0.055); if (x.letterSpacing !== undefined) x.letterSpacing = '0px'; x.restore();
