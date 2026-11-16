@@ -46,3 +46,9 @@ The two v0.1 pieces that are still round-one style, plus the calendar Cody parke
 
 Not in this build: sound (needs recordings), sending to friends (v0.4).
 Open questions for Cody: canister label design per look; whether the month opens on today or on the latest roll.
+
+## Notes from Cody, 16 Nov (round after the share fix)
+- **Feel, everywhere:** very premium, scrapbooky with real objects. When a surface isn't a scrapbook object, it's liquid glass: translucent, with fine grain. (Grain is now on every `.glass` surface.)
+- **Profile = a desk** (board #3, "Repository of Remnants"): your prints, postcards, stamps and stickers lie on a desk and you arrange them freely, tidy or scrapbook-messy. Build this as the profile page.
+- **Stamps cut from your own photo** (board #9): pick a photo, a perforated stamp frame cuts a piece of it out, and that becomes a stamp you can stick on postcards. This is how users make stamps.
+- Done this round: the photo disc (board #5) replaced the film strip and spins one frame at a time, synced with the stack; the month is a hero photo over a photo grid (board #15); no wall shadow behind the postcard; stickers cast a shadow while lifted; share backdrop is black and white with grain.
