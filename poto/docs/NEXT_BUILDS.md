@@ -33,3 +33,16 @@ Recommended order: ~~1~~ → 2 → 4 → 3 → 5 → 6 → 7. Writing and the jo
 - Develop time: now 4 s with tap-to-skip. Keep, or make skip a setting?
 - Diary direction (build 5).
 - Fonts: still placeholders (Special Elite, La Belle Aurore, IBM Plex Mono, Inter).
+
+
+## Next build (planned 16 Nov 2026 from Cody's board): **Rolls and the month**
+
+The two v0.1 pieces that are still round-one style, plus the calendar Cody parked, all built around board quirks 1–3.
+
+1. **Load a roll = pick a canister off a shelf** (#20, #0). The three looks stand as film canisters on a white shelf, labels in the look's colours. Swipe along; the one in front lifts and turns to show its label and a sample print. Tap: it drops into the camera with a click and the counter reads 0 / 27. Reuses the gallery's spine-stack physics.
+2. **Roll complete = the roll comes out as a contact strip** (#0, film strip in the diary). The 27th frame advances, the roll rewinds, and the whole roll slides out as a strip of 27 tiny frames you can scrub. It's filed into the diary as a folder with its canister clipped on (frosted folder, quirk 3).
+3. **The month as a photo calendar** (#4, #15). Each day shows the best kept print of that day, edge to edge; empty days stay plain. Big lowercase month name, small mono weekday labels, ring binding across the top (#15). Tap a day: its prints fan out like #8. Flip the page to change month (paper page-turn).
+4. **Monthly recap share** (#4 "july recap"). The month calendar exported as a 9:16 / 4:5 image using the share renderer from build 2, with a cut-out-label month name (#2).
+
+Not in this build: sound (needs recordings), sending to friends (v0.4).
+Open questions for Cody: canister label design per look; whether the month opens on today or on the latest roll.
