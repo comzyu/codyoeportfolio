@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* The profile is a desk (Cody's board #3, "Repository of Remnants"): your prints, postcards, stamps and film lie on it,
+     and you arrange them however you like: tidy, or scrapbook-messy. The page around it stays quiet; the objects are the colour. */
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(120px + env(safe-area-inset-bottom, 0px)); }
+  .pad { padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+  .who { display: flex; align-items: center; gap: 14px; }
+  .who .av { width: 58px; height: 58px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--hair), 0 8px 18px -8px rgba(20,20,30,.4); }
+  .who .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .who h1 { margin: 0; font-size: 30px; line-height: 32px; font-weight: 600; letter-spacing: -.03em; } .who h1 span { font-weight: 300; color: var(--ink-3); font-size: 18px; letter-spacing: -.01em; margin-left: 4px; }
+  .stats { display: flex; gap: 14px; margin-top: 12px; color: var(--ink-3); flex-wrap: wrap; } .stats b { color: var(--ink); font-weight: 500; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; gap: 8px; }
+  .seg { display: flex; gap: 2px; padding: 3px; } .seg button { height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .tidy { height: 36px; padding: 0 14px; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; } .tidy svg { width: 14px; height: 14px; position: relative; }
+
+  /* the desk */
+  .desk { position: relative; isolation: isolate; margin: 12px auto 0; width: calc(100% - 0px); max-width: 560px; aspect-ratio: 3 / 4; border-radius: 22px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+    background: #F6F5F1 center / 256px 256px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.6), 0 26px 50px -30px rgba(20,20,30,.45); }
+  .desk::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;            /* soft light falling across the desk from the top left */
+    background: radial-gradient(120% 90% at 15% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%), radial-gradient(90% 70% at 100% 100%, rgba(0,0,0,.10), rgba(0,0,0,0) 60%); }
+  .desk.black { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 26px 50px -30px rgba(0,0,0,.7); }
+  .obj { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; cursor: grab; touch-action: none; transition: transform .55s var(--spring); }
+  .obj.drag { transition: none; cursor: grabbing; z-index: 999 !important; }
+  .obj .sh { position: absolute; inset: 0; border-radius: 2px; box-shadow: 0 1px 1.5px rgba(20,20,30,.22), 0 8px 18px -8px rgba(20,20,30,.38); transition: box-shadow .25s, transform .25s; pointer-events: none; }
+  .obj.drag .sh, .obj.sel .sh { box-shadow: 0 2px 3px rgba(20,20,30,.18), 0 24px 36px -14px rgba(20,20,30,.45); transform: translateY(2px); }
+  .black .obj .sh { box-shadow: 0 1px 2px rgba(0,0,0,.6), 0 10px 22px -8px rgba(0,0,0,.8); }
+  /* a print */
+  .print { background: #FDFCFA; padding: 5% 5% 15%; border-radius: 2px; }
+  .print img, .card img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; pointer-events: none; }
+  .print::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.3), rgba(255,255,255,0) 40%); }
+  .print i.cap { position: absolute; left: 6%; bottom: 4.5%; font: 500 6.5px/1 var(--mono); letter-spacing: .08em; color: #9a978f; font-style: normal; white-space: nowrap; }
+  /* a postcard (front): wider border, the card's caption */
+  .card { background: #FAF9F5 var(--paper-white, none) 0 0 / 200px 200px; padding: 4.2% 4.2% 12%; border-radius: 2px; }
+  .card i.cap { position: absolute; left: 5%; bottom: 4.6%; font: 500 6px/1 var(--mono); letter-spacing: .1em; color: #8d8a83; font-style: normal; white-space: nowrap; }
+  /* a stamp: the cut-out PNG (perforations are real holes) */
+  .stamp img { display: block; width: 100%; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(20,20,30,.3)) drop-shadow(0 6px 8px rgba(20,20,30,.18)); }
+  .stamp .sh { display: none; }
+  /* small things */
+  .can .sh, .clip .sh, .tape .sh { display: none; }
+  .can > .can-inner { filter: drop-shadow(0 8px 8px rgba(0,0,0,.28)); }
+  .clip svg { display: block; width: 100%; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .tape { background: linear-gradient(180deg, rgba(243,226,196,.78), rgba(232,214,182,.7)); box-shadow: 0 1px 1px rgba(0,0,0,.08);
+    clip-path: polygon(0 8%, 3% 0, 6% 10%, 9% 0, 91% 0, 94% 12%, 97% 0, 100% 8%, 100% 92%, 97% 100%, 94% 88%, 91% 100%, 9% 100%, 6% 90%, 3% 100%, 0 92%); }   /* washi tape: translucent, torn ends */
+  .can-inner { position: relative; } .can-inner canvas { position: absolute; left: 0; top: -6.5%; width: 100%; height: 106.5%; }
+  .ring { position: absolute; z-index: 1000; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; display: none; place-items: center; touch-action: none; cursor: grab; }
+  .ring.on { display: grid; } .ring svg { width: 16px; height: 16px; position: relative; }
+
+  .selbar { position: absolute; z-index: 7; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; display: flex; gap: 4px; padding: 5px; transition: opacity .25s, transform .4s var(--spring); }
+  .selbar.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  .selbar button { height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+  .selbar .on { background: var(--ink); color: #fff; }
+  .dhint { margin: 12px 0 0; text-align: center; color: var(--ink-3); }
+  .add { height: 36px; width: 36px; }
+  /* the drawer: everything you can put on the desk */
+  .drawer { position: absolute; z-index: 8; left: 0; right: 0; bottom: 0; max-height: 72%; border-radius: 26px 26px 0 0; padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateY(105%); transition: transform .45s var(--spring); overflow-y: auto; background: rgba(250,250,248,.86); }
+  .drawer.on { transform: none; }
+  .drawer .grip { width: 38px; height: 4px; border-radius: 2px; background: var(--hair); margin: 0 auto 12px; }
+  .drawer h4 { margin: 14px 2px 8px; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; } .drawer h4 small { font: 400 10px/1 var(--mono); letter-spacing: .08em; color: var(--ink-3); text-transform: uppercase; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .tiles button { position: relative; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center; }
+  .tiles button img { width: 100%; height: 100%; object-fit: cover; } .tiles button.st img { object-fit: contain; padding: 8%; }
+  .tiles button span { font-size: 11px; color: var(--ink-2); }
+  .mk { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 46px; margin-top: 16px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none; }
+  .dock button[aria-pressed="true"], .dock a.on { background: rgba(20,20,22,.07); color: var(--ink); box-shadow: none; }
+  .dock a.tab { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); text-decoration: none; } .dock a.tab svg { width: 19px; height: 19px; }
+  .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; border-radius: 999px; display: inline-flex; align-items: center; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
+  .dock .cam i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; display: block; }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <a class="glass round" style="color:inherit" href="home.html" aria-label="Back to the diary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <button type="button" class="glass round add" id="add" aria-label="Put something on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+  <div class="scroll" id="scroll">
+    <div class="pad">
+      <div class="who"><span class="av"><img src="img/photo-04-t.jpg" alt=""></span><div><h1>cody<span>@cody</span></h1></div></div>
+      <div class="stats mono" id="stats"></div>
+      <div class="row">
+        <div class="seg glass" role="group" aria-label="Desk surface" id="surf"><button type="button" data-s="paper">Paper</button><button type="button" data-s="linen">Linen</button><button type="button" data-s="cork">Cork</button><button type="button" data-s="black">Black</button></div>
+        <button type="button" class="glass tidy" id="tidy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Tidy up</span></button>
+      </div>
+    </div>
+    <div class="pad"><div class="desk" id="desk" role="application" aria-label="Your desk. Drag things to move them; pinch or use the round handle to turn them."><button type="button" class="ring glass" id="ring" aria-label="Turn and resize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button></div></div>
+    <p class="dhint mono" id="hint">Drag to move · pinch or the round handle to turn</p>
+  </div>
+  <div class="selbar glass" id="selbar"><button type="button" id="front">Bring to front</button><button type="button" id="remove">Remove</button><button type="button" class="on" id="done">Done</button></div>
+  <section class="drawer glass" id="drawer" aria-label="Put on the desk" aria-hidden="true"><div class="grip"></div>
+    <h4>Prints <small>tap to put on the desk</small></h4><div class="tiles" id="tprints"></div>
+    <h4>Postcards</h4><div class="tiles" id="tcards"></div>
+    <h4>Stamps <small id="nstamps"></small></h4><div class="tiles" id="tstamps"></div>
+    <a class="mk" href="stamp.html"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h12v18H6z" stroke-dasharray="2 2.6"/><path d="M9 7h6v7H9z"/></svg>Cut a stamp from a photo</a>
+    <h4>Bits</h4><div class="tiles" id="tbits"></div>
+  </section>
+  <nav class="dock glass" aria-label="Poto">
+    <a class="tab" href="home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16M9 4v5.5"/></svg>Diary</a>
+    <a class="cam" href="camera.html" aria-label="Camera"><i></i></a>
+    <a class="tab on" href="profile.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.3-3.6 4-5.2 7-5.2s5.7 1.6 7 5.2"/></svg>Desk</a>
+  </nav>
+</main>
+<script src="lib/paper.js"></script>
+<script src="lib/texture.js"></script>
+<script src="lib/canister.js"></script>
+<script src="lib/stamp.js"></script>
+<script>
+PotoTex.install();
+const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ph = (n, sz) => 'img/photo-' + String(n).padStart(2, '0') + (sz || '-s') + '.jpg';
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const desk = $('desk'), ring = $('ring');
+// sizes as a fraction of the desk's width
+const SIZE = { print: 0.3, card: 0.36, stamp: 0.17, can: 0.12, clip: 0.05, tape: 0.2 };
+let stamps = store.get('poto.stamps', []);                       // [{id, png (data URL), shape, from}]
+// ---- the desk's state: where everything lies. Scattered like a real desk to start; you move it from there ----
+const START = [
+  { type: 'card', src: 3, x: 0.30, y: 0.25, r: -6 }, { type: 'print', src: 1, x: 0.70, y: 0.20, r: 7 }, { type: 'print', src: 2, x: 0.63, y: 0.52, r: -4 },
+  { type: 'print', src: 6, x: 0.27, y: 0.62, r: 4 }, { type: 'print', src: 9, x: 0.72, y: 0.82, r: 10 }, { type: 'can', look: 'Sunday', x: 0.16, y: 0.86, r: -18 },
+  { type: 'clip', x: 0.69, y: 0.095, r: 8 }, { type: 'tape', x: 0.28, y: 0.48, r: -24 }, { type: 'stampAuto', src: 5, x: 0.45, y: 0.80, r: -8 }, { type: 'stampAuto', src: 8, x: 0.88, y: 0.40, r: 12 },
+];
+let state = store.get('poto.desk', null), topZ = 10, sel = null;
+const save = () => store.set('poto.desk', state);
+
+// stamps made automatically for the starting desk (from two of your photos), so the desk shows what a stamp looks like
+async function autoStamp(n) {
+  const id = 'auto' + n; let s = stamps.find((x) => x.id === id); if (s) return s;
+  const im = new Image(); im.src = ph(n, '-s'); await im.decode().catch(() => {}); await document.fonts.ready;
+  const a = 4 / 5, cw = Math.min(im.width, im.height * a), ch = cw / a;
+  const c = PotoStamp.render(im, { x: (im.width - cw) / 2, y: (im.height - ch) * 0.35, w: cw, h: ch }, { shape: 'portrait', printed: true, date: '15 NOV 26', width: 320 });
+  s = { id, png: c.toDataURL('image/png'), shape: 'portrait', from: n }; stamps.push(s); store.set('poto.stamps', stamps); return s;
+}
+async function init() {
+  if (!state) {
+    state = { surface: 'paper', tidy: false, items: [] };
+    for (const it of START) {
+      if (it.type === 'stampAuto') { const s = await autoStamp(it.src); state.items.push({ id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: s.id, x: it.x, y: it.y, r: it.r, s: 1, z: ++topZ }); }
+      else state.items.push(Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), s: 1, z: ++topZ }, it));
+    }
+    save();
+  }
+  topZ = Math.max(10, ...state.items.map((i) => i.z || 0));
+  setSurface(state.surface, true); render(); paintStats(); paintTidy();
+}
+
+// ---- drawing the objects ----
+const CLIPSVG = '<svg viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.4" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+const els = new Map();
+function make(it) {
+  const el = document.createElement('div'); el.className = 'obj ' + it.type; el.dataset.id = it.id;
+  if (it.type === 'print') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">15 NOV 2026</i>';
+  else if (it.type === 'card') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">POST CARD · SINGAPORE</i>';
+  else if (it.type === 'stamp') { const s = stamps.find((x) => x.id === it.src); el.innerHTML = s ? '<img src="' + s.png + '" alt="" draggable="false">' : ''; }
+  else if (it.type === 'can') { el.innerHTML = '<i class="sh"></i>'; const c = makeCan(byLook(it.look || 'Sunday')); c.classList.add('can-inner'); c.style.width = '100%'; c.style.height = 'auto'; c.style.aspectRatio = '58 / 92'; el.appendChild(c); }
+  else if (it.type === 'clip') el.innerHTML = CLIPSVG;
+  else if (it.type === 'tape') el.innerHTML = '';
+  desk.appendChild(el); els.set(it.id, el); return el;
+}
+function place(it, el) {
+  const D = desk.clientWidth, H = desk.clientHeight, w = SIZE[it.type] * D * (it.s || 1);
+  el.style.width = w + 'px'; if (it.type === 'tape') el.style.height = w * 0.28 + 'px';
+  const h = el.offsetHeight || w * 1.3;
+  el.style.transform = 'translate(' + (it.x * D - w / 2).toFixed(1) + 'px,' + (it.y * H - h / 2).toFixed(1) + 'px) rotate(' + (it.r || 0).toFixed(1) + 'deg)';
+  el.style.zIndex = it.z || 1;
+}
+function render() { for (const it of state.items) { const el = els.get(it.id) || make(it); place(it, el); } for (const [id, el] of els) if (!state.items.find((i) => i.id === id)) { el.remove(); els.delete(id); } placeRing(); }
+addEventListener('resize', render);
+function paintStats() { const kept = store.get('poto.kept', []).length; $('stats').innerHTML = '<span><b>' + (31 + kept) + '</b> prints</span><span><b>4</b> rolls</span><span><b>' + stamps.length + '</b> stamps</span><span><b>12</b> friends</span>'; }
+
+// ---- surface ----
+const surfURL = {};
+async function setSurface(k, quiet) {
+  state.surface = k; [...$('surf').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === k)));
+  surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); desk.style.backgroundImage = 'url(' + surfURL[k] + ')'; desk.classList.toggle('black', k === 'black');
+  if (!quiet) save();
+}
+$('surf').onclick = (e) => { const b = e.target.closest('button'); if (b) setSurface(b.dataset.s); };
+
+// ---- moving things: one finger drags, two fingers turn and resize; the round handle does the same with one finger or a mouse ----
+const pts = new Map(); let g = null;
+const local = (e) => { const r = desk.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, px: e.clientX - r.left, py: e.clientY - r.top }; };
+function select(it) {
+  sel = it; els.forEach((el, id) => el.classList.toggle('sel', !!it && id === it.id)); $('selbar').classList.toggle('on', !!it); placeRing();
+}
+function placeRing() {
+  if (!sel) { ring.classList.remove('on'); return; } const el = els.get(sel.id), D = desk.clientWidth, H = desk.clientHeight, w = el.offsetWidth, h = el.offsetHeight, a = (sel.r || 0) * Math.PI / 180;
+  const cx = sel.x * D, cy = sel.y * H, dx = w / 2 + 6, dy = h / 2 + 6;   // the handle sits on the bottom-right corner, turning with the object
+  ring.style.left = (cx + dx * Math.cos(a) - dy * Math.sin(a)) + 'px'; ring.style.top = (cy + dx * Math.sin(a) + dy * Math.cos(a)) + 'px'; ring.classList.add('on');
+}
+desk.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#ring')) return;
+  const el = e.target.closest('.obj'); pts.set(e.pointerId, local(e));
+  if (!el) { if (pts.size === 1) select(null); return; }
+  const it = state.items.find((i) => i.id === el.dataset.id); desk.setPointerCapture(e.pointerId);
+  if (pts.size === 1) {
+    if (state.tidy) setTidy(false, true);                        // touching a tidy desk turns it back into a free one
+    it.z = ++topZ; el.style.zIndex = it.z; select(it); el.classList.add('drag');
+    const p = local(e); g = { it, el, mode: 'move', ox: p.x - it.x, oy: p.y - it.y };
+  } else if (pts.size === 2 && g) { const [a, b] = [...pts.values()]; g.mode = 'twist'; g.a0 = Math.atan2(b.py - a.py, b.px - a.px); g.d0 = Math.hypot(b.px - a.px, b.py - a.py); g.r0 = g.it.r || 0; g.s0 = g.it.s || 1; }
+});
+desk.addEventListener('pointermove', (e) => {
+  if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, local(e)); if (!g) return;
+  if (g.mode === 'move' && pts.size === 1) { const p = local(e); g.it.x = Math.max(0.02, Math.min(0.98, p.x - g.ox)); g.it.y = Math.max(0.02, Math.min(0.98, p.y - g.oy)); }
+  else if (g.mode === 'twist' && pts.size >= 2) { const [a, b] = [...pts.values()]; g.it.r = g.r0 + (Math.atan2(b.py - a.py, b.px - a.px) - g.a0) * 180 / Math.PI; g.it.s = Math.max(0.5, Math.min(2.2, g.s0 * Math.hypot(b.px - a.px, b.py - a.py) / g.d0)); }
+  place(g.it, g.el); placeRing();
+});
+const up = (e) => { pts.delete(e.pointerId); if (!g) return; if (pts.size === 0) { g.el.classList.remove('drag'); g = null; save(); } else if (g.mode === 'twist') { const p = [...pts.values()][0]; g.mode = 'move'; g.ox = p.x - g.it.x; g.oy = p.y - g.it.y; } };
+desk.addEventListener('pointerup', up); desk.addEventListener('pointercancel', up);
+// the round handle: drag it round to turn, out or in to resize
+let rg = null;
+ring.addEventListener('pointerdown', (e) => { if (!sel) return; e.stopPropagation(); ring.setPointerCapture(e.pointerId); const el = els.get(sel.id), r = desk.getBoundingClientRect(), cx = r.left + sel.x * r.width, cy = r.top + sel.y * r.height;
+  rg = { cx, cy, a0: Math.atan2(e.clientY - cy, e.clientX - cx), d0: Math.hypot(e.clientX - cx, e.clientY - cy), r0: sel.r || 0, s0: sel.s || 1, el }; el.classList.add('drag'); });
+ring.addEventListener('pointermove', (e) => { if (!rg) return; sel.r = rg.r0 + (Math.atan2(e.clientY - rg.cy, e.clientX - rg.cx) - rg.a0) * 180 / Math.PI; sel.s = Math.max(0.5, Math.min(2.2, rg.s0 * Math.hypot(e.clientX - rg.cx, e.clientY - rg.cy) / rg.d0)); place(sel, rg.el); placeRing(); });
+const rup = () => { if (!rg) return; rg.el.classList.remove('drag'); rg = null; save(); }; ring.addEventListener('pointerup', rup); ring.addEventListener('pointercancel', rup);
+$('front').onclick = () => { if (!sel) return; sel.z = ++topZ; els.get(sel.id).style.zIndex = sel.z; save(); };
+$('remove').onclick = () => { if (!sel) return; const el = els.get(sel.id), it = sel; select(null);
+  const done = () => { state.items = state.items.filter((i) => i !== it); render(); save(); };
+  if (reduced || !el.animate) return done(); el.animate([{ opacity: 1 }, { opacity: 0, transform: el.style.transform + ' translateY(-30px) scale(.9)' }], { duration: 260, easing: 'ease-in' }).onfinish = done; };
+$('done').onclick = () => select(null);
+
+// ---- tidy up: everything snaps into neat rows by kind; scatter puts it back where you had it ----
+function paintTidy() { $('tidy').querySelector('span').textContent = state.tidy ? 'Scatter' : 'Tidy up'; }
+function setTidy(on, keepFree) {
+  if (on) {
+    state.free = state.items.map((i) => ({ id: i.id, x: i.x, y: i.y, r: i.r, s: i.s }));
+    const order = ['card', 'print', 'stamp', 'can', 'clip', 'tape'], items = state.items.slice().sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+    const D = desk.clientWidth, H = desk.clientHeight, m = 0.05 * D, gap = 0.035 * D; let x = m, y = m, rowH = 0;
+    for (const it of items) {
+      const el = els.get(it.id); it.r = 0; it.s = it.type === 'clip' || it.type === 'tape' ? 1 : 0.86; place(it, el);
+      const w = el.offsetWidth, h = el.offsetHeight; if (x + w > D - m + 1) { x = m; y += rowH + gap; rowH = 0; }
+      it.x = (x + w / 2) / D; it.y = Math.min(0.97, (y + h / 2) / H); x += w + gap; rowH = Math.max(rowH, h);
+    }
+  } else if (state.free && !keepFree) { for (const f of state.free) { const it = state.items.find((i) => i.id === f.id); if (it) Object.assign(it, { x: f.x, y: f.y, r: f.r, s: f.s }); } }
+  state.tidy = on; render(); save(); paintTidy();
+}
+$('tidy').onclick = () => { select(null); setTidy(!state.tidy); };
+
+// ---- the drawer: your prints, postcards and stamps; tap one and it drops onto the middle of the desk ----
+function openDrawer(on) { $('drawer').classList.toggle('on', on); $('drawer').setAttribute('aria-hidden', String(!on)); if (on) fillDrawer(); }
+$('add').onclick = () => openDrawer(!$('drawer').classList.contains('on'));
+document.addEventListener('pointerdown', (e) => { if ($('drawer').classList.contains('on') && !e.target.closest('#drawer, #add')) openDrawer(false); });
+function fillDrawer() {
+  const tile = (html, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = html; b.onclick = fn; return b; };
+  const put = (it) => { openDrawer(false); if (state.tidy) setTidy(false, true); const n = Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), x: 0.5, y: 0.45, r: (Math.random() * 12 - 6), s: 1, z: ++topZ }, it); state.items.push(n); render(); save(); select(n);
+    const el = els.get(n.id); if (!reduced && el.animate) el.animate([{ opacity: 0, translate: '0 -40px', scale: '1.15' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 420, easing: 'cubic-bezier(.3,1.3,.5,1)' }); };
+  $('tprints').replaceChildren(...Array.from({ length: 12 }, (_, k) => tile('<img src="' + ph(k + 1, '-t') + '" alt="">', '', () => put({ type: 'print', src: k + 1 }))));
+  $('tcards').replaceChildren(...[3, 7].map((n) => tile('<img src="' + ph(n, '-t') + '" alt="">', '', () => put({ type: 'card', src: n }))));
+  $('nstamps').textContent = stamps.length ? stamps.length + ' cut' : 'none yet';
+  $('tstamps').replaceChildren(...stamps.map((s) => tile('<img src="' + s.png + '" alt="">', 'st', () => put({ type: 'stamp', src: s.id }))));
+  $('tbits').replaceChildren(tile('<span>Film</span>', '', () => put({ type: 'can', look: 'Harbour' })), tile('<span>Clip</span>', '', () => put({ type: 'clip' })), tile('<span>Tape</span>', '', () => put({ type: 'tape' })));
+}
+// a stamp you just cut lands on the desk
+const fresh = new URLSearchParams(location.search).get('stamp');
+init().then(() => { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300)); ['linen', 'cork', 'black', 'paper'].forEach((k, i) => idle(async () => { surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); })); if (fresh && stamps.find((s) => s.id === fresh) && !state.items.find((i) => i.src === fresh)) { const n = { id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: fresh, x: 0.5, y: 0.42, r: -5, s: 1.15, z: ++topZ }; state.items.push(n); render(); save(); select(n); paintStats(); } });
+</script>
+</body>
+</html>

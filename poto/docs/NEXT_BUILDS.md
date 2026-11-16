@@ -77,3 +77,9 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - The back has no address any more: a short handwritten note (two lines), editable (Write → Note).
 - Camera: shooting never waits. Shots drop into a tray undeveloped; develop them all together, toss any, keep the rest.
 - Open questions for Cody: how a friend's photo differs from your own (front marking, who the note is from); filters strength pass later; time zone setup in onboarding.
+
+## Build 4: the desk (profile) and stamps — 17 Nov
+- profile.html: your desk. Prints, a postcard, stamps, a film canister, a paper clip and washi tape, scattered. Drag to move; two fingers or the round handle to turn and resize; Bring to front, Remove. Tidy up snaps everything into rows by kind; Scatter restores your layout. Four surfaces to choose from (Paper, Linen, Cork, Black). + opens a drawer of prints, postcards, stamps and bits. Saved in localStorage 'poto.desk'.
+- stamp.html: cut a stamp from a photo. Perforated frame over the photo (move, resize), Portrait/Square/Landscape, Printed/Plain. Cut punches the holes in sequence, the stamp lifts out and its shape is left in the photo. Stamps saved in 'poto.stamps' as transparent PNGs (real perforation holes); "Put on the desk" places it.
+- Shared: lib/canister.js (looks + canister drawing), lib/stamp.js (stamp renderer), surfaces in lib/texture.js.
+- Open for Cody: desk surface choice, stamp shapes and printing, who sees the desk, friend vs own photo marking.

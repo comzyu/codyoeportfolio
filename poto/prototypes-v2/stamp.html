@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Cut a stamp</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Cut a stamp out of your own photo (Cody's board #9). A perforated frame sits on the photo; move it, size it, then Cut:
+     the perforation is punched hole by hole, and the stamp lifts out, leaving its shape behind in the photo. */
+  .scroll { position: absolute; inset: 0; overflow-y: auto; padding: calc(64px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(110px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+  .top h1 { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; }
+  .stage { position: relative; margin: 6px auto 0; width: fit-content; max-width: 100%; overflow: hidden; border-radius: 6px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .stage > img { display: block; max-width: 100%; max-height: 56vh; border-radius: 6px; box-shadow: 0 18px 40px -24px rgba(20,20,30,.5); }
+  .frame { position: absolute; left: 0; top: 0; cursor: grab; touch-action: none; }
+  .frame .dim { position: absolute; inset: 0; box-shadow: 0 0 0 200vmax rgba(250,250,248,.72); pointer-events: none; transition: box-shadow .4s; }
+  .frame svg { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); overflow: visible; pointer-events: none; }
+  .frame .grab { position: absolute; right: -16px; bottom: -16px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; cursor: nwse-resize; touch-action: none; }
+  .frame .grab svg { position: relative; inset: auto; width: 14px; height: 14px; }
+  .cutting .frame .grab, .cut .frame .grab { opacity: 0; pointer-events: none; }
+  .hole-out { position: absolute; background: var(--room); box-shadow: inset 0 2px 6px rgba(0,0,0,.25); border-radius: 2px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .cut .hole-out { opacity: 1; } .cut .frame .dim { box-shadow: 0 0 0 200vmax rgba(250,250,248,.35); }
+  .piece { position: absolute; z-index: 5; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(20,20,30,.25)) drop-shadow(0 18px 24px rgba(20,20,30,.3)); }
+  .opts { display: grid; gap: 10px; margin-top: 18px; justify-items: center; }
+  .seg { display: flex; gap: 2px; padding: 3px; } .seg button { height: 32px; padding: 0 13px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .strip { display: flex; gap: 8px; overflow-x: auto; margin: 16px -18px 0; padding: 4px 18px 8px; scrollbar-width: none; } .strip::-webkit-scrollbar { display: none; }
+  .strip button { flex: none; width: 54px; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--hair); padding: 0; }
+  .strip button img { width: 100%; height: 100%; object-fit: cover; display: block; } .strip button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .bar { position: absolute; z-index: 6; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; }
+  .bar button, .bar a { height: 46px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--ink-2); display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; }
+  .bar .go { background: var(--ink); color: #fff; }
+  .msg { text-align: center; margin-top: 14px; color: var(--ink-3); min-height: 14px; }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <a class="glass round" style="color:inherit" href="profile.html" aria-label="Back to the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <h1>Cut a stamp</h1><span></span>
+  </header>
+  <div class="scroll">
+    <div class="stage" id="stage"><img id="photo" alt="Your photo" draggable="false"><i class="hole-out" id="hole"></i>
+      <div class="frame" id="frame" aria-label="The stamp: drag to move, drag the corner to resize"><i class="dim"></i><svg id="perf" aria-hidden="true"></svg><button type="button" class="grab glass" id="grab" aria-label="Resize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 20H4v-5M15 4h5v5M4 20l7-7M20 4l-7 7"/></svg></button></div>
+    </div>
+    <p class="msg mono" id="msg">Drag the stamp over the part you want</p>
+    <div class="opts">
+      <div class="seg glass" role="group" aria-label="Shape" id="shape"><button type="button" data-v="portrait" aria-pressed="true">Portrait</button><button type="button" data-v="square" aria-pressed="false">Square</button><button type="button" data-v="landscape" aria-pressed="false">Landscape</button></div>
+      <div class="seg glass" role="group" aria-label="Printing" id="print"><button type="button" data-v="1" aria-pressed="true">Printed</button><button type="button" data-v="0" aria-pressed="false">Plain</button></div>
+    </div>
+    <div class="strip" id="strip" role="group" aria-label="Your photos"></div>
+  </div>
+  <div class="bar glass" id="bar"><button type="button" class="go" id="cut">Cut</button></div>
+</main>
+<script src="lib/paper.js"></script>
+<script src="lib/texture.js"></script>
+<script src="lib/stamp.js"></script>
+<script>
+const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ph = (n, sz) => 'img/photo-' + String(n).padStart(2, '0') + (sz || '') + '.jpg';
+const app = $('app'), stage = $('stage'), photo = $('photo'), frame = $('frame');
+let N = +(new URLSearchParams(location.search).get('n')) || 2, shape = 'portrait', printed = true, F = null;   // F: frame in photo fractions {x, y, w} (h follows the shape)
+// the stamp's frame keeps the shape's aspect including the printed foot, so what you frame is what you get
+const aspect = () => { const a = PotoStamp.SHAPES[shape]; const W = 1, pad = 0.075, pw = W - pad * 2, ph2 = pw / a, foot = printed ? 0.1 : 0; return W / (ph2 + pad * 2 + foot); };
+const picAspect = () => PotoStamp.SHAPES[shape];
+function strip() { $('strip').innerHTML = Array.from({ length: 12 }, (_, k) => '<button type="button" data-n="' + (k + 1) + '" aria-pressed="' + (k + 1 === N) + '" aria-label="Photo ' + (k + 1) + '"><img src="' + ph(k + 1, '-t') + '" alt=""></button>').join(''); }
+$('strip').onclick = (e) => { const b = e.target.closest('button'); if (!b || app.classList.contains('cutting')) return; N = +b.dataset.n; strip(); load(); };
+function load() { reset(); photo.onload = () => { F = null; layout(); }; photo.src = ph(N); }
+function layout() {
+  const W = photo.clientWidth, H = photo.clientHeight; if (!W) return;
+  if (!F) { const w = 0.46; F = { x: 0.5 - w / 2, y: 0.32, w }; }
+  const fw = F.w * W, fh = fw / aspect(); F.x = Math.max(0, Math.min(1 - F.w, F.x)); F.y = Math.max(0, Math.min(1 - fh / H, F.y));
+  frame.style.width = fw + 'px'; frame.style.height = fh + 'px'; frame.style.transform = 'translate(' + F.x * W + 'px,' + F.y * H + 'px)';
+  drawPerf(fw, fh);
+}
+// the perforation: a dashed line of small holes all round the frame, like the cut line on a sheet of stamps
+function drawPerf(w, h) {
+  const H = PotoStamp.holes(w, h), r = Math.max(2.2, H.r * w), svg = $('perf');
+  svg.setAttribute('viewBox', (-6) + ' ' + (-6) + ' ' + (w + 12) + ' ' + (h + 12));
+  svg.innerHTML = '<rect x="0" y="0" width="' + w + '" height="' + h + '" fill="none" stroke="rgba(20,20,22,.55)" stroke-width="1" stroke-dasharray="3 3"/>' +
+    H.pts.map((p, i) => '<circle class="h" data-i="' + i + '" cx="' + (p[0] * w).toFixed(1) + '" cy="' + (p[1] * h).toFixed(1) + '" r="' + r.toFixed(1) + '" fill="rgba(255,255,255,.9)" stroke="rgba(20,20,22,.45)" stroke-width=".8"/>').join('');
+}
+addEventListener('resize', layout);
+// move the frame; drag the corner to resize it
+let g = null;
+frame.addEventListener('pointerdown', (e) => { if (e.target.closest('#grab') || app.classList.contains('cutting') || app.classList.contains('cut')) return; frame.setPointerCapture(e.pointerId); g = { x: e.clientX, y: e.clientY, F0: Object.assign({}, F), mode: 'move' }; });
+$('grab').addEventListener('pointerdown', (e) => { e.stopPropagation(); $('grab').setPointerCapture(e.pointerId); g = { x: e.clientX, y: e.clientY, F0: Object.assign({}, F), mode: 'size' }; });
+const mv = (e) => { if (!g) return; const W = photo.clientWidth, H = photo.clientHeight, dx = (e.clientX - g.x) / W, dy = (e.clientY - g.y) / H;
+  if (g.mode === 'move') { F.x = g.F0.x + dx; F.y = g.F0.y + dy; } else { F.w = Math.max(0.18, Math.min(1, g.F0.w + dx)); }
+  layout(); };
+frame.addEventListener('pointermove', mv); $('grab').addEventListener('pointermove', mv);
+const end = () => { g = null; }; ['pointerup', 'pointercancel'].forEach((t) => { frame.addEventListener(t, end); $('grab').addEventListener(t, end); });
+const seg = (id, fn) => $(id).onclick = (e) => { const b = e.target.closest('button'); if (!b || app.classList.contains('cutting')) return; [...$(id).children].forEach((c) => c.setAttribute('aria-pressed', String(c === b))); fn(b.dataset.v); reset(); layout(); };
+seg('shape', (v) => (shape = v)); seg('print', (v) => (printed = v === '1'));
+
+// ---- cut: punch the holes one after another round the frame, then the stamp lifts out of the photo ----
+let made = null;
+function reset() { app.classList.remove('cutting', 'cut'); stage.querySelectorAll('.piece').forEach((p) => p.remove()); $('bar').innerHTML = '<button type="button" class="go" id="cut">Cut</button>'; $('cut').onclick = cut; $('msg').textContent = 'Drag the stamp over the part you want'; }
+$('cut').onclick = cut;
+async function cut() {
+  if (!F) return; app.classList.add('cutting'); $('msg').textContent = 'Cutting…';
+  // the stamp itself, from the full-size photo: the picture area sits inside the paper margin and above the printed foot
+  const big = new Image(); big.src = ph(N); await big.decode().catch(() => {}); await document.fonts.ready;
+  const W = photo.clientWidth, H = photo.clientHeight, fw = F.w * W, fh = fw / aspect(), k = big.naturalWidth / W;
+  const pad = 0.075 * fw, pw = fw - pad * 2, phh = pw / picAspect();
+  const crop = { x: (F.x * W + pad) * k, y: (F.y * H + pad) * k, w: pw * k, h: phh * k };
+  const now = new Date(), date = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).toUpperCase();
+  const c = PotoStamp.render(big, crop, { shape, printed, date, width: 420 });
+  // 1. punch: holes go dark one after another, round the frame
+  const holes = [...$('perf').querySelectorAll('.h')], T = reduced ? 0 : 700;
+  holes.forEach((h, i) => setTimeout(() => { h.setAttribute('fill', 'rgba(20,20,22,.85)'); h.setAttribute('stroke', 'none'); }, T * i / holes.length));
+  await new Promise((r) => setTimeout(r, T + 120));
+  // 2. lift: the stamp rises off the photo, turns a little, and leaves its shape behind
+  const piece = new Image(); piece.className = 'piece'; piece.src = c.toDataURL('image/png'); await piece.decode().catch(() => {});
+  piece.style.left = F.x * W + 'px'; piece.style.top = F.y * H + 'px'; piece.style.width = fw + 'px'; stage.appendChild(piece);
+  const hole = $('hole'); hole.style.left = F.x * W + 'px'; hole.style.top = F.y * H + 'px'; hole.style.width = fw + 'px'; hole.style.height = fh + 'px';
+  app.classList.remove('cutting'); app.classList.add('cut');
+  const cx = W / 2 - (F.x * W + fw / 2), cy = H / 2 - (F.y * H + fh / 2);   // it settles in the middle of the photo, held up off it
+  if (!reduced) piece.animate([{ transform: 'none' }, { transform: 'translate(' + cx * 0.4 + 'px,' + (cy - 26) + 'px) rotate(-6deg) scale(1.12)', offset: 0.55 }, { transform: 'translate(' + cx + 'px,' + cy + 'px) rotate(-3deg) scale(1.08)' }], { duration: 900, easing: 'cubic-bezier(.3,1.2,.4,1)', fill: 'forwards' });
+  // keep it
+  const stamps = JSON.parse(localStorage.getItem('poto.stamps') || '[]'); made = { id: 's' + Date.now().toString(36), png: c.toDataURL('image/png'), shape, from: N };
+  stamps.push(made); while (stamps.length > 18) stamps.splice(stamps.findIndex((s) => !String(s.id).startsWith('auto')), 1);
+  try { localStorage.setItem('poto.stamps', JSON.stringify(stamps)); } catch (e) { stamps.shift(); try { localStorage.setItem('poto.stamps', JSON.stringify(stamps)); } catch (e2) {} }
+  $('msg').textContent = 'Cut. It\'s in your stamps.';
+  $('bar').innerHTML = '<button type="button" id="again">Cut another</button><a class="go" href="profile.html?stamp=' + made.id + '">Put on the desk</a>';
+  $('again').onclick = () => { reset(); layout(); };
+}
+strip(); load();
+</script>
+</body>
+</html>

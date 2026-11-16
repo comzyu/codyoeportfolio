@@ -36,6 +36,25 @@
     return c;
   };
 
+  /* desk surfaces (Cody to choose): paper, linen, cork, black felt. Each a 512 tile, baked once. */
+  T.surface = function (kind) {
+    const key = 's' + kind; if (cache[key]) return cache[key];
+    if (kind === 'paper') return (cache[key] = T.paper(71, [246, 245, 241], { cloud: 0.05, light: 0.28 }));
+    const c = mk(S, S), x = c.getContext('2d'); let sd = kind.length * 977; const r = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);
+    if (kind === 'linen') {                             // woven: fine warp and weft threads, slubs, a soft unbleached colour
+      x.fillStyle = '#E9E3D6'; x.fillRect(0, 0, S, S);
+      for (let i = 0; i < S; i += 2) { x.fillStyle = 'rgba(255,255,255,' + (0.05 + r() * 0.12) + ')'; x.fillRect(0, i, S, 1); x.fillStyle = 'rgba(90,75,50,' + (0.03 + r() * 0.07) + ')'; x.fillRect(i, 0, 1, S); }
+      for (let i = 0; i < 260; i++) { x.fillStyle = 'rgba(110,95,70,' + r() * 0.12 + ')'; const y = r() * S, w = 6 + r() * 30; x.fillRect(r() * S, y, w, 1.2); x.fillRect(r() * S - S, y, w, 1.2); }
+    } else if (kind === 'cork') {                       // cork: warm brown, dense granules of different sizes and shades
+      x.fillStyle = '#B98B5E'; x.fillRect(0, 0, S, S);
+      for (let i = 0; i < 14000; i++) { const g = r(), sz = 0.6 + r() * r() * 3.2, px = r() * S, py = r() * S; x.fillStyle = g > 0.55 ? 'rgba(96,62,32,' + (0.3 + r() * 0.45) + ')' : 'rgba(226,190,146,' + (0.25 + r() * 0.4) + ')'; x.fillRect(px, py, sz * 1.3, sz); }
+    } else {                                            // black felt: near-black with a soft fibre texture
+      x.fillStyle = '#141414'; x.fillRect(0, 0, S, S);
+      for (let i = 0; i < 2600; i++) { x.strokeStyle = 'rgba(255,255,255,' + r() * 0.05 + ')'; x.lineWidth = 0.6; const px = r() * S, py = r() * S, a = r() * 7, l = 3 + r() * 9; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }
+    }
+    return (cache[key] = c);
+  };
+
   /* a tile as a CSS url (blob, so it isn't a huge data URI) */
   T.url = (c) => new Promise((res) => c.toBlob((b) => res(URL.createObjectURL(b)), 'image/png'));
 
