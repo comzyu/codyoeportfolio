@@ -35,7 +35,7 @@ Recommended order: ~~1~~ → 2 → 4 → 3 → 5 → 6 → 7. Writing and the jo
 - Fonts: still placeholders (Special Elite, La Belle Aurore, IBM Plex Mono, Inter).
 
 
-## Next build (planned 16 Nov 2026 from Cody's board): **Rolls and the month**
+## Build 3 (done 16 Nov 2026): **Rolls and the month**
 
 The two v0.1 pieces that are still round-one style, plus the calendar Cody parked, all built around board quirks 1–3.
 
@@ -52,3 +52,12 @@ Open questions for Cody: canister label design per look; whether the month opens
 - **Profile = a desk** (board #3, "Repository of Remnants"): your prints, postcards, stamps and stickers lie on a desk and you arrange them freely, tidy or scrapbook-messy. Build this as the profile page.
 - **Stamps cut from your own photo** (board #9): pick a photo, a perforated stamp frame cuts a piece of it out, and that becomes a stamp you can stick on postcards. This is how users make stamps.
 - Done this round: the photo disc (board #5) replaced the film strip and spins one frame at a time, synced with the stack; the month is a hero photo over a photo grid (board #15); no wall shadow behind the postcard; stickers cast a shadow while lifted; share backdrop is black and white with grain.
+
+## Build 3, as built
+- `rolls.html`: canisters (all CSS, label turns as it comes to the front) on a white ledge, native snap scroll. Load flies the canister into the camera back with a click. Swapping mid-roll files the part-used roll. Finish roll rewinds, then the roll comes out as a contact strip of 27 frames that develop one by one; File it puts it in a frosted folder. State in localStorage `poto.roll` / `poto.rolls`; the camera's film tab and frame counter follow it.
+- Five looks for now: Sunday, Harbour, Flashbulb, Silver, Lido (label colours and CSS-filter samples are stand-ins).
+- Month recap: `PotoShare.month` in lib/share.js, from the diary's Share the month. Cut-out letters reshuffle with "Cut new letters".
+- Still open: canister label design per look (Cody), page-turn between months, tap a day to fan its prints (#8).
+
+## Next build: ask Cody for reference images first
+Candidates: the profile desk (#3), stamps cut from your own photo (#9).

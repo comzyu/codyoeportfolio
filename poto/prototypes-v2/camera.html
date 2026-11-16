@@ -110,6 +110,13 @@ const $ = (id) => document.getElementById(id), app = $('app'), vf = $('vf'), sce
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SCENES = ['img/photo-02.jpg', 'img/photo-01.jpg', 'img/photo-06.jpg', 'img/photo-09.jpg', 'img/photo-12.jpg', 'img/photo-07.jpg'];
 let count = 14, si = 0, busy = false;
+// the roll that's loaded (set on the Rolls page). The tab beside the shutter shows it; tap it to go to the shelf.
+const ROLLC = { Sunday: ['#E8B44C', '#C8553A'], Harbour: ['#3E7C80', '#C9CED1'], Flashbulb: ['#EDEDEF', '#D8553F'], Silver: ['#1b1b1c', '#9a9aa0'], Lido: ['#7FB7D9', '#F2E6C9'] };
+let ROLL = { look: 'Sunday', shot: 14, n: 4 }; try { ROLL = JSON.parse(localStorage.getItem('poto.roll')) || ROLL; } catch (e) {}
+if (!ROLL.look) ROLL = { look: 'Sunday', shot: 0, n: ROLL.n || 4 };
+count = ROLL.shot;
+{ const t = document.querySelector('.film'), c = ROLLC[ROLL.look] || ROLLC.Sunday; t.querySelector('b').textContent = ROLL.look.toUpperCase(); t.setAttribute('aria-label', 'Loaded film: ' + ROLL.look + '. Change the roll');
+  t.querySelector('u').style.background = 'linear-gradient(90deg,' + c[0] + ' 0 62%,#1b1b1c 62% 66%,' + c[1] + ' 66%)'; t.onclick = () => { location.href = 'rolls.html'; }; }
 odo.innerHTML = '<span>' + count + '</span>';
 function roll(n) {                                   // the counter turns like a little drum
   const old = odo.firstElementChild, neu = document.createElement('span'); neu.textContent = n; odo.appendChild(neu);
@@ -162,10 +169,10 @@ sh.addEventListener('pointerdown', () => sh.classList.add('down'));
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((e) => sh.addEventListener(e, () => sh.classList.remove('down')));
 sh.addEventListener('click', shoot);
 async function shoot() {
-  if (busy) return; busy = true; curtain(160); count = count >= 27 ? 1 : count + 1; setTimeout(() => roll(count), 240);
+  if (busy) return; busy = true; curtain(160); count = count >= 27 ? 1 : count + 1; ROLL.shot = count; try { localStorage.setItem('poto.roll', JSON.stringify(ROLL)); } catch (e) {} setTimeout(() => roll(count), 240);
   // grab exactly what the viewfinder showed
   const im = new Image(); im.src = scene.src; await im.decode();
-  const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1; lastShot = { src: scene.getAttribute('src'), zoom: z, ev, look: 'Sunday', t: Date.now() }; const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1; lastShot = { src: scene.getAttribute('src'), zoom: z, ev, look: ROLL.look, t: Date.now() }; const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const s = Math.max(W / im.width, H / im.height) * z, dw = im.width * s, dh = im.height * s; if (ev) x.filter = 'brightness(' + evGain().toFixed(3) + ')'; x.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh); x.filter = 'none';   // the print gets the exposure you set
   const px = x.getImageData(0, 0, W, H).data, img = ctx.createImageData(W, H), d = img.data, late = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) { late[i] = 1 - (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) / 255; d[i * 4 + 3] = 255; }

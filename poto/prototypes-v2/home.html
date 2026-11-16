@@ -67,6 +67,9 @@
   .mcal .rings i { width: 9px; height: 22px; border-radius: 6px; border: 2px solid #b9b9bf; border-left-color: #e9e9ee; border-right-color: #8f8f96; background: transparent; box-shadow: 0 1px 1px rgba(0,0,0,.15); }
   .mcal .rings i:nth-child(n+4):nth-child(-n+5) { visibility: hidden; }
   .mcal .body { padding: 10px 12px 14px; }
+  .mshare { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .mshare button { height: 36px; padding: 0 16px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; }
+  .mshare svg { width: 15px; height: 15px; position: relative; }
   .dow { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; color: var(--ink-3); padding: 6px 0 6px; }
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--hair); border-left: 1px solid var(--hair); }
   .cal > * { position: relative; aspect-ratio: 1; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); overflow: hidden; }
@@ -75,26 +78,6 @@
   .cal .d.has b { color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.6); }
   .cal .d.today::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--ink); }
   .cal .d.sel::before { content: ""; position: absolute; inset: 0; z-index: 2; box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3.5px var(--ink); }
-
-  /* rolls: each finished roll is a folder. Back board with a tab, prints inside, a frosted front pocket that really blurs what's behind it. */
-  .rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
-  .roll { position: relative; display: block; text-align: left; }
-  .folder { position: relative; aspect-ratio: 1 / 0.86; }
-  .folder .board { position: absolute; inset: 14% 0 0 0; border-radius: 16px; background: linear-gradient(180deg, #F4F3F0, #ECEBE7); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(20,20,30,.05), 0 14px 26px -14px rgba(20,20,30,.3); }
-  .folder .board::before { content: ""; position: absolute; left: 0; top: -15%; width: 44%; height: 22%; border-radius: 14px 14px 0 0; background: #F4F3F0; box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 rgba(20,20,30,.04), inset -1px 0 0 rgba(20,20,30,.04);
-    clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%); }
-  .folder .p { width: 46%; top: 3%; transition: transform .6s var(--spring); }
-  .folder .p:nth-child(2) { left: 6%; transform: rotate(-7deg); } .folder .p:nth-child(3) { left: 28%; transform: rotate(2deg) translateY(-4%); } .folder .p:nth-child(4) { left: 50%; transform: rotate(8deg) translateY(2%); }
-  .folder .pocket { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; border-radius: 16px; background: rgba(255,255,255,.46); -webkit-backdrop-filter: blur(9px) saturate(150%); backdrop-filter: blur(9px) saturate(150%);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), inset 0 1.5px 0 #fff, inset 0 -8px 16px -8px rgba(20,20,30,.08), 0 -1px 3px rgba(20,20,30,.06); transition: transform .6s var(--spring); transform-origin: 50% 100%; }
-  .folder .pocket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 40%); }
-  .folder .clip { position: absolute; right: 10%; top: 27%; width: 10%; z-index: 3; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); transition: transform .6s var(--spring); }
-  .folder .swatch { position: absolute; right: 7%; top: 39%; width: 30%; z-index: 2; aspect-ratio: 1 / 1.1; border-radius: 3px; background: #FDFCFA; transform: rotate(7deg); padding: 5%; box-shadow: 0 1px 1.5px rgba(20,20,30,.2), 0 8px 14px -6px rgba(20,20,30,.3); transition: transform .6s var(--spring); }
-  .folder .swatch u { display: block; height: 34%; border-radius: 1.5px; } .folder .swatch i { display: block; font: 500 7px/1 var(--mono); letter-spacing: .08em; margin-top: 12%; font-style: normal; color: #2a2a2c; }
-  .folder .n { position: absolute; left: 9%; bottom: 10%; z-index: 2; font: 500 10px/1 var(--mono); letter-spacing: .08em; color: var(--ink-2); }
-  .roll.open .p:nth-child(2) { transform: rotate(-16deg) translate(-14%, -30%); } .roll.open .p:nth-child(3) { transform: rotate(1deg) translateY(-44%); } .roll.open .p:nth-child(4) { transform: rotate(17deg) translate(14%, -28%); }
-  .roll.open .pocket { transform: perspective(600px) rotateX(-24deg); } .roll.open .swatch { transform: rotate(13deg) translateY(10%); } .roll.open .clip { transform: rotate(14deg) translateY(16%); }
-  .roll strong { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; } .roll em { display: block; font-style: normal; font-size: 12.5px; color: var(--ink-2); }
 
   .dock button[aria-pressed="true"] { background: rgba(20,20,22,.07); color: var(--ink); box-shadow: none; }
   .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
@@ -119,16 +102,24 @@
       <div class="mcal"><div class="hero" id="hero"><img id="heroimg" alt=""><span class="m">nov.</span><span class="y">2026</span><span class="d" id="herod"></span></div>
         <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="body"><div class="dow mono"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="cal" id="cal"></div></div></div>
-      <h3>Rolls <small>Tap to look inside</small></h3>
+      <div class="mshare"><span class="mono soft">31 kept · 2 rolls</span><button type="button" class="glass" id="mshare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg>Share the month</button></div>
+      <h3>Rolls <small><a href="rolls.html" style="color:inherit;text-decoration:none">The shelf ›</a></small></h3>
       <div class="rolls" id="rolls"></div>
     </div>
   </div>
   <nav class="dock glass" aria-label="Poto">
     <button type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16M9 4v5.5"/></svg>Diary</button>
     <a class="cam" href="camera.html" aria-label="Camera" style="border-radius:999px;display:inline-flex;align-items:center"><i></i></a>
-    <button type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/></svg>Rolls</button>
+    <a href="rolls.html" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink-2);text-decoration:none"><svg style="width:19px;height:19px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/></svg>Rolls</a>
   </nav>
+  <section class="share" id="sharesheet" aria-label="Share the month" aria-hidden="true">
+    <div class="row glass" role="group" aria-label="Format"><button type="button" data-fmt="story" aria-pressed="true">Story 9:16</button><button type="button" data-fmt="post" aria-pressed="false">Post 4:5</button></div>
+    <div class="row glass" role="group" aria-label="Letters"><button type="button" id="shuffle">Cut new letters</button></div>
+    <div class="stage" id="sstage"><div class="frame" id="sframe"><img id="simg" alt="Your month, as an image to share"><i class="zone t" id="zt"></i><i class="zone b" id="zb"></i></div></div>
+    <div class="foot"><button type="button" class="g" id="sguides" aria-pressed="false">Show safe zones</button><p>Press and hold the picture to save it.</p><button type="button" class="x" id="sclose">Done</button></div>
+  </section>
 </main>
+<script src="lib/share.js"></script>
 <script>
 const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
@@ -259,6 +250,30 @@ for (let d = 1; d <= 30; d++) {
   cal.appendChild(c);
 }
 pickDay(15, cal.querySelector('.today'));
+
+// ---- share the month (board #4): the calendar as a Story or Post, the hero photo you picked on top ----
+{
+  const sheet = $('sharesheet'), sh = { fmt: 'story', seed: 7 }, load = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+  let imgs = null;
+  async function render() {
+    const hero = $('heroimg').getAttribute('src');
+    if (!imgs || imgs.hero !== hero) {
+      const cells = {}; await Promise.all(Object.keys(PLAN).map(async (d) => { cells[d] = await load(ph(dayPhoto(+d))); }));
+      imgs = { hero, photo: await load(hero), cells };
+    }
+    await document.fonts.ready;
+    const c = PotoShare.month({ format: sh.fmt, photo: imgs.photo, month: 'november', year: 2026, lead: 6, days: 30, cells: imgs.cells, today: 15, seed: sh.seed, left: '31 kept · 2 rolls', right: 'Nov 2026', handle: '@cody', mark: 'poto.app' });
+    $('simg').src = c.toDataURL('image/jpeg', 0.92);
+    const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min(st.clientWidth / F.w, (st.clientHeight - 20) / F.h);
+    fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';
+    $('zt').style.height = (sh.fmt === 'story' ? F.safeTop * k : 0) + 'px'; $('zb').style.height = (sh.fmt === 'story' ? F.safeBottom * k : 0) + 'px'; $('sguides').hidden = sh.fmt !== 'story';
+  }
+  $('mshare').onclick = () => { sheet.classList.add('on'); sheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(render); };
+  $('sclose').onclick = () => { sheet.classList.remove('on'); sheet.setAttribute('aria-hidden', 'true'); };
+  sheet.querySelectorAll('[data-fmt]').forEach((b) => (b.onclick = () => { sh.fmt = b.dataset.fmt; sheet.querySelectorAll('[data-fmt]').forEach((o) => o.setAttribute('aria-pressed', String(o === b))); render(); }));
+  $('shuffle').onclick = () => { sh.seed = (sh.seed * 48271) % 2147483647; render(); };
+  $('sguides').onclick = () => { const on = sheet.classList.toggle('guides'); $('sguides').setAttribute('aria-pressed', String(on)); };
+}
 
 // ---- rolls as folders ----
 const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.4" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';

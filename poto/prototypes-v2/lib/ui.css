@@ -66,3 +66,42 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
 .hint { position: absolute; z-index: 4; left: 0; right: 0; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); text-align: center; color: var(--ink-3); transition: opacity .4s; pointer-events: none; }
 
 @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+/* ---- objects shared between pages ---- */
+/* rolls: each finished roll is a folder. Back board with a tab, prints inside, a frosted front pocket that really blurs what's behind it. */
+.rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
+.roll { position: relative; display: block; text-align: left; }
+.folder { position: relative; aspect-ratio: 1 / 0.86; }
+.folder .board { position: absolute; inset: 14% 0 0 0; border-radius: 16px; background: linear-gradient(180deg, #F4F3F0, #ECEBE7); box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(20,20,30,.05), 0 14px 26px -14px rgba(20,20,30,.3); }
+.folder .board::before { content: ""; position: absolute; left: 0; top: -15%; width: 44%; height: 22%; border-radius: 14px 14px 0 0; background: #F4F3F0; box-shadow: inset 0 1px 0 #fff, inset 1px 0 0 rgba(20,20,30,.04), inset -1px 0 0 rgba(20,20,30,.04);
+  clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%); }
+.folder .p { width: 46%; top: 3%; transition: transform .6s var(--spring); }
+.folder .p:nth-child(2) { left: 6%; transform: rotate(-7deg); } .folder .p:nth-child(3) { left: 28%; transform: rotate(2deg) translateY(-4%); } .folder .p:nth-child(4) { left: 50%; transform: rotate(8deg) translateY(2%); }
+.folder .pocket { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; border-radius: 16px; background: rgba(255,255,255,.46); -webkit-backdrop-filter: blur(9px) saturate(150%); backdrop-filter: blur(9px) saturate(150%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), inset 0 1.5px 0 #fff, inset 0 -8px 16px -8px rgba(20,20,30,.08), 0 -1px 3px rgba(20,20,30,.06); transition: transform .6s var(--spring); transform-origin: 50% 100%; }
+.folder .pocket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 40%); }
+.folder .clip { position: absolute; right: 10%; top: 27%; width: 10%; z-index: 3; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); transition: transform .6s var(--spring); }
+.folder .swatch { position: absolute; right: 7%; top: 39%; width: 30%; z-index: 2; aspect-ratio: 1 / 1.1; border-radius: 3px; background: #FDFCFA; transform: rotate(7deg); padding: 5%; box-shadow: 0 1px 1.5px rgba(20,20,30,.2), 0 8px 14px -6px rgba(20,20,30,.3); transition: transform .6s var(--spring); }
+.folder .swatch u { display: block; height: 34%; border-radius: 1.5px; } .folder .swatch i { display: block; font: 500 7px/1 var(--mono); letter-spacing: .08em; margin-top: 12%; font-style: normal; color: #2a2a2c; }
+.folder .n { position: absolute; left: 9%; bottom: 10%; z-index: 2; font: 500 10px/1 var(--mono); letter-spacing: .08em; color: var(--ink-2); }
+.roll.open .p:nth-child(2) { transform: rotate(-16deg) translate(-14%, -30%); } .roll.open .p:nth-child(3) { transform: rotate(1deg) translateY(-44%); } .roll.open .p:nth-child(4) { transform: rotate(17deg) translate(14%, -28%); }
+.roll.open .pocket { transform: perspective(600px) rotateX(-24deg); } .roll.open .swatch { transform: rotate(13deg) translateY(10%); } .roll.open .clip { transform: rotate(14deg) translateY(16%); }
+.roll strong { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; } .roll em { display: block; font-style: normal; font-size: 12.5px; color: var(--ink-2); }
+
+/* share: a white sheet with the exact image that will be posted */
+.share { position: fixed; inset: 0; z-index: 20; background: var(--room); display: flex; flex-direction: column; align-items: center; opacity: 0; pointer-events: none; transform: translateY(18px); transition: opacity .25s, transform .4s var(--spring);
+  padding: calc(14px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+.share.on { opacity: 1; pointer-events: auto; transform: none; }
+.share .row { display: flex; gap: 4px; padding: 4px; margin-top: 8px; }
+.share .row button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink-2); position: relative; white-space: nowrap; }
+.share .row button[aria-pressed="true"] { color: #fff; background: var(--ink); }
+.share .stage { flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; padding: 14px 0 6px; position: relative; }
+.share .frame { position: relative; max-width: 100%; max-height: 100%; border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), 0 18px 40px -18px rgba(20,20,30,.35); }
+.share .frame img { display: block; width: 100%; height: 100%; -webkit-touch-callout: default; user-select: auto; }
+.share .zone { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(-45deg, rgba(225,60,60,.10) 0 6px, transparent 6px 12px); border: 0 dashed rgba(225,60,60,.45); pointer-events: none; opacity: 0; transition: opacity .2s; }
+.share .zone.t { top: 0; border-bottom-width: 1px; } .share .zone.b { bottom: 0; border-top-width: 1px; } .share.guides .zone { opacity: 1; }
+.share .foot { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 420px; gap: 10px; }
+.share .foot p { margin: 0; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.share .x { height: 40px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; }
+.share .g { height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--hair); white-space: nowrap; }
+.share .g[aria-pressed="true"] { color: #c23b3b; border-color: rgba(225,60,60,.45); }
