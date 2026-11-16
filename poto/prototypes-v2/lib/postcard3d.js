@@ -115,7 +115,7 @@
   function Postcard(el, opts) {
     const self = this; opts = opts || {};
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(opts.lite ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(opts.lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));   // 1.75x is sharp on a phone and ~25% fewer pixels than 2x
     renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.NoToneMapping;
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.VSMShadowMap;
     el.appendChild(renderer.domElement);
@@ -132,13 +132,13 @@
     scene.add(new T.HemisphereLight(0xffffff, 0xeeebe5, 1.3));
     // the key comes in low from the upper left, so the paper's tooth and the typewriter dents catch the light
     const key = new T.DirectionalLight(0xfffcf6, 1.75); key.position.set(-2.4, 2.1, 2.7); key.castShadow = true;
-    key.shadow.mapSize.set(opts.lite ? 1024 : 2048, opts.lite ? 1024 : 2048); key.shadow.radius = opts.lite ? 10 : 18; key.shadow.blurSamples = opts.lite ? 8 : 20; key.shadow.bias = -0.0004;
+    key.shadow.mapSize.set(1024, 1024); key.shadow.radius = opts.lite ? 8 : 12; key.shadow.blurSamples = opts.lite ? 6 : 10;   // the shadow is soft anyway: a smaller map and fewer blur taps look the same and cost far less per frame key.shadow.bias = -0.0004;
     Object.assign(key.shadow.camera, { left: -1.8, right: 1.8, top: 2, bottom: -2, near: 0.5, far: 9 }); key.shadow.camera.updateProjectionMatrix(); scene.add(key);
     const wall = new T.Mesh(new T.PlaneGeometry(14, 14), new T.ShadowMaterial({ opacity: 0.11, color: 0x20222a })); wall.position.z = -0.3; wall.receiveShadow = true; scene.add(wall);
 
     /* ---------- the card ---------- */
     const card = new T.Group(); scene.add(card);
-    const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.anisotropy = renderer.capabilities.getMaxAnisotropy(); if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
+    const tex = (c, srgb) => { const t = new T.CanvasTexture(c); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); if (srgb) t.colorSpace = T.SRGBColorSpace; return t; };
     const edge = new T.MeshStandardMaterial({ color: 0xe9e4d9, roughness: 1, envMapIntensity: 0.2, side: T.DoubleSide });
     const mats = { front: new T.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.3, clearcoat: 0, clearcoatRoughness: 0.07 }), back: new T.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0.25 }) };
     const body = new T.Mesh(cardGeometry(), [edge, mats.front, mats.back]); body.castShadow = true; body.receiveShadow = true; card.add(body);

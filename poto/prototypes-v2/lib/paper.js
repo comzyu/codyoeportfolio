@@ -11,6 +11,8 @@
   P.size = { w: TW, h: TH };
   const rnd = (seed) => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  // CPU-side canvas: anything that gets drawn into the height map (or read back) must live here, or each draw forces a slow GPU readback
+  const mkR = (w, h) => { const c = mk(w, h); c.getContext('2d', { willReadFrequently: true }); return c; };
   const S = 512;                                    // stock tile size (tileable)
 
   /* tileable value noise: sum of smoothly interpolated random lattices. Returns Float32 in roughly [-1, 1]. */
@@ -30,7 +32,7 @@
     return out;
   }
   function toCanvas(f, mapFn) {
-    const c = mk(S, S), x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data;
+    const c = mkR(S, S), x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data;
     for (let i = 0; i < f.length; i++) { const [v, a] = mapFn(f[i], i); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = a == null ? 255 : a; }
     x.putImageData(img, 0, 0); return c;
   }
@@ -69,18 +71,29 @@
 
   /* height canvas -> tangent-space normal map canvas */
   P.normalFromHeight = function (hc, strength) {
-    const w = hc.width, h = hc.height, src = hc.getContext('2d').getImageData(0, 0, w, h).data, out = mk(w, h), o = out.getContext('2d'), img = o.createImageData(w, h), d = img.data;
-    const H = (x, y) => src[(Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))) * 4];
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const dx = (H(x + 1, y) - H(x - 1, y)) / 255 * strength, dy = (H(x, y + 1) - H(x, y - 1)) / 255 * strength, l = Math.hypot(dx, dy, 1), k = (y * w + x) * 4;
-      d[k] = (-dx / l * 0.5 + 0.5) * 255; d[k + 1] = (dy / l * 0.5 + 0.5) * 255; d[k + 2] = (1 / l * 0.5 + 0.5) * 255; d[k + 3] = 255;
+    const w = hc.width, h = hc.height, out = mk(w, h);
+    P.normalInto(hc.getContext('2d').getImageData(0, 0, w, h).data, w, h, out.getContext('2d'), 0, 0, w, h, 0, 0, strength);
+    return out;
+  };
+  /* tight loop (no closures, no Math.hypot): src is RGBA height data of size sw x sh; writes the normals for the w x h box at (x, y) in that data
+     into ctx at (dx, dy). Edges clamp. ~10x faster than the first version: this was most of the postcard's load time. */
+  P.normalInto = function (src, sw, sh, ctx, x, y, w, h, dx, dy, strength) {
+    const img = ctx.createImageData(w, h), d = img.data, k = strength / 255;
+    for (let j = 0; j < h; j++) {
+      const yy = y + j, up = (yy > 0 ? yy - 1 : 0) * sw, dn = (yy < sh - 1 ? yy + 1 : sh - 1) * sw, row = yy * sw;
+      for (let i = 0; i < w; i++) {
+        const xx = x + i, l = xx > 0 ? xx - 1 : 0, r = xx < sw - 1 ? xx + 1 : sw - 1;
+        const gx = (src[(row + r) << 2] - src[(row + l) << 2]) * k, gy = (src[(dn + xx) << 2] - src[(up + xx) << 2]) * k;
+        const inv = 127.5 / Math.sqrt(gx * gx + gy * gy + 1), o = (j * w + i) << 2;
+        d[o] = 127.5 - gx * inv; d[o + 1] = 127.5 + gy * inv; d[o + 2] = 127.5 + inv; d[o + 3] = 255;
+      }
     }
-    o.putImageData(img, 0, 0); return out;
+    ctx.putImageData(img, dx, dy);
   };
 
   function sheet(color, stock, roughness, toneAlpha) {
-    const col = mk(TW, TH), rough = mk(TW, TH), hgt = mk(TW, TH);
-    const c = col.getContext('2d'), r = rough.getContext('2d'), h = hgt.getContext('2d');
+    const col = mk(TW, TH), rough = mk(TW, TH), hgt = mkR(TW, TH);
+    const c = col.getContext('2d'), r = rough.getContext('2d'), h = hgt.getContext('2d', { willReadFrequently: true });   // the height map is read back a lot: keep it on the CPU
     c.fillStyle = color; c.fillRect(0, 0, TW, TH);
     c.save(); c.globalCompositeOperation = 'overlay'; c.globalAlpha = toneAlpha; c.fillStyle = c.createPattern(stock.tone, 'repeat'); c.fillRect(0, 0, TW, TH); c.restore();
     h.fillStyle = h.createPattern(stock.height, 'repeat'); h.fillRect(0, 0, TW, TH);
@@ -125,6 +138,7 @@
   /* typewriter: each letter struck separately. The slug presses the paper (a dent you see in raking light),
      the ribbon lays ink on the peaks of the tooth, uneven pressure, a worn ribbon. */
   function typed(t, lines, x0, y0, size, lead, ink) {
+    if (!lines.length) return;
     const r = rnd(41), layer = mk(TW, TH), L = layer.getContext('2d');
     font(L, size + 'px "Special Elite", "Courier New", monospace'); font(t.h, L.font);
     const adv = L.measureText('m').width;
@@ -147,13 +161,17 @@
   /* pen ink: wets into the fibres (soft feathered edge), pools a little, runs into the valleys and skips the peaks.
      It dries with a faint sheen, so its roughness is lower than the paper's. */
   function penned(t, text, x, y, size, ink, angle) {
-    const layer = mk(TW, TH), L = layer.getContext('2d'), f = size + 'px "La Belle Aurore", "Homemade Apple", cursive';
-    const put = (ctx, style, blur, alpha, dx, dy) => { ctx.save(); ctx.translate(x + (dx || 0), y + (dy || 0)); ctx.rotate(angle || 0); font(ctx, f); ctx.filter = blur ? 'blur(' + blur + 'px)' : 'none'; ctx.globalAlpha = alpha; ctx.fillStyle = style; ctx.fillText(text, 0, 0); ctx.restore(); };
-    put(L, ink, 2.4, 0.22); put(L, ink, 0.55, 0.92); put(L, ink, 0, 0.35, 0.4, 0.5);
-    L.save(); L.globalCompositeOperation = 'destination-out'; L.fillStyle = L.createPattern(t.stock.peaks, 'repeat'); L.fillRect(0, 0, TW, TH); L.restore();
-    t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(layer, 0, 0); t.c.restore();
-    put(t.r, 'rgb(150,150,150)', 0.6, 0.9);
+    // drawn in a small box around the words, not a full-card canvas: canvas blur filters cost by area, and 12 full-size blurs were seconds of load time
+    const f = size + 'px "La Belle Aurore", "Homemade Apple", cursive', m0 = mk(8, 8).getContext('2d'); font(m0, f);
+    const bw = Math.ceil(m0.measureText(text).width + size * 1.4), bh = Math.ceil(size * 2.2), bx = Math.floor(x - size * 0.5), by = Math.floor(y - size * 1.4);
+    const L = mk(bw, bh).getContext('2d');
+    const put = (ctx, ox, oy, style, blur, alpha, dx, dy) => { ctx.save(); ctx.translate(x - ox + (dx || 0), y - oy + (dy || 0)); ctx.rotate(angle || 0); font(ctx, f); ctx.filter = blur ? 'blur(' + blur + 'px)' : 'none'; ctx.globalAlpha = alpha; ctx.fillStyle = style; ctx.fillText(text, 0, 0); ctx.restore(); };
+    put(L, bx, by, ink, 2.4, 0.22); put(L, bx, by, ink, 0.55, 0.92); put(L, bx, by, ink, 0, 0.35, 0.4, 0.5);
+    L.save(); L.globalCompositeOperation = 'destination-out'; L.translate(-bx, -by); L.fillStyle = L.createPattern(t.stock.peaks, 'repeat'); L.fillRect(bx, by, bw, bh); L.restore();
+    t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, bx, by); t.c.restore();
+    const Rr = mk(bw, bh).getContext('2d'); put(Rr, bx, by, 'rgb(150,150,150)', 0.6, 0.9); t.r.drawImage(Rr.canvas, bx, by);
   }
+
 
   /* BACK: uncoated card. Offset-printed rules, a stamp, a postmark struck over it, a typed message, a penned address. */
   P.back = function (photo, o) {
@@ -229,25 +247,21 @@
 (function () {
   const P = window.PotoPaper, TW = 1024, TH = 1448;
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  // CPU-side canvas: anything that gets drawn into the height map (or read back) must live here, or each draw forces a slow GPU readback
+  const mkR = (w, h) => { const c = mk(w, h); c.getContext('2d', { willReadFrequently: true }); return c; };
   const hash = (i) => { let x = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b) >>> 0; x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35) >>> 0; x ^= x >>> 16; return (x >>> 0) / 4294967296; };
 
   P.normalRegion = function (hc, nc, x, y, w, h, strength) {
     x = Math.max(0, Math.floor(x)); y = Math.max(0, Math.floor(y)); w = Math.min(TW - x, Math.ceil(w)); h = Math.min(TH - y, Math.ceil(h)); if (w <= 0 || h <= 0) return;
     const sx = Math.max(0, x - 1), sy = Math.max(0, y - 1), sw = Math.min(TW, x + w + 1) - sx, sh = Math.min(TH, y + h + 1) - sy;
-    const src = hc.getContext('2d').getImageData(sx, sy, sw, sh).data, out = nc.getContext('2d').createImageData(w, h), d = out.data;
-    const H = (px, py) => src[((Math.min(sh - 1, Math.max(0, py - sy))) * sw + Math.min(sw - 1, Math.max(0, px - sx))) * 4];
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-      const px = x + i, py = y + j, dx = (H(px + 1, py) - H(px - 1, py)) / 255 * strength, dy = (H(px, py + 1) - H(px, py - 1)) / 255 * strength, l = Math.hypot(dx, dy, 1), k = (j * w + i) * 4;
-      d[k] = (-dx / l * 0.5 + 0.5) * 255; d[k + 1] = (dy / l * 0.5 + 0.5) * 255; d[k + 2] = (1 / l * 0.5 + 0.5) * 255; d[k + 3] = 255;
-    }
-    nc.getContext('2d').putImageData(out, x, y);
-  };
+    P.normalInto(hc.getContext('2d').getImageData(sx, sy, sw, sh).data, sw, sh, nc.getContext('2d'), x - sx, y - sy, w, h, x, y, strength);
+  };;
 
   P.backWriter = function (photo, o) {
     const t = P.back(photo, Object.assign({}, o, { message: [] })), NS = 1.9;
     t.nrm = P.normalFromHeight(t.hgt, NS);
     const R = { x: 56, y: 540, w: 930, h: 440 }, clean = {};
-    for (const k of ['col', 'hgt']) { const c = mk(R.w, R.h); c.getContext('2d').drawImage(t[k], R.x, R.y, R.w, R.h, 0, 0, R.w, R.h); clean[k] = c; }
+    for (const k of ['col', 'hgt']) { const c = k === 'hgt' ? mkR(R.w, R.h) : mk(R.w, R.h); c.getContext('2d').drawImage(t[k], R.x, R.y, R.w, R.h, 0, 0, R.w, R.h); clean[k] = c; }
     const size = 37, lead = 60, x0 = 86, y0 = 610, ink = '#26231f';
     // Special Elite only covers Latin. Every other script falls back to a good system face for that script.
     const FONT = size + 'px "Special Elite", "Courier New", "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Noto Sans KR", "Geeza Pro", "Noto Naskh Arabic", "Kohinoor Devanagari", "Noto Sans Devanagari", "Tamil Sangam MN", "Noto Sans Tamil", serif';
@@ -327,7 +341,7 @@
       for (let k = 0; k < 22; k++) { L.fillStyle = 'rgba(0,0,0,' + (0.2 + hash(g.i * 97 + k * 7) * 0.5) + ')'; L.fillRect(bx + hash(g.i * 89 + k * 13) * bw, by + hash(g.i * 83 + k * 17) * bh, 0.8 + hash(g.i * 79 + k) * 1.8, 0.8 + hash(g.i * 73 + k) * 1.4); }
       L.restore();
       t.c.save(); t.c.globalCompositeOperation = 'multiply'; t.c.drawImage(L.canvas, bx, by); t.c.restore();
-      const D = mk(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.direction = L.direction; D.textAlign = 'left'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.txt, 0, 0);
+      const D = mkR(bw, bh).getContext('2d'); D.font = FONT; D.textBaseline = 'alphabetic'; D.direction = L.direction; D.textAlign = 'left'; D.translate(p.x - bx, p.y - by); D.rotate(rot); D.fillStyle = '#202020'; D.filter = 'blur(0.7px)'; D.fillText(g.txt, 0, 0);
       t.h.save(); t.h.globalAlpha = 0.5 * press; t.h.drawImage(D.canvas, bx, by); t.h.restore();                // the dent, blurred on a small canvas (blurring the big one is slow)
       if (!batch) P.normalRegion(t.hgt, t.nrm, bx, by, bw, bh, NS);
       return { x: bx, y: by, w: bw, h: bh };

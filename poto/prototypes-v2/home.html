@@ -23,20 +23,21 @@
   .p img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.2); }
   .p::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,0) 38%); }
 
-  /* this week: a catalogue you scroll sideways. The middle print faces you; the rest turn away like pages, and flutter when you scroll fast.
-     Underneath, a film strip shows every print at once. */
-  .cat { display: flex; overflow-x: auto; overflow-y: visible; scroll-snap-type: x mandatory; padding: 22px 24% 30px; margin-top: 4px; perspective: 1000px; perspective-origin: 50% 40%;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
-  .cat::-webkit-scrollbar { display: none; }
-  .cat .c { flex: 0 0 52%; margin: 0 -7%; scroll-snap-align: center; position: relative; transform-style: preserve-3d; will-change: transform; cursor: pointer; }
-  .cat .c .p { position: relative; width: 100%; transition: box-shadow .3s; }
-  .cat .c .date { display: block; text-align: center; margin-top: 12px; color: var(--ink-3); opacity: 0; transition: opacity .25s; }
-  .cat .c.mid .date { opacity: 1; }
+  /* this week: a stack you flick through (references: Cody's board #8, #12, #0). The print you're on faces you;
+     the rest stand on edge like spines in a box. Driven by its own physics, not page scroll: momentum, then a soft spring onto a print. */
+  .cat { position: relative; height: 330px; margin-top: 6px; perspective: 900px; perspective-origin: 50% 45%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; }
+  .cat:active { cursor: grabbing; }
+  .cat .c { position: absolute; left: 50%; top: 14px; width: 168px; margin-left: -84px; transform-style: preserve-3d; will-change: transform; backface-visibility: hidden; }
+  .cat .c .p { position: relative; width: 100%; }
+  .cat .c .p::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.06)); opacity: var(--shade, 0); }
+  .cat .c.r .p::before { background: linear-gradient(270deg, rgba(0,0,0,.28), rgba(0,0,0,.06)); }
+  .cat .date { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; color: var(--ink-3); transition: opacity .2s; }
   .film { position: relative; display: flex; gap: 3px; padding: 9px 8px; margin-top: 2px; border-radius: 6px; background: #1b1a19;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 14px -8px rgba(0,0,0,.5); }
   .film::before, .film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 4px; background: repeating-linear-gradient(90deg, #f3f1ec 0 4px, transparent 4px 9px); opacity: .55; border-radius: 1px; }
   .film::before { top: 2.5px; } .film::after { bottom: 2.5px; }
-  .film button { flex: 1; min-width: 0; padding: 0; aspect-ratio: 3 / 4; border-radius: 1px; overflow: hidden; opacity: .55; transition: opacity .2s, transform .3s var(--spring); }
+  .film { touch-action: none; cursor: ew-resize; }
+  .film button { flex: 1; min-width: 0; padding: 0; aspect-ratio: 3 / 4; border-radius: 1px; overflow: hidden; opacity: .55; transition: opacity .2s, transform .3s var(--spring); pointer-events: none; }
   .film button img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .film button.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 1.5px #f3f1ec; }
 
@@ -106,39 +107,85 @@ const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-re
 const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
 let seed = 27; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
-// ---- this week: the catalogue ----
+// ---- this week: the stack ----
 let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const items = kept.slice(0, 12).concat([4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10].map((n, k) => ({ src: 'img/photo-' + String(n).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, 12);
-const cat = $('cat'), film = $('film'), look = (o) => 'transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')';
-let mid = 0, v = 0, lastX = 0, raf = 0;
+const cat = $('cat'), film = $('film'), N = items.length, look = (o) => 'transform:scale(' + (o.zoom > 1 ? o.zoom / 1.35 : 1) + ');filter:brightness(' + Math.pow(2, (o.ev || 0) * 0.75).toFixed(3) + ')';
+const date = document.createElement('span'); date.className = 'date mono'; cat.appendChild(date);
+cat.tabIndex = 0; cat.setAttribute('role', 'listbox'); cat.setAttribute('aria-label', "This week's prints. Swipe, or use the arrow keys.");
 items.forEach((o, k) => {
-  const sm = o.src.replace('.jpg', '-s.jpg'), d = new Date(o.t || Date.now());
-  const c = document.createElement('div'); c.className = 'c'; c.setAttribute('role', 'button'); c.tabIndex = 0; c.setAttribute('aria-label', 'Print ' + (k + 1) + ' of ' + items.length);
-  c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="' + look(o) + '"></span></span><span class="date mono">' + DAYS[d.getDay()] + ' ' + d.getDate() + ' Nov</span>';
-  c.onclick = () => (k === mid ? open(o, c) : go(k)); c.onkeydown = (e) => { if (e.key === 'Enter') c.onclick(); };
+  const sm = o.src.replace('.jpg', '-s.jpg');
+  const c = document.createElement('div'); c.className = 'c'; c.setAttribute('role', 'option'); c.setAttribute('aria-label', 'Print ' + (k + 1) + ' of ' + N);
+  c.innerHTML = '<span class="p"><span style="display:block;overflow:hidden;aspect-ratio:3/4"><img src="' + sm + '" alt="" draggable="false" style="' + look(o) + '"></span></span>';
   o.el = c; cat.appendChild(c);
-  const f = document.createElement('button'); f.type = 'button'; f.setAttribute('aria-label', 'Go to print ' + (k + 1)); f.innerHTML = '<img src="' + sm + '" alt="" style="' + look(o) + '">'; f.onclick = () => go(k); film.appendChild(f);
+  const f = document.createElement('button'); f.type = 'button'; f.tabIndex = -1; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<img src="' + sm + '" alt="" style="' + look(o) + '">'; film.appendChild(f);
 });
-$('count').textContent = items.length + ' prints · scroll';
-const go = (k) => { const c = items[k].el; cat.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - cat.clientWidth / 2, behavior: reduced ? 'auto' : 'smooth' }); };
-function frame() {
-  const x = cat.scrollLeft, w = items[0].el.offsetWidth || 1, cx = x + cat.clientWidth / 2;
-  v = v * 0.86 + (x - lastX) * 0.14; lastX = x;                                       // scroll speed, smoothed
-  let best = 0, bd = 1e9;
-  items.forEach((o, k) => {
-    const c = o.el, d = (c.offsetLeft + c.offsetWidth / 2 - cx) / w, a = Math.abs(d);
-    if (a < bd) { bd = a; best = k; }
-    if (reduced) { c.style.transform = 'scale(' + (1 - Math.min(a, 1) * 0.12) + ')'; return; }
-    const turn = Math.max(-64, Math.min(64, -d * 42 - v * 0.35));                    // pages turn away from the middle, and lean into a fast scroll
-    const flutter = Math.sin(performance.now() / 120 + k * 1.7) * Math.min(4, Math.abs(v) * 0.12);
-    c.style.transform = 'translateX(' + (-d * 6) + '%) rotateY(' + turn.toFixed(2) + 'deg) translateZ(' + (-a * 70).toFixed(1) + 'px) rotateZ(' + (d * 1.6 + flutter).toFixed(2) + 'deg)';
-    c.style.zIndex = 100 - Math.round(a * 10);
-  });
-  if (best !== mid) { mid = best; items.forEach((o, k) => { o.el.classList.toggle('mid', k === mid); film.children[k].classList.toggle('on', k === mid); }); }
-  raf = requestAnimationFrame(frame);
+$('count').textContent = N + ' prints · swipe';
+
+// motion state: pos is a float index (2.4 = between prints 2 and 3)
+let pos = 0, vel = 0, target = null, dragging = false, raf = 0, shown = -1;
+const CW = 168, G1 = 128, G2 = 13, SPINE = 76;              // card width, gap to first neighbour, spacing between spines, how far a spine turns
+const clampPos = (p) => p < 0 ? p * 0.35 : p > N - 1 ? N - 1 + (p - N + 1) * 0.35 : p;   // past the ends it stretches, then springs back
+function layout() {
+  for (let k = 0; k < N; k++) {
+    const c = items[k].el, d = k - pos, a = Math.abs(d), sg = Math.sign(d), near = Math.min(a, 1), far = Math.max(a - 1, 0);
+    if (a > 9) { c.style.visibility = 'hidden'; continue; } c.style.visibility = '';
+    const x = sg * (near * G1 + far * G2), rot = -sg * near * SPINE, z = -near * 70 - far * 4, lift = (1 - near) * -6;
+    c.style.transform = reduced ? 'translateX(' + x * 1.5 + 'px) scale(' + (1 - near * 0.2) + ')' : 'translate3d(' + x.toFixed(1) + 'px,' + lift.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + rot.toFixed(2) + 'deg)';
+    c.style.zIndex = 100 - Math.round(a * 4); c.classList.toggle('r', d < 0); c.style.setProperty('--shade', (near * 0.9).toFixed(2));
+  }
+  const cur = Math.max(0, Math.min(N - 1, Math.round(pos)));
+  if (cur !== shown) {
+    if (shown !== -1 && !reduced) try { navigator.vibrate && navigator.vibrate(3); } catch (e) {}     // a soft tick as each print passes
+    shown = cur; const d = new Date(items[cur].t || Date.now()); date.textContent = DAYS[d.getDay()] + ' ' + d.getDate() + ' Nov · ' + (cur + 1) + ' / ' + N;
+    [...film.children].forEach((f, k) => f.classList.toggle('on', k === cur)); cat.setAttribute('aria-activedescendant', ''); items.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === cur)));
+  }
 }
-items[0].el.classList.add('mid'); film.children[0].classList.add('on'); frame();
+function tick(now) {
+  raf = 0; const dt = Math.min(0.034, (now - (tick.t || now)) / 1000) || 0.016; tick.t = now;
+  if (!dragging) {
+    if (target == null) {                                      // coasting: friction, then pick the print we'll land on
+      vel *= Math.exp(-4.2 * dt); pos += vel * dt;
+      if (Math.abs(vel) < 2.2 || pos < -0.2 || pos > N - 0.8) target = Math.max(0, Math.min(N - 1, Math.round(pos + vel * 0.12)));
+    }
+    if (target != null) {                                      // a soft spring onto it (critically-ish damped: one tiny overshoot at most)
+      const k = 140, c = 21; vel += ((target - pos) * k - vel * c) * dt; pos += vel * dt;
+      if (Math.abs(target - pos) < 0.0015 && Math.abs(vel) < 0.01) { pos = target; vel = 0; target = null; layout(); tick.t = 0; return; }
+    }
+  }
+  layout(); raf = requestAnimationFrame(tick);
+}
+const wake = () => { if (!raf) { tick.t = 0; raf = requestAnimationFrame(tick); } };
+const go = (k) => { target = Math.max(0, Math.min(N - 1, k)); wake(); };
+
+// drag with your finger; the stack follows 1:1, and a flick keeps going
+let px = 0, pt = 0, downX = 0, downT = 0, moved = false, startPos = 0;
+cat.addEventListener('pointerdown', (e) => { cat.setPointerCapture(e.pointerId); dragging = true; target = null; vel = 0; px = downX = e.clientX; pt = downT = performance.now(); moved = false; startPos = pos; wake(); });
+cat.addEventListener('pointermove', (e) => {
+  if (!dragging) return; const now = performance.now(), dx = e.clientX - px; if (Math.abs(e.clientX - downX) > 6) moved = true;
+  const raw = startPos - (e.clientX - downX) / G1; pos = clampPos(raw);
+  const v = -dx / G1 / Math.max(0.008, (now - pt) / 1000); vel = vel * 0.6 + v * 0.4; px = e.clientX; pt = now;
+});
+const release = (e) => {
+  if (!dragging) return; dragging = false;
+  if (!moved && performance.now() - downT < 300) {                // a tap: open the print you're on, or go to the one you tapped
+    const hit = document.elementFromPoint(e.clientX, e.clientY), el = hit && hit.closest('.c'), k = items.findIndex((o) => o.el === el);   // the drag captured the pointer, so ask what's really under the finger
+    if (k >= 0 && k === Math.round(pos)) return open(items[k], el);
+    if (k >= 0) return go(k);
+    return go(Math.round(pos));
+  }
+  vel = Math.max(-28, Math.min(28, vel)); wake();
+};
+cat.addEventListener('pointerup', release); cat.addEventListener('pointercancel', release);
+cat.addEventListener('wheel', (e) => { e.preventDefault(); target = null; vel += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.02; wake(); }, { passive: false });
+cat.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(Math.round(pos) + 1); else if (e.key === 'ArrowLeft') go(Math.round(pos) - 1); else if (e.key === 'Enter') open(items[Math.round(pos)], items[Math.round(pos)].el); });
+// the film strip: drag along it to scrub through every print
+const scrub = (e) => { const r = film.getBoundingClientRect(); go(Math.round(((e.clientX - r.left - 8) / (r.width - 16)) * (N - 1))); };
+film.addEventListener('pointerdown', (e) => { film.setPointerCapture(e.pointerId); film.scrubbing = true; scrub(e); });
+film.addEventListener('pointermove', (e) => { if (film.scrubbing) scrub(e); });
+film.addEventListener('pointerup', () => (film.scrubbing = false)); film.addEventListener('pointercancel', () => (film.scrubbing = false));
+layout();
 // tap the middle print: it comes toward you and opens as a postcard
 function open(o, b) {
   const q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
