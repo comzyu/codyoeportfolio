@@ -8,6 +8,8 @@ Written 16 Nov 2026 at the end of round two. Agreed so far: gallery white, dark 
 - **Back of the card is minimal** (Cody, 16 Nov): typed message + handwritten address only. No stamp or postmark by default. A postmark appears only when a card is actually mailed (v0.4, as proof it travelled); stamps become decorations, like stickers. Code keeps both behind `stamp: true`.
 - **Handwriting**: v1 = one shared script font plus a choice of ink colours. Next = "sign with your finger": a signature captured as vector strokes (a few KB, no real storage cost) that can be placed on any card. Later, maybe Plus = a personal handwriting font from a filled-in template (heavier: ~70 glyphs, a font build step, ~50 to 200 KB per user).
 - **Platen: Paper & Ink** (App Store id6809529696), typewriter reference: no machine on screen; paper, ink and sound carry the feeling. Ink styles Fresh / Seasoned / Worn / Clean, embossed letter mark, corrections crossed out or erased, haptics Soft/Medium/Strong, bell Soft/Normal. Free with limits, one-time "Studio" unlock + small themed packs, no subscription. Use for build 1.
+- **Photo finish: matte** (Cody, 16 Nov). The picture itself is always clean and true-colour: no paper texture, greying or reflection on the photo. Texture lives in the border.
+- **Diary**: the pile is replaced by a sideways catalogue + film strip. The month view is for a later pass.
 - Prototypes live in `prototypes-v2/`. Round one (`prototypes/`, `docs/motion-spec.md` visuals) is superseded.
 
 ## Build order (each one is one session)

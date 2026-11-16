@@ -39,8 +39,9 @@
   .picking .ring { opacity: 1; }
   .sbar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); display: flex; align-items: center; gap: 2px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
   .picking .sbar { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); } .picking .dock, .picking .hint { opacity: 0 !important; pointer-events: none !important; }
-  .sbar button { height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); position: relative; }
-  .sbar button.on { color: #fff; background: var(--ink); } .sbar span { padding: 0 10px 0 8px; font-size: 12px; color: var(--ink-3); }
+  .sbar button { white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); position: relative; }
+  .sbar button.on { color: #fff; background: var(--ink); }
+  .shint { position: absolute; z-index: 8; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transition: opacity .2s; pointer-events: none; } .picking .shint { opacity: 1; }
   .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
 </style>
 </head>
@@ -59,7 +60,7 @@
   </div>
   <p class="hint mono" id="hint">Drag to turn · tap to flip · peel a sticker off the back</p>
   <i class="cap" id="cap" aria-hidden="true"></i><i class="ring" id="ring" aria-hidden="true"></i>
-  <div class="sbar glass" id="sbar" role="group" aria-label="Sticker"><span id="shint">Drag to peel</span><button type="button" id="speel">Peel off</button><button type="button" id="sremove">Remove</button><button type="button" class="on" id="sdone">Done</button></div>
+  <p class="shint mono soft" id="shint">Drag to peel</p><div class="sbar glass" id="sbar" role="group" aria-label="Sticker"><button type="button" id="speel">Peel off</button><button type="button" id="sremove">Remove</button><button type="button" class="on" id="sdone">Done</button></div>
   <div class="edit glass" id="edit" role="group" aria-label="Edit text"><button type="button" id="selall">Select all</button><button type="button" id="del" class="on" hidden>Delete</button><button type="button" id="unsel" hidden>Cancel</button></div>
   <div id="hls" aria-hidden="true"></div>
   <button type="button" class="done" id="done">Done</button><span class="left mono soft" id="left"></span>
