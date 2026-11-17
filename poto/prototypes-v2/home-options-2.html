@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Home options 2</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=La+Belle+Aurore&display=swap">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Phase 1: four ways the Home screen could show your friends' day. Same content in each, so they compare fairly.
+     Light theme: warm off-white, never pure white (Cody, 17 Nov). */
+  :root { --room: #F5F3EE; --room-2: #ECE9E2; --card: #FDFCF9; --ink: #18171A; --ink-2: #6F6C68; --ink-3: #A8A49E; --hair: rgba(24,23,26,.08);
+    --sans: Inter, -apple-system, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --hand: "La Belle Aurore", cursive; --spring: cubic-bezier(.3,1.4,.45,1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: #E9E6DF; color: var(--ink); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .mono { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  header.page { max-width: 1200px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) 20px 8px; }
+  header.page a { color: var(--ink-2); text-decoration: none; font-size: 13px; }
+  header.page h1 { margin: 10px 0 6px; font-size: 34px; line-height: 38px; font-weight: 600; letter-spacing: -.03em; }
+  header.page p { margin: 0; max-width: 62ch; color: var(--ink-2); }
+  .rail { display: flex; gap: 28px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 22px 20px 40px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  @media (min-width: 1300px) { .rail { justify-content: center; } }
+  .opt { flex: none; scroll-snap-align: center; width: min(86vw, 340px); }
+  .opt h2 { margin: 16px 2px 4px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; } .opt h2 span { color: var(--ink-3); font-weight: 400; }
+  .opt p { margin: 0 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+  .opt p b { color: var(--ink); font-weight: 500; }
+  /* the phone */
+  .phone { position: relative; width: 100%; aspect-ratio: 390 / 844; border-radius: 44px; overflow: hidden; background: var(--room); box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5); isolation: isolate; }
+  .scr { position: absolute; inset: 0; container-type: inline-size; }
+  .sb { position: absolute; z-index: 30; left: 0; right: 0; top: 0; height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 6px 26px 0; font: 600 13px/1 var(--sans); pointer-events: none; }
+  .sb i { width: 90px; height: 24px; border-radius: 14px; background: #000; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); }
+  .head { position: absolute; z-index: 20; left: 0; right: 0; top: 46px; padding: 0 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+  .head h3 { margin: 0; font-size: 26px; line-height: 28px; font-weight: 600; letter-spacing: -.03em; } .head h3 small { display: block; font: 500 9.5px/1 var(--mono); letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 6px; }
+  .head .me { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--card), 0 2px 6px rgba(0,0,0,.15); pointer-events: auto; }
+  .head .me img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* liquid glass dock */
+  .glass { background: rgba(253,252,249,.62); -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), inset 0 1px 0 rgba(255,255,255,.95), 0 8px 24px -8px rgba(20,20,30,.22); }
+  .dock { position: absolute; z-index: 25; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; }
+  .dock span { height: 38px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .dock span.on { background: rgba(24,23,26,.07); color: var(--ink); }
+  .dock .cam { width: 46px; height: 46px; padding: 0; justify-content: center; background: var(--ink); margin: -3px 2px; box-shadow: 0 4px 10px -3px rgba(0,0,0,.4); }
+  .dock .cam::after { content: ""; width: 17px; height: 17px; border-radius: 50%; border: 2px solid #fff; }
+  .devbar { position: absolute; z-index: 24; left: 14px; right: 14px; bottom: 82px; height: 40px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 11.5px; color: var(--ink-2); }
+  .devbar i { width: 22px; height: 28px; border-radius: 2px; background: linear-gradient(160deg, #3a332c, #1e1a17); box-shadow: 0 0 0 2px var(--card), 0 1px 3px rgba(0,0,0,.3); flex: none; }
+  .devbar b { color: var(--ink); font-weight: 500; }
+  /* a postcard: photo on card, mark on the frame, the sender's stamp clipped on */
+  .pc { position: absolute; background: var(--card); padding: 4.5% 4.5% 13%; border-radius: 2px; box-shadow: 0 1px 1.5px rgba(20,20,30,.18), 0 12px 24px -12px rgba(20,20,30,.35); }
+  .pc > img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .pc .cap { position: absolute; left: 6%; right: 6%; bottom: 3.6%; display: flex; justify-content: space-between; align-items: baseline; }
+  .pc .cap em { font: 400 clamp(9px, 4.4cqw, 15px)/1 var(--hand); color: #24314f; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78%; }
+  .pc .cap u { font: 500 6px/1 var(--mono); letter-spacing: .14em; color: var(--ink-3); text-decoration: none; text-transform: uppercase; }
+  .st { position: absolute; right: 3%; top: -3%; width: 21%; aspect-ratio: 4 / 5; background: #FBFAF6; padding: 7%; transform: rotate(6deg); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat;
+    mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .st img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .clip { position: absolute; right: 13%; top: -7%; width: 5.5%; z-index: 2; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .who { position: absolute; left: 0; top: -22px; font: 500 9.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+  .who b { color: var(--ink); font-weight: 600; }
+  .new { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #D8553F; margin-right: 5px; vertical-align: 1px; }
+
+    /* ---- shared for round 2: calmer, more air, one clear thing per screen ---- */
+  .lbl { font: 500 9.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .friends { position: absolute; left: 0; right: 0; top: 104px; display: flex; gap: 14px; padding: 0 18px; overflow: hidden; }
+  .friends button { position: relative; flex: none; display: grid; justify-items: center; gap: 6px; font: 500 8.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .friends .av { width: 40px; height: 50px; background: #FBFAF6; padding: 4px; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.22));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .friends .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .friends .dot { position: absolute; right: -2px; top: -2px; width: 8px; height: 8px; border-radius: 50%; background: #D8553F; box-shadow: 0 0 0 2px var(--room); }
+  .friends button.old { opacity: .5; }
+  .sheet { position: absolute; z-index: 28; inset: 0; background: rgba(245,243,238,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .sheet.on { opacity: 1; pointer-events: auto; }
+  .sheet .hold { width: 74%; } .sheet .pc { position: relative; width: 100%; transform: rotate(-1.5deg); }
+  .sheet .who2 { position: absolute; top: 70px; left: 0; right: 0; text-align: center; }
+  .sheet .x { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); height: 36px; padding: 0 18px; border-radius: 999px; font-size: 12.5px; font-weight: 500; }
+
+  /* ---- E: the calendar ---- */
+  .E .cal { position: absolute; left: 14px; right: 14px; top: 186px; }
+  .E .mh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; } .E .mh b { font-size: 22px; font-weight: 400; letter-spacing: -.02em; }
+  .E .dow, .E .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; } .E .dow span { text-align: center; padding-bottom: 4px; }
+  .E .grid i { position: relative; aspect-ratio: 1; border-radius: 6px; background: var(--room-2); overflow: hidden; font-style: normal; }
+  .E .grid i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .E .grid i b { position: absolute; left: 4px; top: 3px; font: 500 8px/1 var(--sans); color: rgba(255,255,255,.95); text-shadow: 0 0 3px rgba(0,0,0,.6); }
+  .E .grid i.e b { color: var(--ink-3); text-shadow: none; } .E .grid i.pad { background: none; }
+  .E .grid i.today { background: var(--ink); } .E .grid i.today b { color: #fff; text-shadow: none; }
+  .E .grid i.today::after { content: "+"; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 300 18px/1 var(--sans); }
+  .E .wk { position: absolute; left: 18px; right: 18px; bottom: 96px; display: flex; justify-content: space-between; align-items: center; color: var(--ink-2); font-size: 12px; }
+
+  /* ---- F: this week (rows of weeks, one row per friend) ---- */
+  .F .feed { position: absolute; left: 0; right: 0; top: 102px; bottom: 90px; overflow: hidden; }
+  .F .row { margin: 0 0 18px; } .F .row .rh { display: flex; justify-content: space-between; align-items: center; padding: 0 18px 8px; }
+  .F .row .rh span:first-child { font-size: 13px; font-weight: 600; letter-spacing: -.01em; } .F .row .rh .lbl { font-size: 8.5px; }
+  .F .strip { display: flex; gap: 6px; padding: 0 18px; overflow-x: auto; scrollbar-width: none; } .F .strip::-webkit-scrollbar { display: none; }
+  .F .strip i { flex: none; width: 74px; aspect-ratio: 3 / 4; background: var(--card); padding: 3px 3px 9px; border-radius: 2px; box-shadow: 0 1px 1.5px rgba(20,20,30,.16), 0 6px 12px -8px rgba(20,20,30,.3); }
+  .F .strip i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .F .row.me .strip i:last-child { background: var(--room-2); box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center; color: var(--ink-3); font: 300 22px/1 var(--sans); }
+
+  /* ---- G: today, one thing ---- */
+  .G .hero { position: absolute; left: 50%; top: 130px; width: 72%; margin-left: -36%; }
+  .G .hero .pc { position: relative; transform: rotate(-1deg); }
+  .G .hero .pc.dev > img { filter: sepia(.4) saturate(.2) brightness(.55) contrast(.8); }
+  .G .hero .lbl2 { position: absolute; left: 0; right: 0; top: 38%; text-align: center; color: #fff; font: 500 10px/1.6 var(--mono); letter-spacing: .14em; text-transform: uppercase; z-index: 3; }
+  .G .lines { position: absolute; left: 18px; right: 18px; top: calc(130px + 72% * 1.52 + 26px); display: grid; gap: 0; }
+  .G .lines button { display: flex; justify-content: space-between; align-items: center; padding: 13px 2px; border-top: 1px solid var(--hair); font-size: 13.5px; text-align: left; }
+  .G .lines button:last-child { border-bottom: 1px solid var(--hair); } .G .lines button span:last-child { color: var(--ink-3); font-size: 12px; }
+  .G .lines .new { margin-right: 8px; }
+
+  /* ---- H: the month as one photo ---- */
+  .H .full { position: absolute; inset: 0; }
+  .H .full > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .H .full::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 55%, rgba(0,0,0,.5)); }
+  .H .head, .H .sb { color: #fff; } .H .head h3 small { color: rgba(255,255,255,.75); }
+  .H .tag { position: absolute; z-index: 5; left: 18px; bottom: 300px; color: #fff; } .H .tag em { display: block; font: 400 22px/1.1 var(--hand); font-style: normal; margin-bottom: 6px; } .H .tag .lbl { color: rgba(255,255,255,.8); }
+  .H .drawer { position: absolute; z-index: 22; left: 8px; right: 8px; bottom: 8px; height: 270px; border-radius: 34px; padding: 16px 0 0; transition: height .45s var(--spring); }
+  .H .drawer.up { height: 70%; }
+  .H .drawer .grip { width: 36px; height: 4px; border-radius: 2px; background: rgba(24,23,26,.18); margin: 0 auto 12px; }
+  .H .drawer .friends { position: static; padding: 0 16px; }
+  .H .drawer .wkr { display: flex; gap: 5px; padding: 18px 16px 0; } .H .drawer .wkr i { flex: 1; aspect-ratio: 3 / 4; border-radius: 4px; overflow: hidden; background: var(--room-2); } .H .drawer .wkr i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .H .drawer .lbl { padding: 14px 16px 0; display: block; }
+  .H .dock { z-index: 29; }
+</style>
+</head>
+<body>
+<header class="page">
+  <a href="home-options.html">‹ Round 1 (A–D)</a>
+  <h1>Home: round 2</h1>
+  <p>Calmer and more personal. Each opens on you, with friends one tap away, and asks only one thing of you. Tap around: friends' stamps open their postcard; in H, tap the drawer to pull it up.</p>
+</header>
+<div class="rail" id="rail"></div>
+<footer class="page"><p>Pick a letter (A–H), or a mix like "E with G's today card". Nothing is final: the winner gets built properly with the real calendar, the develop overnight, and the friends' postcards.</p></footer>
+<script>
+const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '-s') + '.jpg';
+const F = [
+  { name: 'Dana', photo: 3, stamp: 7, note: 'the market at 9pm', time: '8:42 PM', new: true },
+  { name: 'Mei', photo: 6, stamp: 1, note: 'lunch, finally', time: '1:15 PM', new: true },
+  { name: 'Arjun', photo: 9, stamp: 4, note: 'look at this sky', time: '6:58 PM', new: true },
+  { name: 'Sofia', photo: 2, stamp: 8, note: 'made it to the top', time: '11:20 AM' },
+  { name: 'Leo', photo: 5, stamp: 11, note: 'sunday reset', time: '9:05 AM' },
+];
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+const card = (f, cls) => '<div class="pc ' + (cls || '') + '"><img src="' + ph(f.photo) + '" alt="">' + (f.stamp ? '<span class="st"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + CLIP : '') + '<span class="cap"><em>' + f.note + '</em><u>poto</u></span></div>';
+const chrome = (title, sub, inner, dark) => '<div class="sb"><span>9:41</span><i></i><span>●●●</span></div>' +
+  '<div class="head"><h3><small>' + sub + '</small>' + title + '</h3><span class="me"><img src="' + ph(4, '-t') + '" alt=""></span></div>' + inner +
+  '<div class="dock glass"><span class="on">Home</span><span class="cam"></span><span>Desk</span></div>';
+const friendsRow = () => '<div class="friends">' + F.map((f, i) => '<button type="button" data-i="' + i + '"' + (f.new ? '' : ' class="old"') + '><span class="av"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + (f.new ? '<i class="dot"></i>' : '') + f.name + '</button>').join('') + '</div>';
+const sheet = '<div class="sheet"><span class="who2 lbl"></span><div class="hold"></div><button type="button" class="x glass">Close</button></div>';
+function wireFriends(s) {
+  const sh = s.querySelector('.sheet');
+  s.querySelectorAll('.friends button').forEach((b) => b.onclick = (e) => { e.stopPropagation(); const f = F[+b.dataset.i]; sh.querySelector('.hold').innerHTML = card(f); sh.querySelector('.who2').textContent = f.name + ' · ' + f.time; sh.classList.add('on'); b.classList.add('old'); const d = b.querySelector('.dot'); if (d) d.remove(); });
+  sh.querySelector('.x').onclick = (e) => { e.stopPropagation(); sh.classList.remove('on'); };
+}
+const opts = [];
+
+opts.push({ k: 'E', name: 'The calendar', sub: 'Your month first', p: '<b>You see:</b> your month, a photo in every day you shot. Friends who posted sit in one quiet row of stamps above it; a dot means new. Today is the dark square: tap it to shoot. <b>Feels:</b> personal, like a diary you keep.', html: (s) => {
+  const plan = { 2: 2, 3: 6, 5: 9, 6: 1, 8: 3, 9: 12, 10: 5, 12: 8, 13: 4, 14: 10, 16: 7 };
+  let g = ''; for (let i = 0; i < 6; i++) g += '<i class="pad"></i>';
+  for (let d = 1; d <= 30; d++) g += d === 17 ? '<i class="today"><b>17</b></i>' : plan[d] ? '<i><img src="' + ph(plan[d], '-t') + '" alt=""><b>' + d + '</b></i>' : '<i class="e"><b>' + d + '</b></i>';
+  s.innerHTML = chrome('November', 'Tue 17 Nov', friendsRow() + '<div class="cal"><div class="dow lbl"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="grid">' + g + '</div></div><div class="wk"><span>Roll 04 · 13 of 27 left</span><span class="lbl">5 developing · 7:00</span></div>' + sheet);
+  wireFriends(s);
+} });
+
+opts.push({ k: 'F', name: 'This week', sub: 'Weeks, like a journal', p: '<b>You see:</b> this week as filmstrips. Yours on top (with an empty frame: shoot), then one strip per friend, newest first. Scroll down for more friends, sideways for their days. <b>Feels:</b> the closest to Retro\'s weekly journal, in Poto\'s look.', html: (s) => {
+  const mine = [1, 7, 10, 12];
+  const strip = (arr, me) => '<div class="strip">' + arr.map((n) => '<i><img src="' + ph(n, '-t') + '" alt=""></i>').join('') + (me ? '<i>+</i>' : '') + '</div>';
+  let h = '<div class="feed"><div class="row me"><div class="rh"><span>You</span><span class="lbl">Mon – Tue · 5 developing</span></div>' + strip(mine, true) + '</div>';
+  h += F.map((f, i) => '<div class="row"><div class="rh"><span>' + (f.new ? '<i class="new"></i>' : '') + f.name + '</span><span class="lbl">' + (3 + i) + ' this week</span></div>' + strip([f.photo, f.stamp, (f.photo + 3) % 12 + 1, (f.stamp + 5) % 12 + 1]) + '</div>').join('') + '</div>';
+  s.innerHTML = chrome('This week', 'Week 47 · 16 – 22 Nov', h);
+} });
+
+opts.push({ k: 'G', name: 'Today', sub: 'One thing at a time', p: '<b>You see:</b> one card: today. Before you shoot it says so; after, your shots are on it, developing until morning. Under it, three plain lines: postcards from friends, this week, your month. <b>Feels:</b> the calmest, nothing to decide except "shoot".', html: (s) => {
+  let h = '<div class="hero">' + card({ photo: 12, note: 'today, so far', stamp: 0 }, 'dev') + '<span class="lbl2">5 shots developing<br>ready at 7:00</span></div>';
+  h += '<div class="lines"><button type="button"><span><i class="new"></i>3 postcards from friends</span><span>›</span></button><button type="button"><span>This week</span><span>4 days ›</span></button><button type="button"><span>November</span><span>11 days ›</span></button></div>';
+  s.innerHTML = chrome('Today', 'Tue 17 Nov', h);
+} });
+
+opts.push({ k: 'H', name: 'The cover', sub: 'Your photo, full screen', p: '<b>You see:</b> your latest photo filling the screen, like a magazine cover with the month on it. A glass drawer at the bottom holds friends\' stamps and your week; pull it up for more. <b>Feels:</b> the most striking; your photos are the whole interface.', html: (s) => {
+  let h = '<div class="full"><img src="' + ph(10, '') + '" alt=""></div><div class="tag"><em>sunday, slow</em><span class="lbl">16 Nov · Roll 04 · frame 14</span></div>';
+  h += '<div class="drawer glass"><div class="grip"></div>' + friendsRow() + '<span class="lbl">This week</span><div class="wkr">' + [1, 7, 10, 12, 3].map((n) => '<i><img src="' + ph(n, '-t') + '" alt=""></i>').join('') + '</div></div>' + sheet;
+  s.innerHTML = chrome('November', 'Tue 17 Nov', h);
+  s.querySelector('.drawer').onclick = (e) => { if (!e.target.closest('.friends button')) s.querySelector('.drawer').classList.toggle('up'); };
+  wireFriends(s);
+} });
+
+const rail = document.getElementById('rail');
+opts.forEach((o) => {
+  const el = document.createElement('section'); el.className = 'opt';
+  el.innerHTML = '<div class="phone"><div class="scr ' + o.k + '"></div></div><h2>' + o.k + ' · ' + o.name + ' <span>' + o.sub + '</span></h2><p>' + o.p + '</p>';
+  rail.appendChild(el); o.html(el.querySelector('.scr'));
+});
+</script>
+</body>
+</html>
