@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Home options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=La+Belle+Aurore&display=swap">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Phase 1: four ways the Home screen could show your friends' day. Same content in each, so they compare fairly.
+     Light theme: warm off-white, never pure white (Cody, 17 Nov). */
+  :root { --room: #F5F3EE; --room-2: #ECE9E2; --card: #FDFCF9; --ink: #18171A; --ink-2: #6F6C68; --ink-3: #A8A49E; --hair: rgba(24,23,26,.08);
+    --sans: Inter, -apple-system, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --hand: "La Belle Aurore", cursive; --spring: cubic-bezier(.3,1.4,.45,1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: #E9E6DF; color: var(--ink); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .mono { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  header.page { max-width: 1200px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) 20px 8px; }
+  header.page a { color: var(--ink-2); text-decoration: none; font-size: 13px; }
+  header.page h1 { margin: 10px 0 6px; font-size: 34px; line-height: 38px; font-weight: 600; letter-spacing: -.03em; }
+  header.page p { margin: 0; max-width: 62ch; color: var(--ink-2); }
+  .rail { display: flex; gap: 28px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 22px 20px 40px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  @media (min-width: 1300px) { .rail { justify-content: center; } }
+  .opt { flex: none; scroll-snap-align: center; width: min(86vw, 340px); }
+  .opt h2 { margin: 16px 2px 4px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; } .opt h2 span { color: var(--ink-3); font-weight: 400; }
+  .opt p { margin: 0 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+  .opt p b { color: var(--ink); font-weight: 500; }
+  /* the phone */
+  .phone { position: relative; width: 100%; aspect-ratio: 390 / 844; border-radius: 44px; overflow: hidden; background: var(--room); box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5); isolation: isolate; }
+  .scr { position: absolute; inset: 0; container-type: inline-size; }
+  .sb { position: absolute; z-index: 30; left: 0; right: 0; top: 0; height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 6px 26px 0; font: 600 13px/1 var(--sans); pointer-events: none; }
+  .sb i { width: 90px; height: 24px; border-radius: 14px; background: #000; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); }
+  .head { position: absolute; z-index: 20; left: 0; right: 0; top: 46px; padding: 0 18px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+  .head h3 { margin: 0; font-size: 26px; line-height: 28px; font-weight: 600; letter-spacing: -.03em; } .head h3 small { display: block; font: 500 9.5px/1 var(--mono); letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 6px; }
+  .head .me { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--card), 0 2px 6px rgba(0,0,0,.15); pointer-events: auto; }
+  .head .me img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* liquid glass dock */
+  .glass { background: rgba(253,252,249,.62); -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), inset 0 1px 0 rgba(255,255,255,.95), 0 8px 24px -8px rgba(20,20,30,.22); }
+  .dock { position: absolute; z-index: 25; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; }
+  .dock span { height: 38px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .dock span.on { background: rgba(24,23,26,.07); color: var(--ink); }
+  .dock .cam { width: 46px; height: 46px; padding: 0; justify-content: center; background: var(--ink); margin: -3px 2px; box-shadow: 0 4px 10px -3px rgba(0,0,0,.4); }
+  .dock .cam::after { content: ""; width: 17px; height: 17px; border-radius: 50%; border: 2px solid #fff; }
+  .devbar { position: absolute; z-index: 24; left: 14px; right: 14px; bottom: 82px; height: 40px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 11.5px; color: var(--ink-2); }
+  .devbar i { width: 22px; height: 28px; border-radius: 2px; background: linear-gradient(160deg, #3a332c, #1e1a17); box-shadow: 0 0 0 2px var(--card), 0 1px 3px rgba(0,0,0,.3); flex: none; }
+  .devbar b { color: var(--ink); font-weight: 500; }
+  /* a postcard: photo on card, mark on the frame, the sender's stamp clipped on */
+  .pc { position: absolute; background: var(--card); padding: 4.5% 4.5% 13%; border-radius: 2px; box-shadow: 0 1px 1.5px rgba(20,20,30,.18), 0 12px 24px -12px rgba(20,20,30,.35); }
+  .pc > img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .pc .cap { position: absolute; left: 6%; right: 6%; bottom: 3.6%; display: flex; justify-content: space-between; align-items: baseline; }
+  .pc .cap em { font: 400 clamp(9px, 4.4cqw, 15px)/1 var(--hand); color: #24314f; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78%; }
+  .pc .cap u { font: 500 6px/1 var(--mono); letter-spacing: .14em; color: var(--ink-3); text-decoration: none; text-transform: uppercase; }
+  .st { position: absolute; right: 3%; top: -3%; width: 21%; aspect-ratio: 4 / 5; background: #FBFAF6; padding: 7%; transform: rotate(6deg); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat;
+    mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .st img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .clip { position: absolute; right: 13%; top: -7%; width: 5.5%; z-index: 2; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .who { position: absolute; left: 0; top: -22px; font: 500 9.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+  .who b { color: var(--ink); font-weight: 600; }
+  .new { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #D8553F; margin-right: 5px; vertical-align: 1px; }
+
+  /* ---- A: the mailbox ---- */
+  .A .pile { position: absolute; left: 0; right: 0; top: 104px; bottom: 140px; }
+  .env { position: absolute; left: 12%; width: 76%; aspect-ratio: 1.55; border-radius: 4px; background: #F1ECE2; box-shadow: 0 1px 2px rgba(20,20,30,.15), 0 14px 26px -14px rgba(20,20,30,.4); transition: transform .5s var(--spring), opacity .3s; }
+  .env::before { content: ""; position: absolute; inset: 0; background: linear-gradient(155deg, transparent 49.6%, rgba(0,0,0,.06) 50%, transparent 50.4%), linear-gradient(25deg, transparent 49.6%, rgba(0,0,0,.06) 50%, transparent 50.4%); }
+  .env .to { position: absolute; left: 9%; bottom: 14%; font: 400 15px/1.2 var(--hand); color: #24314f; } .env .to small { display: block; font: 500 7px/1 var(--mono); letter-spacing: .14em; color: var(--ink-3); margin-bottom: 4px; text-transform: uppercase; }
+  .env .st { width: 15%; right: 6%; top: 8%; transform: rotate(3deg); }
+  .env .pm { position: absolute; right: 16%; top: 14%; width: 26%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid rgba(36,49,79,.35); }
+  .env .pm::after { content: "17 NOV"; position: absolute; inset: 0; display: grid; place-items: center; font: 500 7px/1 var(--mono); color: rgba(36,49,79,.5); letter-spacing: .1em; }
+  .A .opened { position: absolute; left: 50%; top: 52%; width: 70%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; transition: transform .55s var(--spring), opacity .3s; z-index: 15; }
+  .A.open .opened { transform: translate(-50%, -50%) rotate(-2deg); opacity: 1; pointer-events: auto; }
+  .A.open .env.top { transform: translateY(110%) rotate(4deg); opacity: 0; }
+  .A .count { position: absolute; left: 18px; top: 108px; z-index: 3; }
+
+  /* ---- B: today's table ---- */
+  .B .table { position: absolute; inset: 96px 0 0 0; }
+  .B .pc { transition: transform .45s var(--spring), z-index 0s .2s; cursor: pointer; }
+  .B .pc.lift { transform: translate(var(--lx), var(--ly)) rotate(0deg) scale(1.55) !important; z-index: 20 !important; transition: transform .45s var(--spring); }
+  .B .day { position: absolute; left: 18px; bottom: 140px; color: var(--ink-3); }
+
+  /* ---- C: the stack ---- */
+  .C .stk { position: absolute; left: 0; right: 0; top: 112px; height: 58%; perspective: 1200px; overflow: hidden; touch-action: pan-y; }
+  .C .stk .pc { left: 50%; top: 24px; width: 58%; margin-left: -29%; transition: transform .5s var(--spring), opacity .4s; will-change: transform; }
+  .C .rowf { position: absolute; left: 0; right: 0; top: calc(112px + 58% + 4px); display: flex; justify-content: center; gap: 8px; }
+  .C .rowf button { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; opacity: .45; transition: opacity .2s, transform .3s var(--spring); }
+  .C .rowf button.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 2px var(--room), 0 0 0 3.5px var(--ink); }
+  .C .rowf img { width: 100%; height: 100%; object-fit: cover; }
+  .C .note { position: absolute; left: 22px; right: 22px; top: calc(112px + 58% + 52px); text-align: center; }
+  .C .note em { font: 400 20px/1.2 var(--hand); color: #24314f; font-style: normal; } .C .note div { margin-top: 6px; color: var(--ink-3); }
+
+  /* ---- D: one friend at a time ---- */
+  .D .rail2 { position: absolute; left: 0; right: 0; top: 100px; display: flex; gap: 12px; padding: 0 18px; overflow: hidden; }
+  .D .rail2 button { flex: none; display: grid; justify-items: center; gap: 5px; font: 500 8.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .D .rail2 .av { width: 44px; height: 54px; background: #FBFAF6; padding: 4px; -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25)); }
+  .D .rail2 .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .D .rail2 button.on { color: var(--ink); } .D .rail2 button.seen .av { opacity: .45; }
+  .D .one { position: absolute; left: 50%; top: 196px; width: 76%; margin-left: -38%; transition: opacity .25s, transform .4s var(--spring); }
+  .D .one .pc { position: relative; }
+  .D .meta { position: absolute; left: 22px; right: 22px; top: calc(196px + 76% * 1.52 + 22px); display: flex; justify-content: space-between; color: var(--ink-3); }
+  .D .tapl, .D .tapr { position: absolute; top: 170px; bottom: 140px; width: 40%; z-index: 10; } .D .tapl { left: 0; } .D .tapr { right: 0; }
+  .D .bar { position: absolute; left: 18px; right: 18px; top: 172px; display: flex; gap: 3px; } .D .bar i { flex: 1; height: 2px; border-radius: 2px; background: var(--hair); } .D .bar i.on { background: var(--ink); }
+
+  .hintbtn { position: absolute; z-index: 26; left: 50%; bottom: 140px; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; font: 500 9.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); pointer-events: none; }
+  footer.page { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; color: var(--ink-2); font-size: 13px; line-height: 19px; }
+  footer.page b { color: var(--ink); }
+</style>
+</head>
+<body>
+<header class="page">
+  <a href="index.html">‹ Poto</a>
+  <h1>Home: four options</h1>
+  <p>How your friends' day appears when you open Poto. Same friends, same postcards in each, so you compare only the idea. Each one is tappable. Swipe sideways for the next.</p>
+</header>
+<div class="rail" id="rail"></div>
+<footer class="page">
+  <p><b>In all four:</b> warm off-white, never pure white. Each postcard has the poto mark on the frame and the sender's signature stamp clipped on with a paper clip. The developing bar shows your own shots coming up overnight. Camera in the middle of the dock; the desk is your profile.</p>
+  <p>Tell me the letter you like (or "A's envelopes with C's stack"). Mixing is fine.</p>
+</footer>
+<script>
+const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '-s') + '.jpg';
+// your friends' postcards today (stand-ins: your own photos, made-up friends)
+const F = [
+  { name: 'Dana', photo: 3, stamp: 7, note: 'the market at 9pm', time: '8:42 PM', new: true },
+  { name: 'Mei', photo: 6, stamp: 1, note: 'lunch, finally', time: '1:15 PM', new: true },
+  { name: 'Arjun', photo: 9, stamp: 4, note: 'look at this sky', time: '6:58 PM', new: true },
+  { name: 'Sofia', photo: 2, stamp: 8, note: 'made it to the top', time: '11:20 AM' },
+  { name: 'Leo', photo: 5, stamp: 11, note: 'sunday reset', time: '9:05 AM' },
+];
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+const card = (f, style, extra) => '<div class="pc" style="' + (style || '') + '">' + (extra || '') + '<img src="' + ph(f.photo) + '" alt="">' + '<span class="st"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + CLIP + '<span class="cap"><em>' + f.note + '</em><u>poto</u></span></div>';
+const chrome = (title, sub, extra) => '<div class="sb"><span>9:41</span><i></i><span>●●●</span></div>' +
+  '<div class="head"><h3><small>' + sub + '</small>' + title + '</h3><span class="me"><img src="' + ph(4, '-t') + '" alt=""></span></div>' + (extra || '') +
+  '<div class="devbar glass"><i></i><span><b>5 of your shots</b> develop overnight · ready 7:00</span></div>' +
+  '<div class="dock glass"><span class="on">Home</span><span class="cam"></span><span>Desk</span></div>';
+const opts = [];
+
+// A — the mailbox: today's postcards arrive as envelopes; open them one by one
+opts.push({ k: 'A', name: 'The mailbox', sub: 'Postcards arrive as mail', p: '<b>Feels like:</b> getting post. Unopened envelopes stack up; tap to open each and the postcard comes out. Strong reason to open the app ("3 new"). Slower to browse many friends.', html: (s) => {
+  let h = chrome('Today', 'Tue 17 Nov', '<span class="count mono"><span class="new"></span>3 new postcards</span>');
+  h += '<div class="pile">' + F.slice(0, 4).map((f, i) => '<div class="env' + (i === 0 ? ' top' : '') + '" style="top:' + (i * 13) + '%;z-index:' + (10 - i) + ';transform:rotate(' + [-2, 3, -4, 2][i] + 'deg)"><span class="st"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><i class="pm"></i><span class="to"><small>from</small>' + f.name + '</span></div>').join('') + '</div>';
+  h += '<div class="opened"><span class="who"><b>' + F[0].name + '</b> · ' + F[0].time + '</span>' + card(F[0], 'position:relative') + '</div>';
+  h += '<span class="hintbtn glass">tap the envelope</span>';
+  s.innerHTML = h; s.onclick = () => s.classList.toggle('open');
+} });
+
+// B — today's table: everyone's postcard lies on the table, a little scattered; tap one to lift it
+opts.push({ k: 'B', name: "Today's table", sub: 'Everyone at once', p: '<b>Feels like:</b> your friends\' day laid out on a table, the same world as your desk. See everyone in one glance; tap one to pick it up. Busy when you have many friends (it becomes "today\'s pile").', html: (s) => {
+  const pos = [[6, 4, -6, 44], [50, 2, 5, 42], [26, 30, -2, 46], [4, 52, 4, 40], [54, 50, -5, 41]];
+  let h = chrome('Today', 'Tue 17 Nov · 5 friends posted');
+  h += '<div class="table">' + F.map((f, i) => card(f, 'left:' + pos[i][0] + '%;top:' + pos[i][1] + '%;width:' + pos[i][3] + '%;transform:rotate(' + pos[i][2] + 'deg);z-index:' + (i + 1), '<span class="who"><b>' + f.name + '</b></span>')).join('') + '</div>';
+  h += '<span class="day mono">tap one to pick it up</span>';
+  s.innerHTML = h;
+  s.querySelectorAll('.table .pc').forEach((el) => el.onclick = (e) => { e.stopPropagation(); const on = !el.classList.contains('lift'); s.querySelectorAll('.lift').forEach((x) => x.classList.remove('lift'));
+    if (on) { const t = s.querySelector('.table').getBoundingClientRect(), r = el.getBoundingClientRect(); el.style.setProperty('--lx', (t.left + t.width / 2 - (r.left + r.width / 2)) / 1 + 'px'); el.style.setProperty('--ly', (t.top + t.height * 0.36 - (r.top + r.height / 2)) + 'px'); el.classList.add('lift'); } });
+} });
+
+// C — the stack: one postcard in front, the rest stacked behind; swipe through, friends' stamps underneath
+opts.push({ k: 'C', name: 'The stack', sub: 'Flick through', p: '<b>Feels like:</b> flicking through a pile of prints, like the diary stack you liked. One postcard big and clear at a time with its note, quick to get through. Friends\' stamps underneath show who\'s next.', html: (s) => {
+  let h = chrome('Today', 'Tue 17 Nov');
+  h += '<div class="stk">' + F.map((f) => card(f, '')).join('') + '</div>';
+  h += '<div class="rowf">' + F.map((f, i) => '<button type="button" data-i="' + i + '"><img src="' + ph(f.stamp, '-t') + '" alt="' + f.name + '"></button>').join('') + '</div>';
+  h += '<div class="note"><em></em><div class="mono"></div></div>';
+  s.innerHTML = h;
+  let cur = 0; const cards = [...s.querySelectorAll('.stk .pc')];
+  const show = () => { cards.forEach((c, i) => { const d = i - cur; c.style.zIndex = 10 - Math.abs(d);
+      c.style.transform = d < 0 ? 'translateX(-140%) rotate(-12deg)' : 'translate(' + d * 9 + 'px,' + d * 7 + 'px) scale(' + (1 - d * 0.04) + ') rotate(' + (d ? (d % 2 ? 4 : -3) : 0) + 'deg)'; c.style.opacity = d > 3 ? 0 : 1; });
+    s.querySelectorAll('.rowf button').forEach((b, i) => b.classList.toggle('on', i === cur));
+    s.querySelector('.note em').textContent = F[cur].note; s.querySelector('.note div').textContent = F[cur].name + ' · ' + F[cur].time; };
+  s.querySelector('.stk').onclick = () => { cur = (cur + 1) % F.length; show(); };
+  s.querySelectorAll('.rowf button').forEach((b) => b.onclick = (e) => { e.stopPropagation(); cur = +b.dataset.i; show(); });
+  show();
+} });
+
+// D — one friend at a time: BeReal / stories rhythm; tap right for the next friend, their stamps across the top
+opts.push({ k: 'D', name: 'One by one', sub: 'Like stories', p: '<b>Feels like:</b> BeReal or stories: one friend fills the screen, tap to go to the next, a row of their stamps across the top (faded once seen). Fastest and most familiar; the least "object" feeling.', html: (s) => {
+  let h = chrome('Today', 'Tue 17 Nov');
+  h += '<div class="rail2">' + F.map((f, i) => '<button type="button" data-i="' + i + '"><span class="av"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + f.name + '</button>').join('') + '</div>';
+  h += '<div class="bar">' + F.map(() => '<i></i>').join('') + '</div>';
+  h += '<div class="one"></div><div class="meta mono"><span></span><span>reply with a postcard ›</span></div><i class="tapl"></i><i class="tapr"></i>';
+  s.innerHTML = h;
+  let cur = 0; const seen = new Set();
+  const show = () => { seen.add(cur); const f = F[cur], one = s.querySelector('.one'); one.innerHTML = card(f, 'position:relative');
+    s.querySelectorAll('.rail2 button').forEach((b, i) => { b.classList.toggle('on', i === cur); b.classList.toggle('seen', seen.has(i) && i !== cur); });
+    s.querySelectorAll('.bar i').forEach((b, i) => b.classList.toggle('on', i <= cur)); s.querySelector('.meta span').textContent = f.name + ' · ' + f.time; };
+  s.querySelector('.tapr').onclick = () => { cur = Math.min(F.length - 1, cur + 1); show(); };
+  s.querySelector('.tapl').onclick = () => { cur = Math.max(0, cur - 1); show(); };
+  s.querySelectorAll('.rail2 button').forEach((b) => b.onclick = () => { cur = +b.dataset.i; show(); });
+  show();
+} });
+
+const rail = document.getElementById('rail');
+opts.forEach((o) => {
+  const el = document.createElement('section'); el.className = 'opt';
+  el.innerHTML = '<div class="phone"><div class="scr ' + o.k + '"></div></div><h2>' + o.k + ' · ' + o.name + ' <span>' + o.sub + '</span></h2><p>' + o.p + '</p>';
+  rail.appendChild(el); o.html(el.querySelector('.scr'));
+});
+</script>
+</body>
+</html>
