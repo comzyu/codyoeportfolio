@@ -134,3 +134,10 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Shooting more is not a perk: roll rules are the same for free and Plus.
 - Money comes from three things: Poto+ (film looks, events), shop items, limited film drops.
 - Hosting an event requires Poto+. No one-time event payments.
+
+## Decisions (Cody, 17 Nov, round 4) — Phase 1 starts
+- The poto mark stays on every postcard's frame (never on the photo), for everyone: it's how the app promotes itself.
+- Animated recaps benched. Instead: a Spotify-Wrapped-style recap, monthly and/or every 4 / 6 / 12 months.
+- Don't put everything behind the paywall.
+- Two levels confirmed: Poto+ and Poto+ Events. Event subscribers can step down to Poto+ at a discount to keep their subscription.
+- Photos are stored only while subscribed: cancel means export first or lose them. (Claude flagged: needs a grace period and clear warnings; see chat.)
