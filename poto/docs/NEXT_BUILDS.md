@@ -117,3 +117,14 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - No AI looks for now (no running costs); try to get there with our own filters.
 - Overnight developing vs instant: undecided.
 - No events quick-join, no AI, no physical at launch.
+
+## Decisions (Cody, 17 Nov, round 2)
+- Friends' posts on Home: undecided. Claude makes several versions from the references + Cody's brief; Cody picks.
+- Your own custom stamp is your signature: stamped on the back of every postcard you send. On the front, a tiny cut-out of your stamp is clipped on with a small paper clip (small enough not to cover the photo). This is how friends' postcards are told apart.
+- Currency: worried it feels childish/gamey. Leaning to selling items directly for real money (small prices). (Claude's recommendation: no currency; daily posting earns occasional free items instead.)
+- Events: host gets a cover page, a live wall, and the event's shots, to display, send, or share to Instagram.
+- Voice: calm and short, like Apple. Adult and professional even with playful features.
+- Light/dark: light default (warm off-white, never pure white); dark mode available, a premium tinted dark (never pure black).
+- Desk surfaces: user-chosen but never distracting. Clean off-white "table" that reads as a table without literally being one. Cork is too much.
+- Android at launch if the code allows (Expo: yes).
+- Developing: a few shots can develop right away, the rest develop overnight. Premium (Poto+) skips the wait. Poto+ needs more good things in it: monetise.
