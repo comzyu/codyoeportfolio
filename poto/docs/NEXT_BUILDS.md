@@ -128,3 +128,9 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Desk surfaces: user-chosen but never distracting. Clean off-white "table" that reads as a table without literally being one. Cork is too much.
 - Android at launch if the code allows (Expo: yes).
 - Developing: a few shots can develop right away, the rest develop overnight. Premium (Poto+) skips the wait. Poto+ needs more good things in it: monetise.
+
+## Decisions (Cody, 17 Nov, round 3): monetisation
+- No importing photos at all, for anyone (authenticity, like BeReal). Shots come only from the Poto camera, on the day.
+- Shooting more is not a perk: roll rules are the same for free and Plus.
+- Money comes from three things: Poto+ (film looks, events), shop items, limited film drops.
+- Hosting an event requires Poto+. No one-time event payments.
