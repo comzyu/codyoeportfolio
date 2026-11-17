@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Home, one postcard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=La+Belle+Aurore&display=swap">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Home as one postcard at a time (Cody, 17 Nov): like Locket / Reels, but each friend's postcard is an object.
+     Tap to flip it and read the back. Swipe up (or tap ›) to move on, and moving on is a small ritual: stamp it, file it, or punch it. */
+  :root { --room: #F5F3EE; --room-2: #ECE9E2; --card: #FDFCF9; --ink: #18171A; --ink-2: #6F6C68; --ink-3: #A8A49E; --hair: rgba(24,23,26,.08); --blue: #24314f; --red: #B8402E;
+    --sans: Inter, -apple-system, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --hand: "La Belle Aurore", cursive; --spring: cubic-bezier(.3,1.4,.45,1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #E9E6DF; color: var(--ink); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .lbl { font: 500 9.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .wrap { min-height: 100%; display: grid; place-items: center; gap: 18px; padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(30px + env(safe-area-inset-bottom, 0px)); }
+  .pick { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+  .pick button { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+  .pick button.on { background: var(--ink); color: #fff; }
+  .note { max-width: 380px; text-align: center; color: var(--ink-2); font-size: 13px; line-height: 18px; margin: 0; }
+  .back-link { color: var(--ink-2); font-size: 13px; text-decoration: none; }
+  /* phone */
+  .phone { position: relative; width: min(92vw, 380px); aspect-ratio: 390 / 844; border-radius: 46px; overflow: hidden; background: var(--room); box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5); isolation: isolate; container-type: inline-size; touch-action: none; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 480px) { body { background: var(--room); } .phone { width: 100vw; height: 100svh; aspect-ratio: auto; border-radius: 0; box-shadow: none; } .wrap { padding: 0; gap: 0; } .pick, .note, .back-link { display: none; } }
+  .sb { position: absolute; z-index: 30; left: 0; right: 0; top: 0; height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 6px 26px 0; font: 600 13px/1 var(--sans); pointer-events: none; }
+  .sb i { width: 90px; height: 24px; border-radius: 14px; background: #000; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); }
+  @media (max-width: 480px) { .sb { display: none; } }
+  .glass { background: rgba(253,252,249,.62); -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), inset 0 1px 0 rgba(255,255,255,.95), 0 8px 24px -8px rgba(20,20,30,.22); }
+  /* top: whose postcard, progress ticks */
+  .top { position: absolute; z-index: 20; left: 18px; right: 18px; top: calc(52px + env(safe-area-inset-top, 0px)); }
+  .ticks { display: flex; gap: 3px; } .ticks i { flex: 1; height: 2px; border-radius: 2px; background: var(--hair); transition: background .3s; } .ticks i.on { background: var(--ink); }
+  .who { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .who .av { width: 30px; height: 38px; background: #FBFAF6; padding: 3px; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.22));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .who .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .who b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.01em; } .who span { font-size: 12px; color: var(--ink-3); }
+  .who .me { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--card), 0 2px 6px rgba(0,0,0,.15); } .who .me img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* the postcard: two faces, flips in 3D */
+  .stage { position: absolute; left: 0; right: 0; top: calc(130px + env(safe-area-inset-top, 0px)); bottom: 168px; display: grid; place-items: center; perspective: 1400px; }
+  .card { position: relative; width: 78%; aspect-ratio: 1024 / 1448; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,1.25,.45,1); will-change: transform; }
+  .card.flip { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 3px; background: var(--card); box-shadow: 0 1px 2px rgba(20,20,30,.16), 0 24px 40px -22px rgba(20,20,30,.45); overflow: hidden; }
+  .front { padding: 4.2% 4.2% 0; }
+  .front > img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .front .cap { position: absolute; left: 5.5%; right: 5.5%; bottom: 4%; display: flex; justify-content: space-between; align-items: baseline; }
+  .front .cap span { font: 500 7px/1 var(--mono); letter-spacing: .14em; color: #8d8a83; text-transform: uppercase; } .front .cap u { font: 500 7px/1 var(--mono); letter-spacing: .14em; color: var(--ink-3); text-decoration: none; }
+  .front .st { position: absolute; right: 5%; top: 2.5%; width: 17%; aspect-ratio: 4 / 5; background: #FBFAF6; padding: 6%; transform: rotate(7deg); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.3));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .front .st img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .front .clip { position: absolute; right: 13%; top: -1%; width: 5%; z-index: 2; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .back { transform: rotateY(180deg); padding: 9% 8%; background: #FAF7F0; }
+  .back .pcl { font: 500 9px/1 var(--mono); letter-spacing: .5em; color: rgba(90,84,76,.75); }
+  .back .msg { margin-top: 12%; font: 400 clamp(15px, 6.4cqw, 24px)/1.55 var(--hand); color: var(--blue); }
+  .back .sig { position: absolute; left: 8%; bottom: 13%; font: 400 clamp(14px, 5.6cqw, 21px)/1 var(--hand); color: var(--blue); }
+  .back .meta { position: absolute; left: 8%; right: 8%; bottom: 6%; display: flex; justify-content: space-between; font: 500 7px/1 var(--mono); letter-spacing: .14em; color: rgba(90,84,76,.7); text-transform: uppercase; }
+  .back .sst { position: absolute; right: 8%; top: 7%; width: 20%; aspect-ratio: 4 / 5; background: #FBFAF6; padding: 6%; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 7px 7px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .back .sst img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .back .rule { position: absolute; left: 8%; right: 8%; height: 1px; background: rgba(90,84,76,.25); }
+  /* marks left by the transitions */
+  .pm { position: absolute; z-index: 5; width: 38%; aspect-ratio: 1; border-radius: 50%; border: 2.5px solid var(--red); color: var(--red); display: grid; place-items: center; text-align: center; font: 600 8px/1.5 var(--mono); letter-spacing: .14em; mix-blend-mode: multiply; opacity: 0; pointer-events: none; }
+  .pm::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1px solid var(--red); }
+  .hole { position: absolute; z-index: 5; top: 3.2%; width: 5.5%; aspect-ratio: 1; border-radius: 50%; background: var(--room); box-shadow: inset 0 1px 2px rgba(0,0,0,.35); transform: scale(0); pointer-events: none; }
+  .punch { position: absolute; z-index: 25; left: 50%; top: 0; width: 46%; height: 54px; margin-left: -23%; border-radius: 14px 14px 18px 18px; background: linear-gradient(180deg, #5b5b60, #2c2c30); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 10px 18px -8px rgba(0,0,0,.6); transform: translateY(-120%); pointer-events: none; }
+  .punch::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: -6px; height: 10px; border-radius: 4px; background: #1a1a1c; }
+  .box { position: absolute; z-index: 22; left: 10%; right: 10%; bottom: 0; height: 176px; border-radius: 6px 6px 14px 14px; background: linear-gradient(180deg, #E6E1D6, #D9D3C6); box-shadow: inset 0 2px 0 rgba(255,255,255,.6), 0 14px 24px -14px rgba(20,20,30,.45); transform: translateY(40px); opacity: 0; visibility: hidden; transition: transform .45s var(--spring), opacity .2s, visibility 0s .45s; display: flex; align-items: flex-start; justify-content: space-between; padding: 26px 14px 0; }
+  .box.on { transform: none; opacity: 1; visibility: visible; transition: transform .45s var(--spring), opacity .2s; } .box span { font: 500 9px/1 var(--mono); letter-spacing: .12em; color: rgba(60,52,40,.7); text-transform: uppercase; }
+  .box::before { content: ""; position: absolute; left: 6%; right: 6%; top: 8px; height: 6px; border-radius: 3px; background: rgba(0,0,0,.18); }
+  .ring { position: absolute; z-index: 24; left: 50%; top: calc(130px + env(safe-area-inset-top, 0px)); width: 36px; height: 36px; margin-left: -18px; border-radius: 50%; border: 3px solid #b9b9bf; border-left-color: #e9e9ee; border-right-color: #8f8f96; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  /* bottom */
+  .act { position: absolute; z-index: 20; left: 0; right: 0; bottom: 104px; display: flex; justify-content: center; gap: 10px; }
+  .act button { height: 40px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .act .next { background: var(--ink); color: #fff; }
+  .hint { position: absolute; z-index: 20; left: 0; right: 0; bottom: 154px; text-align: center; }
+  .dock { position: absolute; z-index: 26; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; }
+  .dock span { height: 38px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .dock span.on { background: rgba(24,23,26,.07); color: var(--ink); }
+  .dock .cam { width: 46px; height: 46px; padding: 0; justify-content: center; background: var(--ink); margin: -3px 2px; box-shadow: 0 4px 10px -3px rgba(0,0,0,.4); } .dock .cam::after { content: ""; width: 17px; height: 17px; border-radius: 50%; border: 2px solid #fff; }
+  .done { position: absolute; inset: 0; z-index: 15; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .4s; padding: 0 40px; }
+  .done.on { opacity: 1; pointer-events: auto; } .done h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; } .done p { margin: 0; color: var(--ink-2); font-size: 13px; }
+  .done button { margin-top: 8px; height: 38px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="home-options-3.html">‹ Home options</a>
+  <div class="pick" role="group" aria-label="How you move to the next postcard"><button type="button" data-m="stamp" class="on">Stamp it</button><button type="button" data-m="file">File it</button><button type="button" data-m="punch">Punch it</button></div>
+  <div class="phone" id="phone">
+    <div class="sb"><span>9:41</span><i></i><span>●●●</span></div>
+    <div class="top"><div class="ticks" id="ticks"></div><div class="who" id="who"></div></div>
+    <i class="ring" id="ring"></i>
+    <div class="stage" id="stage"></div>
+    <i class="punch" id="punch"></i>
+    <div class="box" id="box"><span>Kept today</span><span id="kept">0</span></div>
+    <p class="hint lbl" id="hint">tap to flip · swipe up for the next</p>
+    <div class="act"><button type="button" class="glass" id="reply">Reply</button><button type="button" class="next" id="next">Next ›</button></div>
+    <div class="done" id="done"><span class="lbl">Tue 17 Nov</span><h3>You're all caught up</h3><p>Five postcards from friends today. Yours develop overnight.</p><button type="button" class="glass" id="again">See them again</button></div>
+    <div class="dock glass"><span class="on">Home</span><span class="cam"></span><span>Desk</span></div>
+  </div>
+  <p class="note">Tap the postcard to flip it and read the back. Swipe up or tap Next to move on; try each way of moving on with the buttons above. On a phone this fills the screen.</p>
+</div>
+<script>
+const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '-s') + '.jpg';
+const F = [
+  { name: 'Dana', photo: 3, stamp: 7, time: '8:42 PM', place: 'Shanghai', msg: 'the market at 9pm.<br>everything lit up at once.<br>wish you were here.' },
+  { name: 'Mei', photo: 6, stamp: 1, time: '1:15 PM', place: 'Osaka', msg: 'lunch, finally.<br>we queued an hour<br>and it was worth it.' },
+  { name: 'Arjun', photo: 9, stamp: 4, time: '6:58 PM', place: 'Seoul', msg: 'look at this sky.<br>i stopped in the middle<br>of the road for it.' },
+  { name: 'Sofia', photo: 2, stamp: 8, time: '11:20 AM', place: 'Taipei', msg: 'made it to the top.<br>legs are gone.<br>view is not.' },
+  { name: 'Leo', photo: 5, stamp: 11, time: '9:05 AM', place: 'Singapore', msg: 'sunday reset.<br>coffee, laundry,<br>nowhere to be.' },
+];
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+let i = 0, mode = 'stamp', busy = false, kept = 0;
+const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+function cardHTML(f) {
+  return '<div class="card" id="card"><div class="face front"><img src="' + ph(f.photo, '') + '" alt="Postcard from ' + f.name + '" draggable="false"><span class="st"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + CLIP + '<span class="cap"><span>17 Nov · ' + f.place + '</span><u>poto</u></span></div>' +
+    '<div class="face back"><span class="pcl">POST CARD</span><span class="sst"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><div class="msg">' + f.msg + '</div><i class="rule" style="bottom:22%"></i><span class="sig">— ' + f.name.toLowerCase() + '</span><span class="meta"><span>' + f.place + ' · ' + f.time + '</span><span>poto</span></span></div></div>';
+}
+function show(enter) {
+  const f = F[i];
+  $('who').innerHTML = '<span class="av"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><span><b>' + f.name + '</b><span>' + f.place + ' · ' + f.time + '</span></span><span class="me"><img src="' + ph(4, '-t') + '" alt=""></span>';
+  $('ticks').innerHTML = F.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('');
+  $('stage').innerHTML = cardHTML(f);
+  const c = $('card');
+  if (enter && !reduced) c.animate([{ transform: 'translateY(60%) scale(.9)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, easing: 'cubic-bezier(.2,1.1,.35,1)' });
+  c.onclick = () => { if (busy || moved) return; c.classList.toggle('flip'); buzz(6); };
+}
+// ---- the three ways to move on ----
+const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+async function stampOut(c) {          // a postmark comes down on the front, "received", then the card slides away
+  if (c.classList.contains('flip')) { c.classList.remove('flip'); await wait(420); }
+  const pm = document.createElement('i'); pm.className = 'pm'; pm.innerHTML = 'RECEIVED<br>17 NOV<br>POTO'; pm.style.left = '50%'; pm.style.top = '44%'; c.querySelector('.front').appendChild(pm);
+  pm.animate([{ transform: 'translate(-50%,-50%) scale(1.8) rotate(-18deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(.94) rotate(-12deg)', opacity: .95, offset: .7 }, { transform: 'translate(-50%,-50%) scale(1) rotate(-12deg)', opacity: .85 }], { duration: reduced ? 1 : 300, easing: 'cubic-bezier(.5,0,.6,1)', fill: 'forwards' });
+  await wait(220); buzz(18); c.animate([{ transform: 'scale(1)' }, { transform: 'scale(.97)' }, { transform: 'scale(1)' }], { duration: 180 });
+  await wait(380);
+  await c.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-120%) rotate(-8deg)', opacity: 0 }], { duration: reduced ? 1 : 460, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' }).finished;
+}
+async function fileOut(c) {           // a file box rises, the card drops into it, the box counts it
+  if (c.classList.contains('flip')) { c.classList.remove('flip'); await wait(420); }
+  $('box').classList.add('on'); await wait(260);
+  const b = $('box').getBoundingClientRect(), r = c.getBoundingClientRect();
+  const dy = b.top + 30 - (r.top + r.height / 2);          // the card's centre goes to the box's mouth, small enough to fit, then sinks in
+  await c.animate([{ transform: 'none' }, { transform: 'translateY(-5%) rotate(-2deg)', offset: .22 }, { transform: 'translateY(' + dy + 'px) scale(.42) rotate(0deg)', opacity: 1, offset: .8 }, { transform: 'translateY(' + (dy + 70) + 'px) scale(.42)', opacity: 0 }],
+    { duration: reduced ? 1 : 640, easing: 'cubic-bezier(.55,0,.4,1)', fill: 'forwards' }).finished;
+  c.style.visibility = 'hidden'; kept++; $('kept').textContent = kept; buzz(14);
+  $('box').animate([{ transform: 'translateY(0)' }, { transform: 'translateY(5px)' }, { transform: 'translateY(0)' }], { duration: 240, easing: 'ease-out' });
+  await wait(300); $('box').classList.remove('on');
+}
+async function punchOut(c) {          // the punch comes down, two holes, the card swings up onto a ring and away
+  if (c.classList.contains('flip')) { c.classList.remove('flip'); await wait(420); }
+  const r = c.getBoundingClientRect(), pr = $('phone').getBoundingClientRect(), p = $('punch');
+  const y = r.top - pr.top - 40;
+  await p.animate([{ transform: 'translateY(-120%)' }, { transform: 'translateY(' + y + 'px)' }], { duration: reduced ? 1 : 320, easing: 'cubic-bezier(.3,0,.5,1)', fill: 'forwards' }).finished;
+  ['28%', '66%'].forEach((l) => { const h = document.createElement('i'); h.className = 'hole'; h.style.left = l; c.querySelector('.front').appendChild(h); h.animate([{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 120, fill: 'forwards' }); });
+  buzz(22); c.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(4px)' }, { transform: 'translateY(0)' }], { duration: 140 });
+  await wait(160);
+  p.animate([{ transform: 'translateY(' + y + 'px)' }, { transform: 'translateY(-120%)' }], { duration: reduced ? 1 : 280, easing: 'ease-in', fill: 'forwards' });
+  $('ring').style.opacity = 1;
+  c.style.transformOrigin = '47% 3%';
+  await c.animate([{ transform: 'none' }, { transform: 'rotate(-14deg)', offset: .35 }, { transform: 'translateY(-130%) rotate(-24deg)', opacity: 0 }], { duration: reduced ? 1 : 620, easing: 'cubic-bezier(.45,0,.7,.4)', fill: 'forwards' }).finished;
+  $('ring').style.opacity = 0;
+}
+async function next() {
+  if (busy) return; busy = true; const c = $('card');
+  if (mode === 'stamp') await stampOut(c); else if (mode === 'file') await fileOut(c); else await punchOut(c);
+  if (i < F.length - 1) { i++; show(true); } else { $('stage').innerHTML = ''; $('done').classList.add('on'); $('ticks').querySelectorAll('i').forEach((t) => t.classList.add('on')); }
+  busy = false;
+}
+$('next').onclick = next;
+$('again').onclick = () => { i = 0; kept = 0; $('kept').textContent = 0; $('done').classList.remove('on'); show(true); };
+$('reply').onclick = () => { $('hint').textContent = 'reply opens the camera, to send ' + F[i].name + ' a postcard back'; };
+document.querySelectorAll('.pick button').forEach((b) => b.onclick = () => { mode = b.dataset.m; document.querySelectorAll('.pick button').forEach((x) => x.classList.toggle('on', x === b)); });
+// swipe up = next, swipe down = previous (like Reels)
+let sy = null, moved = false;
+$('phone').addEventListener('pointerdown', (e) => { if (e.target.closest('button, .dock')) return; sy = e.clientY; moved = false; });
+$('phone').addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 12) moved = true; });
+$('phone').addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy; sy = null;
+  if (dy < -50) next(); else if (dy > 50 && i > 0 && !busy) { i--; show(true); } setTimeout(() => (moved = false), 0); });
+show(false);
+</script>
+</body>
+</html>
