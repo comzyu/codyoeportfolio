@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Home</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=La+Belle+Aurore&display=swap">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Home, minimal (Cody, 18 Nov): only the postcard. No header, no tabs, no words. A barely-there glass bar at the bottom.
+     Tap the postcard to turn it over; swipe up for the next one. */
+  :root { --room: #F4F2ED; --card: #FDFCF9; --ink: #18171A; --blue: #24314f; --hand: "La Belle Aurore", cursive; --mono: "IBM Plex Mono", ui-monospace, monospace; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body { background: #E7E4DD; display: grid; place-items: center; font-family: -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .phone { position: relative; width: min(92vw, 390px); aspect-ratio: 390 / 844; border-radius: 48px; overflow: hidden; background: var(--room); isolation: isolate;
+    box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5); touch-action: none; user-select: none; -webkit-user-select: none; container-type: inline-size; }
+  .sb { position: absolute; z-index: 9; left: 0; right: 0; top: 0; height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 6px 26px 0; font: 600 13px/1 -apple-system, system-ui, sans-serif; color: var(--ink); pointer-events: none; }
+  .sb i { width: 90px; height: 24px; border-radius: 14px; background: #000; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); }
+  /* the postcard, nothing else */
+  .deck { position: absolute; inset: 0 0 64px; display: grid; place-items: center; perspective: 1600px; }
+  .slot { position: absolute; width: 84%; max-height: 78%; aspect-ratio: 1024 / 1448; transform-style: preserve-3d; transition: transform .24s cubic-bezier(.2,.8,.2,1), opacity .24s; }
+  .slot.under { transform: scale(.96) translateY(8px); opacity: .85; }
+  .card { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.3,1.2,.45,1); }
+  .card.over { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 3px; background: var(--card); overflow: hidden;
+    box-shadow: 0 1px 2px rgba(20,20,30,.12), 0 30px 50px -28px rgba(20,20,30,.45); }
+  .front { padding: 4.2% 4.2% 0; }
+  .front > img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .front u { position: absolute; right: 5.5%; bottom: 4.4%; font: 500 7px/1 var(--mono); letter-spacing: .16em; color: #b0aca5; text-decoration: none; }
+  .st { position: absolute; right: 5%; top: 2.4%; width: 15%; aspect-ratio: 4 / 5; background: #FBFAF6; padding: 3px; transform: rotate(7deg); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .st img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .clip { position: absolute; right: 12.4%; top: -1%; width: 4.4%; z-index: 2; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .back { transform: rotateY(180deg); background: #FAF8F2; }
+  .back .msg { position: absolute; left: 8%; right: 8%; top: 32%; font: 400 clamp(15px, 6cqw, 23px)/1.6 var(--hand); color: var(--blue); }
+  .back .sig { display: block; margin-top: 8%; }
+  .back .st { right: 8%; top: 5%; width: 18%; transform: none; }
+  .back .pm { position: absolute; right: 20%; top: 9%; width: 24%; aspect-ratio: 1; border-radius: 50%; border: 1.4px solid rgba(36,49,79,.4); transform: rotate(-12deg); }
+  .back u { position: absolute; left: 8%; bottom: 6%; font: 500 7px/1 var(--mono); letter-spacing: .16em; color: #b0aca5; text-decoration: none; text-transform: uppercase; }
+  .back u + u { left: auto; right: 8%; }
+  /* the bar: there, but you hardly notice it */
+  .bar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
+    background: rgba(255,255,255,.22); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.6), 0 6px 20px -12px rgba(20,20,30,.25); }
+  .bar button { position: relative; width: 44px; height: 40px; display: grid; place-items: center; color: rgba(24,23,26,.38); border-radius: 999px; transition: color .2s; }
+  .bar button.on { color: rgba(24,23,26,.85); }
+  .bar svg { width: 20px; height: 20px; }
+  .bar .cam { width: 48px; } .bar .cam i { width: 26px; height: 26px; border-radius: 50%; border: 1.6px solid currentColor; position: relative; } .bar .cam i::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: currentColor; opacity: .9; }
+  .bar .dot::after { content: ""; position: absolute; right: 9px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: #C8553A; }
+  /* after the last one: an empty frame, waiting for yours */
+  .empty { position: absolute; inset: 0 0 64px; display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .empty.on { opacity: 1; pointer-events: auto; }
+  .empty .frame { width: 58%; aspect-ratio: 1024 / 1448; border-radius: 3px; border: 1.5px dashed rgba(24,23,26,.16); display: grid; place-items: center; }
+  .empty .frame i { width: 46px; height: 46px; border-radius: 50%; border: 1.6px solid rgba(24,23,26,.3); position: relative; } .empty .frame i::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: rgba(24,23,26,.18); }
+  .cap { margin-top: 16px; font: 500 10px/1 var(--mono); letter-spacing: .12em; color: #9a968f; text-transform: uppercase; text-align: center; }
+  @media (max-width: 500px) { body { background: var(--room); } .phone { width: 100vw; height: 100svh; aspect-ratio: auto; border-radius: 0; box-shadow: none; } .sb, .cap { display: none; } }
+</style>
+</head>
+<body>
+<div>
+  <div class="phone" id="phone">
+    <div class="sb"><span>9:41</span><i></i><span>●●●</span></div>
+    <div class="deck" id="deck"></div>
+    <div class="empty" id="empty"><div class="frame"><i></i></div></div>
+    <nav class="bar" aria-label="Poto">
+      <button type="button" class="on" aria-label="Postcards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8 7h8v7H8z"/></svg></button>
+      <button type="button" aria-label="Calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button>
+      <button type="button" class="cam" aria-label="Camera"><i></i></button>
+      <button type="button" class="dot" aria-label="Rolls (a roll was passed to you)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="7" y="5" width="10" height="15" rx="2"/><path d="M9 3h6v2H9zM9 20h6v1.5H9z"/></svg></button>
+      <button type="button" aria-label="Your desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.3-3.6 4-5.2 7-5.2s5.7 1.6 7 5.2"/></svg></button>
+    </nav>
+  </div>
+  <p class="cap">tap to turn over · swipe up for the next</p>
+</div>
+<script>
+const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
+const F = [
+  { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'dana', where: 'Tokyo · 17 Nov' },
+  { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'mei', where: 'Paris · 17 Nov' },
+  { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'arjun', where: 'Seoul · 17 Nov' },
+  { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'sofia', where: 'Mexico City · 17 Nov' },
+  { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'leo', where: 'Singapore · 17 Nov' },
+];
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+const st = (n) => '<span class="st"><img src="' + ph(n, '-t') + '" alt=""></span>';
+const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + '<u>poto</u></div>' +
+  '<div class="face back">' + st(f.stamp) + '<i class="pm"></i><div class="msg">' + f.msg + '<span class="sig">— ' + f.name + '</span></div><u>' + f.where + '</u><u>poto</u></div></div>';
+const deck = document.getElementById('deck'), empty = document.getElementById('empty');
+let i = 0, busy = false, moved = false;
+function render() {
+  deck.innerHTML = '';
+  for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.innerHTML = card(F[k]); deck.appendChild(s); }
+  const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved) c.classList.toggle('over'); };
+}
+function go(d) {
+  if (busy) return;
+  if (empty.classList.contains('on')) { if (d < 0) { empty.classList.remove('on'); i = F.length - 1; render(); } return; }
+  const to = i + d; if (to < 0) return; busy = true;
+  const s = deck.querySelector('.slot:not(.under)');
+  if (d > 0) { s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-18%)'; s.style.opacity = 0; const u = deck.querySelector('.slot.under'); if (u) u.classList.remove('under'); }
+  else { s.style.transform = 'scale(.96) translateY(8px)'; s.style.opacity = .4; }
+  setTimeout(() => {
+    if (to >= F.length) { deck.innerHTML = ''; empty.classList.add('on'); busy = false; return; }
+    i = to; render();
+    if (d < 0) { const n = deck.querySelector('.slot:not(.under)'); n.style.transition = 'none'; n.style.transformOrigin = '50% 0'; n.style.transform = 'rotateX(80deg) translateY(-18%)'; n.style.opacity = 0;
+      requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = ''; n.style.transform = ''; n.style.opacity = ''; })); }
+    busy = false;
+  }, 220);
+  try { navigator.vibrate && navigator.vibrate(5); } catch (e) {}
+}
+const ph0 = document.getElementById('phone'); let sy = null, sx = 0;
+ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar')) return; sy = e.clientY; sx = e.clientX; moved = false; });
+ph0.addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 10) moved = true; });
+ph0.addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy, dx = e.clientX - sx; sy = null; if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) go(dy < 0 ? 1 : -1); setTimeout(() => (moved = false), 0); });
+ph0.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 30) { e.preventDefault(); go(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
+addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowRight') go(1); if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') go(-1); if (e.key === ' ') { e.preventDefault(); const c = deck.querySelector('.slot:not(.under) .card'); if (c) c.classList.toggle('over'); } });
+render();
+</script>
+</body>
+</html>
