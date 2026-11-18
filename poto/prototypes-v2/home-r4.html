@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poto · Home, round 4</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=La+Belle+Aurore&family=Noto+Sans+JP:wght@500&family=Noto+Sans+KR:wght@500&display=swap">
+<script src="lib/develop.js" defer></script>
+<style>
+  /* Home, round 4 (Cody, 18 Nov): one friend's postcard at a time. Tap to turn it over; swipe up to flip to the next, quickly.
+     Same Time and Pass the Roll appear only when there's something. Country editions show on the back, pressed into the paper. */
+  :root { --room: #F5F3EE; --room-2: #ECE9E2; --card: #FDFCF9; --ink: #18171A; --ink-2: #6F6C68; --ink-3: #A8A49E; --hair: rgba(24,23,26,.08); --blue: #24314f;
+    --sans: Inter, -apple-system, system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --hand: "La Belle Aurore", cursive; --ease: cubic-bezier(.2,.8,.2,1); --spring: cubic-bezier(.3,1.35,.45,1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: #E9E6DF; color: var(--ink); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .lbl { font: 500 9.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  header.page { max-width: 1240px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) 20px 4px; }
+  header.page a { color: var(--ink-2); font-size: 13px; text-decoration: none; }
+  header.page h1 { margin: 10px 0 6px; font-size: 34px; line-height: 38px; font-weight: 600; letter-spacing: -.03em; }
+  header.page p { margin: 0; max-width: 64ch; color: var(--ink-2); }
+  .rail { display: flex; gap: 30px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 22px 20px 40px; scrollbar-width: none; } .rail::-webkit-scrollbar { display: none; }
+  @media (min-width: 1300px) { .rail { justify-content: center; } }
+  .opt { flex: none; scroll-snap-align: center; width: min(88vw, 360px); }
+  .opt h2 { margin: 16px 2px 4px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; } .opt h2 span { color: var(--ink-3); font-weight: 400; }
+  .opt p { margin: 0 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); } .opt p b { color: var(--ink); font-weight: 500; }
+  footer.page { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; color: var(--ink-2); font-size: 13px; line-height: 19px; } footer.page b { color: var(--ink); }
+
+  /* ---- the phone ---- */
+  .phone { position: relative; width: 100%; aspect-ratio: 390 / 844; border-radius: 46px; overflow: hidden; background: var(--room); box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5);
+    isolation: isolate; container-type: inline-size; touch-action: pan-x; user-select: none; -webkit-user-select: none; }
+  .sb { position: absolute; z-index: 40; left: 0; right: 0; top: 0; height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 6px 26px 0; font: 600 13px/1 var(--sans); pointer-events: none; }
+  .sb i { width: 90px; height: 24px; border-radius: 14px; background: #000; position: absolute; left: 50%; top: 10px; transform: translateX(-50%); }
+  .glass { background: rgba(253,252,249,.6); -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), inset 0 1px 0 rgba(255,255,255,.95), 0 8px 24px -10px rgba(20,20,30,.22); }
+  .hd { position: absolute; z-index: 30; left: 18px; right: 18px; top: 50px; display: flex; align-items: center; justify-content: space-between; }
+  .hd .t { font: 600 17px/1 var(--sans); letter-spacing: -.02em; } .hd .t small { font: 500 9.5px/1 var(--mono); letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; margin-left: 8px; }
+  .hd .me { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--card), 0 2px 6px rgba(0,0,0,.15); } .hd .me img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* activity pills: only when something is happening */
+  .pills { position: absolute; z-index: 30; left: 0; right: 0; top: 90px; display: flex; gap: 6px; padding: 0 18px; overflow-x: auto; scrollbar-width: none; } .pills::-webkit-scrollbar { display: none; }
+  .pill { flex: none; height: 32px; padding: 0 12px 0 6px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .pill .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: #fff; } .pill .ic svg { width: 12px; height: 12px; }
+  .pill .ic.can { background: linear-gradient(90deg, #4b4b50, #e9e9ee 35%, #9c9ca2 60%, #46464b); } .pill .ic.can::after { content: ""; width: 9px; height: 9px; border-radius: 2px; background: #E8B44C; }
+  .pill em { font-style: normal; color: var(--ink-3); font-weight: 400; }
+  /* progress */
+  .ticks { position: absolute; z-index: 30; left: 18px; right: 18px; display: flex; gap: 3px; } .ticks i { flex: 1; height: 2px; border-radius: 2px; background: var(--hair); transition: background .2s; } .ticks i.on { background: var(--ink); }
+  .srow { position: absolute; z-index: 30; left: 0; right: 0; display: flex; gap: 10px; padding: 0 18px; }
+  .srow button { flex: none; width: 30px; height: 38px; opacity: .35; transition: opacity .2s, transform .3s var(--spring); }
+  .srow button.on { opacity: 1; transform: translateY(-2px) scale(1.08); } .srow button.seen { opacity: .6; }
+  .stampav { display: block; width: 100%; height: 100%; background: #FBFAF6; padding: 3px; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.22));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -3px -3px / 6px 6px, linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat; }
+  .stampav img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ---- the deck of postcards ---- */
+  .deck { position: absolute; left: 0; right: 0; perspective: 1500px; display: grid; place-items: center; }
+  .slot { position: absolute; width: var(--w, 80%); aspect-ratio: 1024 / 1448; transform-style: preserve-3d; transition: transform .26s var(--ease), opacity .26s; }
+  .slot.under { transform: scale(.955) translateY(10px); opacity: .9; }
+  .card { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.3,1.2,.45,1); }
+  .card.over { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 3px; background: var(--card); overflow: hidden;
+    box-shadow: 0 1px 2px rgba(20,20,30,.15), 0 22px 36px -22px rgba(20,20,30,.42); }
+  .front { padding: 4.2% 4.2% 0; }
+  .front > img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .front .cap { position: absolute; left: 5.5%; right: 5.5%; bottom: 4.2%; display: flex; justify-content: space-between; align-items: baseline; font: 500 7px/1 var(--mono); letter-spacing: .14em; color: #8d8a83; text-transform: uppercase; }
+  .front .cap u { color: var(--ink-3); text-decoration: none; }
+  .front .stampav.st { position: absolute; right: 5%; top: 2.4%; width: 16%; height: auto; aspect-ratio: 4 / 5; transform: rotate(7deg); }
+  .front .clip { position: absolute; right: 12.6%; top: -1%; width: 4.6%; z-index: 2; transform: rotate(8deg); filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  /* the back: the country's edition */
+  .back { transform: rotateY(180deg); background: #FAF7F0; }
+  .back .emb { position: absolute; inset: 0; pointer-events: none; opacity: .6;      /* pressed into the edges, fading out under the writing */
+    -webkit-mask: radial-gradient(ellipse 62% 58% at 46% 50%, transparent 38%, #000 92%); mask: radial-gradient(ellipse 62% 58% at 46% 50%, transparent 38%, #000 92%); }
+  .back .hdr { position: absolute; left: 7%; top: 6.5%; font: 600 clamp(9px, 3.3cqw, 12px)/1 var(--mono); letter-spacing: .32em; }
+  .back .hdr.jp, .back .hdr.kr { font-family: "Noto Sans JP", "Noto Sans KR", sans-serif; letter-spacing: .2em; font-size: clamp(10px, 3.6cqw, 13px); }
+  .back .zip { position: absolute; left: 7%; top: 12%; display: flex; gap: 3px; } .back .zip i { width: clamp(9px, 3.6cqw, 13px); aspect-ratio: 1 / 1.2; border: 1px solid currentColor; opacity: .7; }
+  .back .lab { position: absolute; top: 20%; font: 500 7px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
+  .back .div { position: absolute; left: 55%; top: 22%; bottom: 20%; width: 1px; background: currentColor; opacity: .3; }
+  .back .msg { position: absolute; left: 7%; right: 49%; top: 27%; font: 400 clamp(12px, 4.6cqw, 17px)/1.6 var(--hand); color: var(--blue); }
+  .back .sig { display: block; margin-top: 10%; }
+  .back .to { position: absolute; left: 60%; right: 7%; top: 52%; } .back .to i { display: block; height: 1px; background: currentColor; opacity: .3; margin-bottom: 20%; }
+  .back .to em { position: absolute; left: 0; top: -60%; font: 400 clamp(12px, 4.4cqw, 16px)/1 var(--hand); color: var(--blue); font-style: normal; }
+  .back .stampav.sst { position: absolute; right: 7%; top: 5%; width: 19%; height: auto; aspect-ratio: 4 / 5; }
+  .back .pm { position: absolute; right: 18%; top: 11%; width: 26%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid rgba(36,49,79,.55); display: grid; place-items: center; text-align: center; font: 600 5.5px/1.5 var(--mono); letter-spacing: .06em; overflow: hidden; color: rgba(36,49,79,.7); transform: rotate(-14deg); mix-blend-mode: multiply; }
+  .back .pm::after { content: ""; position: absolute; left: 92%; top: 30%; width: 70%; height: 40%; background: repeating-linear-gradient(180deg, rgba(36,49,79,.45) 0 1.3px, transparent 1.3px 6px); }
+  .back .ed { position: absolute; left: 7%; right: 7%; bottom: 5.5%; display: flex; justify-content: space-between; font: 500 7px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+  .rtl .msg { left: 49%; right: 7%; text-align: right; } .rtl .to { left: 7%; right: 60%; } .rtl .div { left: 45%; }
+  .name { position: absolute; z-index: 30; left: 0; right: 0; text-align: center; transition: opacity .2s; }
+  .name b { font-size: 15px; font-weight: 600; letter-spacing: -.01em; } .name span { display: block; margin-top: 4px; }
+  .hint { position: absolute; z-index: 30; left: 0; right: 0; text-align: center; }
+  /* end of today's postcards */
+  .done { position: absolute; left: 24px; right: 24px; display: grid; justify-items: center; text-align: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .done.on { opacity: 1; pointer-events: auto; }
+  .done h3 { margin: 6px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; } .done p { margin: 0; color: var(--ink-2); font-size: 13px; }
+  .done .wk { display: flex; gap: 6px; margin-top: 14px; } .done .wk i { width: 50px; aspect-ratio: 3 / 4; background: var(--card); padding: 3px 3px 9px; box-shadow: 0 1px 2px rgba(20,20,30,.16); } .done .wk i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .done .wk i.add { display: grid; place-items: center; background: var(--room-2); box-shadow: inset 0 0 0 1px var(--hair); padding: 0; color: var(--ink-2); font-size: 20px; font-weight: 300; }
+  .done button { margin-top: 12px; height: 38px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+  /* your week (variant C) */
+  .yw { position: absolute; z-index: 30; left: 18px; right: 18px; bottom: 92px; height: 74px; border-radius: 20px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
+  .yw .s { display: flex; gap: 4px; } .yw .s i { width: 34px; aspect-ratio: 3 / 4; border-radius: 2px; background: var(--card); padding: 2px 2px 6px; box-shadow: 0 1px 2px rgba(0,0,0,.18); } .yw .s i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .yw .s i.dev { background: linear-gradient(160deg, #3a332c, #1e1a17); box-shadow: 0 0 0 2px var(--card), 0 1px 3px rgba(0,0,0,.3); padding: 0; }
+  .yw .tx { flex: 1; min-width: 0; } .yw .tx b { display: block; font-size: 13px; font-weight: 600; } .yw .tx span { font-size: 11.5px; color: var(--ink-2); }
+  /* dock */
+  .dock { position: absolute; z-index: 35; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; }
+  .dock span { height: 38px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; color: var(--ink-2); } .dock span.on { background: rgba(24,23,26,.07); color: var(--ink); }
+  .dock .cam { width: 46px; height: 46px; padding: 0; justify-content: center; background: var(--ink); margin: -3px 2px; box-shadow: 0 4px 10px -3px rgba(0,0,0,.4); } .dock .cam::after { content: ""; width: 17px; height: 17px; border-radius: 50%; border: 2px solid #fff; }
+  /* sheets for the pills */
+  .sheet { position: absolute; z-index: 45; left: 8px; right: 8px; bottom: 8px; border-radius: 34px; padding: 14px 20px 26px; transform: translateY(105%); transition: transform .4s var(--spring); background: rgba(250,249,246,.9); }
+  .sheet.on { transform: none; } .sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: rgba(24,23,26,.15); margin: 0 auto 14px; }
+  .sheet h4 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; } .sheet p { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
+  .sheet .who { display: grid; gap: 10px; margin-top: 16px; } .sheet .who div { display: flex; align-items: center; gap: 10px; font-size: 13px; } .sheet .who .stampav.av { width: 26px; height: 32px; flex: none; } .sheet .who span:last-child { margin-left: auto; font: 500 11px/1 var(--mono); color: var(--ink-2); }
+  .sheet .go { display: flex; gap: 8px; margin-top: 18px; } .sheet .go button { flex: 1; height: 44px; border-radius: 999px; font-size: 14px; font-weight: 500; box-shadow: inset 0 0 0 1px var(--hair); } .sheet .go .main { background: var(--ink); color: #fff; box-shadow: none; }
+  .sheet .canbig { display: flex; align-items: center; gap: 14px; margin-top: 14px; } .sheet .canbig i { width: 46px; height: 72px; border-radius: 4px; background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,0) 30%, rgba(255,255,255,.3) 45%, rgba(0,0,0,0) 60%, rgba(0,0,0,.3)), #E8B44C; box-shadow: 0 -7px 0 -2px #9c9ca2, 0 7px 0 -2px #9c9ca2, 0 10px 14px -6px rgba(0,0,0,.4); }
+  .sheet .route { font: 500 10.5px/1.6 var(--mono); letter-spacing: .06em; color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { .slot, .card { transition: none; } }
+</style>
+</head>
+<body>
+<header class="page">
+  <a href="index.html">‹ Poto</a>
+  <h1>Home, round 4</h1>
+  <p>One friend's postcard at a time. <b>Tap</b> it to turn it over and read the back (each friend's country edition is pressed into the paper). <b>Swipe up</b> to flip to the next, quickly; swipe down to go back. Same Time and a roll passed to you appear as small pills at the top; tap them.</p>
+</header>
+<div class="rail" id="rail"></div>
+<footer class="page"><p><b>The backs are country editions:</b> Japan (seigaiha waves, postal-code boxes), France (Correspondance / Adresse, Art Nouveau curves), Korea, Mexico (papel picado, pressed in) and Singapore (home: Peranakan tile). Turn each card over to compare. All received, so each has the sender's postmark.</p>
+<p>Pick A, B or C, or a mix. Next: the screen map, with these screens in it.</p></footer>
+<script>
+const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '-s') + '.jpg';
+// ---- embossed motifs: drawn twice (a light edge up-left, a soft shadow down-right) so they read as pressed into the paper ----
+const MOTIF = {
+  seigaiha: { s: 40, d: 'M0 20a20 20 0 0 1 40 0M5 20a15 15 0 0 1 30 0M10 20a10 10 0 0 1 20 0M-20 40a20 20 0 0 1 40 0M-15 40a15 15 0 0 1 30 0M-10 40a10 10 0 0 1 20 0M20 40a20 20 0 0 1 40 0M25 40a15 15 0 0 1 30 0M30 40a10 10 0 0 1 20 0' },
+  nouveau: { s: 120, d: 'M0 110C30 100 30 60 60 60S90 20 120 10M0 120C20 80 50 90 60 70M120 0C100 30 100 50 80 60' },
+  lattice: { s: 28, d: 'M0 0h28v28H0zM14 0v28M0 14h28M4 4h8v8H4zM16 16h8v8h-8z' },
+  picado: { s: 36, d: 'M18 4l4 8 8 2-6 6 2 9-8-4-8 4 2-9-6-6 8-2zM0 34h36M4 30l2 4 2-4 2 4 2-4 2 4 2-4 2 4 2-4 2 4 2-4 2 4 2-4 2 4 2-4' },
+  peranakan: { s: 44, d: 'M22 6c8 0 8 16 0 16s-8-16 0-16zM22 22c8 0 8 16 0 16s-8-16 0-16zM6 22c0-8 16-8 16 0s-16 8-16 0zM22 22c0-8 16-8 16 0s-16 8-16 0zM0 0h44v44H0z' },
+};
+const embossURL = (m, deboss) => {
+  const M = MOTIF[m], light = deboss ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.95)', dark = deboss ? 'rgba(255,255,255,.9)' : 'rgba(60,45,25,.2)';
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + M.s + '" height="' + M.s + '"><g fill="none" stroke-width="1.6" stroke-linecap="round"><path transform="translate(-.7 -.7)" stroke="' + light + '" d="' + M.d + '"/><path transform="translate(.8 .8)" stroke="' + dark + '" d="' + M.d + '"/></g></svg>';
+  return "url('data:image/svg+xml," + encodeURIComponent(svg) + "')";
+};
+// country editions (from the country postcards doc): the word, the layout quirk, the motif, the accent ink
+const ED = {
+  JP: { word: '郵便はがき', cls: 'jp', zip: 7, motif: 'seigaiha', ink: '#C0442C', name: 'Japan' },
+  FR: { word: 'CARTE POSTALE', labels: ['Correspondance', 'Adresse'], motif: 'nouveau', ink: '#2B4C9B', name: 'France' },
+  KR: { word: '우편엽서', cls: 'kr', zip: 5, motif: 'lattice', ink: '#5E8B7E', name: 'Korea' },
+  MX: { word: 'TARJETA POSTAL', motif: 'picado', deboss: true, ink: '#D0457C', name: 'Mexico' },
+  SG: { word: 'POSTCARD · 明信片 · POSKAD', motif: 'peranakan', ink: '#2E7E7A', name: 'Singapore' },
+};
+const F = [
+  { name: 'Dana', photo: 3, stamp: 7, time: '8:42 PM', city: 'Tokyo', ed: 'JP', msg: 'the market at 9pm. everything lit up at once.' },
+  { name: 'Mei', photo: 6, stamp: 1, time: '1:15 PM', city: 'Paris', ed: 'FR', msg: 'lunch, finally. we queued an hour. worth it.' },
+  { name: 'Arjun', photo: 9, stamp: 4, time: '6:58 PM', city: 'Seoul', ed: 'KR', msg: 'look at this sky. i stopped walking for it.' },
+  { name: 'Sofia', photo: 2, stamp: 8, time: '11:20 AM', city: 'Mexico City', ed: 'MX', msg: 'made it to the top. legs gone, view not.' },
+  { name: 'Leo', photo: 5, stamp: 11, time: '9:05 AM', city: 'Singapore', ed: 'SG', msg: 'sunday reset. coffee, laundry, nowhere to be.' },
+];
+const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
+const stamp = (n, cls) => '<span class="stampav ' + (cls || '') + '"><img src="' + ph(n, '-t') + '" alt=""></span>';
+function cardHTML(f) {
+  const e = ED[f.ed];
+  const back = '<div class="face back" style="color:' + e.ink + '"><i class="emb" style="background-image:' + embossURL(e.motif, e.deboss) + '"></i>' +
+    '<span class="hdr ' + (e.cls || '') + '">' + e.word + '</span>' + (e.zip ? '<span class="zip">' + '<i></i>'.repeat(e.zip) + '</span>' : '') +
+    (e.labels ? '<span class="lab" style="left:7%">' + e.labels[0] + '</span><span class="lab" style="left:60%">' + e.labels[1] + '</span>' : '') +
+    '<i class="div"></i>' + stamp(f.stamp, 'sst') + '<span class="pm">' + f.city.toUpperCase().replace('MEXICO CITY', 'MEXICO') + '<br>17 NOV 26</span>' +
+    '<div class="msg">' + f.msg + '<span class="sig">— ' + f.name.toLowerCase() + '</span></div>' +
+    '<div class="to"><em>you</em><i></i><i></i></div>' +
+    '<span class="ed"><span>' + e.name + ' edition · received</span><span>poto</span></span></div>';
+  return '<div class="card"><div class="face front"><img src="' + ph(f.photo, '') + '" alt="Postcard from ' + f.name + '" draggable="false">' + stamp(f.stamp, 'st') + CLIP +
+    '<span class="cap"><span>17 Nov · ' + f.city + '</span><u>poto</u></span></div>' + back + '</div>';
+}
+const ICON_ST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>';
+
+function makeHome(root, v) {
+  // v: 'A' clean ticks, 'B' stamps row as progress, 'C' with your week
+  const top = { A: 132, B: 150, C: 132 }[v], bottom = { A: 150, B: 140, C: 186 }[v], w = { A: '80%', B: '84%', C: '74%' }[v];
+  root.innerHTML = '<div class="sb"><span>9:41</span><i></i><span>●●●</span></div>' +
+    '<div class="hd"><span class="t">Today<small>Tue 17 Nov</small></span><span class="me"><img src="' + ph(4, '-t') + '" alt=""></span></div>' +
+    '<div class="pills"><button type="button" class="pill glass" data-s="st"><span class="ic">' + ICON_ST + '</span>Same Time <em>in 2 h 14 m</em></button><button type="button" class="pill glass" data-s="roll"><span class="ic can"></span>Roll from Mei</button></div>' +
+    (v === 'B' ? '<div class="srow" style="top:' + (top - 24) + 'px">' + F.map((f, k) => '<button type="button" data-k="' + k + '">' + stamp(f.stamp) + '</button>').join('') + '</div>' : '<div class="ticks" style="top:' + (top - 8) + 'px">' + F.map(() => '<i></i>').join('') + '</div>') +
+    '<div class="deck" style="top:' + (top + 4) + 'px;bottom:' + (bottom + 36) + 'px;--w:' + w + '"></div>' +
+    '<div class="name" style="bottom:' + (bottom - 6) + 'px"><b></b><span class="lbl"></span></div>' +
+    '<div class="done" style="top:' + (top + 60) + 'px"><span class="lbl">Tue 17 Nov</span><h3>That\'s everyone today</h3><p>5 postcards from friends. Yours develop tonight.</p><div class="wk">' + [1, 7, 10].map((n) => '<i><img src="' + ph(n, '-t') + '" alt=""></i>').join('') + '<i class="add">+</i></div><button type="button" class="glass again">See today again</button></div>' +
+    (v === 'C' ? '<div class="yw glass"><span class="s">' + [1, 7, 10].map((n) => '<i><img src="' + ph(n, '-t') + '" alt=""></i>').join('') + '<i class="dev"></i><i class="dev"></i></span><span class="tx"><b>Your week</b><span>5 developing · ready 7:00</span></span></div>' : '') +
+    '<div class="dock glass"><span class="on">Home</span><span class="cam"></span><span>Desk</span></div>' +
+    '<div class="sheet glass" data-sh="st"><div class="grip"></div><h4>Same Time</h4><p>Tonight 9:00 PM your time. Everyone gets the prompt at once; you\'ll have 3 minutes.</p><div class="who">' +
+      [['Dana', 7, 'Tokyo', '10:00 PM'], ['Mei', 1, 'Paris', '2:00 PM'], ['Arjun', 4, 'Seoul', '10:00 PM'], ['Sofia', 8, 'Mexico City', '7:00 AM']].map((r) => '<div>' + stamp(r[1], 'av') + '<span>' + r[0] + ' · ' + r[2] + '</span><span>' + r[3] + '</span></div>').join('') +
+      '</div><div class="go"><button type="button" class="x">Close</button><button type="button" class="main x">Remind me</button></div></div>' +
+    '<div class="sheet glass" data-sh="roll"><div class="grip"></div><h4>You have the roll</h4><p>"summer 26" · Sunday film · frames 7–12 are yours. Nobody sees anything until the last frame.</p><div class="canbig"><i></i><span class="route">Singapore → Paris → <b>you</b><br>2 of 5 holders · 21 h left</span></div><div class="go"><button type="button" class="x">Later</button><button type="button" class="main x">Open camera</button></div></div>';
+  const deck = root.querySelector('.deck'), nameEl = root.querySelector('.name');
+  let i = 0, busy = false;
+  const seen = new Set();
+  function render() {
+    deck.innerHTML = '';
+    for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.dataset.k = k; s.innerHTML = cardHTML(F[k]); deck.appendChild(s); }
+    const f = F[i]; seen.add(i);
+    nameEl.querySelector('b').textContent = f.name; nameEl.querySelector('span').textContent = f.city + ' · ' + f.time; nameEl.style.opacity = 1;
+    root.querySelectorAll('.ticks i').forEach((t, k) => t.classList.toggle('on', k <= i));
+    root.querySelectorAll('.srow button').forEach((b, k) => { b.classList.toggle('on', k === i); b.classList.toggle('seen', seen.has(k) && k !== i); });
+    const front = deck.querySelector('.slot:not(.under) .card'); front.onclick = () => { if (!moved) front.classList.toggle('over'); };
+  }
+  // next: the card flips up and away (a quick page-turn), the one under it comes forward
+  function go(d) {
+    if (busy) return; const to = i + d;
+    if (d > 0 && to >= F.length) { const s = deck.querySelector('.slot:not(.under)'); busy = true; s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-20%)'; s.style.opacity = 0; nameEl.style.opacity = 0;
+      setTimeout(() => { deck.innerHTML = ''; root.querySelector('.done').classList.add('on'); busy = false; }, 260); return; }
+    if (to < 0) return; busy = true;
+    if (d > 0) { const s = deck.querySelector('.slot:not(.under)'), u = deck.querySelector('.slot.under'); s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-20%)'; s.style.opacity = 0; if (u) u.classList.remove('under'); }
+    else { const s = deck.querySelector('.slot:not(.under)'); s.style.transform = 'scale(.955) translateY(10px)'; s.style.opacity = .4; }
+    setTimeout(() => { i = to; render(); if (d < 0) { const s = deck.querySelector('.slot:not(.under)'); s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-20%)'; s.style.opacity = 0; requestAnimationFrame(() => requestAnimationFrame(() => { s.style.transition = ''; s.style.transform = ''; s.style.opacity = ''; })); } busy = false; }, 240);
+    try { navigator.vibrate && navigator.vibrate(6); } catch (e) {}
+  }
+  let sy = null, sx = 0, moved = false;
+  root.addEventListener('pointerdown', (e) => { if (e.target.closest('button, .sheet')) return; sy = e.clientY; sx = e.clientX; moved = false; });
+  root.addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 10) moved = true; });
+  root.addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy, dx = e.clientX - sx; sy = null; if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) go(dy < 0 ? 1 : -1); setTimeout(() => (moved = false), 0); });
+  root.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 30) { e.preventDefault(); go(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
+  root.querySelectorAll('.srow button').forEach((b) => b.onclick = () => { root.querySelector('.done').classList.remove('on'); i = +b.dataset.k; render(); });
+  root.querySelector('.again').onclick = () => { root.querySelector('.done').classList.remove('on'); i = 0; render(); };
+  root.querySelectorAll('.pill').forEach((p) => p.onclick = () => root.querySelector('[data-sh="' + p.dataset.s + '"]').classList.add('on'));
+  root.querySelectorAll('.sheet .x').forEach((x) => x.onclick = () => x.closest('.sheet').classList.remove('on'));
+  render();
+}
+const OPTS = [
+  ['A', 'Clean', 'Ticks and one card', '<b>The simplest.</b> Thin progress ticks, one postcard, the friend\'s name and city under it. Pills appear only when there\'s a Same Time or a roll for you.'],
+  ['B', 'Stamps', 'Friends\' stamps on top', '<b>Same, but the progress is your friends\' signature stamps</b>: who\'s now, who you\'ve seen, who\'s next. Tap a stamp to jump to them. Bigger card.'],
+  ['C', 'With your week', 'Theirs, then yours', '<b>Friends\' postcards, with your own week in a glass bar underneath</b>: your prints and tonight\'s undeveloped frames. Closest to Retro\'s mix of you and friends.'],
+];
+const rail = document.getElementById('rail');
+OPTS.forEach(([k, n, s, p]) => { const el = document.createElement('section'); el.className = 'opt'; el.innerHTML = '<div class="phone"></div><h2>' + k + ' · ' + n + ' <span>' + s + '</span></h2><p>' + p + '</p>'; rail.appendChild(el); makeHome(el.querySelector('.phone'), k); });
+</script>
+</body>
+</html>
