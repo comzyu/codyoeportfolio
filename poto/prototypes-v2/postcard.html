@@ -117,7 +117,7 @@
   // fonts have to be in before anything is drawn onto the card
   const fonts = ['37px "Special Elite"', '58px "La Belle Aurore"', '500 19px "IBM Plex Mono"', '700 120px "IBM Plex Mono"'];
   await Promise.race([Promise.all(fonts.map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
-  const Q = new URLSearchParams(location.search), SRC = /^img\/photo-\d\d\.jpg$/.test(Q.get('src') || '') ? Q.get('src') : 'img/photo-04.jpg', ZOOM = Math.max(1, +Q.get('zoom') || 1), EV = Math.max(-2, Math.min(2, +Q.get('ev') || 0));
+  const Q = new URLSearchParams(location.search), SRC = /^(img\/photo-\d\d|shots\/\d+)\.jpg$/.test(Q.get('src') || '') ? Q.get('src') : 'img/photo-04.jpg', ZOOM = Math.max(1, +Q.get('zoom') || 1), EV = Math.max(-2, Math.min(2, +Q.get('ev') || 0));
   // the loader: show the small print right away (it's cached from the diary), develop it, step the progress line as the card is built
   window.PotoTex && PotoTex.install();
   const boot = $('boot'), step = (pct, txt) => new Promise((r) => { $('bfill').style.width = pct + '%'; if (txt) $('bstep').textContent = txt; requestAnimationFrame(() => setTimeout(r, 0)); });

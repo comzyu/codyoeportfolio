@@ -1,122 +1,115 @@
 /**
- * Home: only the postcard (Cody, 18 Nov). Who sent it, small, top left. Tap to turn over, swipe up for the next,
- * swipe down for the previous, hold for reply / keep / sticker. Today's postcards run on into earlier days.
+ * Poto: the tested prototype pages, running in the app.
+ * Tabs (one shared glass bar, drawn by the pages): Postcards (home-min), Calendar (the diary: week stack, photo disc,
+ * wall calendar, month share), Rolls, Desk. The camera opens over everything; the postcard and the stamp cutter open
+ * full screen from the pages that link to them.
  */
-import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
-import { useMemo, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, StyleSheet, type GestureResponderEvent, Text, useWindowDimensions, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
-import { PostcardView } from '@/components/postcard';
-import { Type } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { FRIENDS, type Postcard } from '@/lib/sample';
-import { useShots } from '@/lib/store';
+import { CameraLayer } from '@/components/camera-layer';
+import { WebPage, type PageMessage, type WebPageHandle } from '@/components/web-page';
+import { installWeb } from '@/web/install';
 
-export default function Home() {
-  const c = useTheme(), insets = useSafeAreaInsets(), { height } = useWindowDimensions();
-  const [stage, setStage] = useState({ w: 0, h: 0 });
-  const { developed } = useShots();
-  // your own developed shots join the stack as postcards from you
-  const cards: Postcard[] = useMemo(() => {
-    const mine = developed.slice(0, 6).map((s): Postcard => ({
-      id: s.id, from: 'you', avatar: { uri: s.uri }, stamp: { uri: s.uri }, photo: { uri: s.uri }, mine: true,
-      typed: ['a moment from today.'], note: s.note ?? ['', ''], place: 'Here', when: 'now', day: 'Today',
-    }));
-    return [...mine, ...FRIENDS];
-  }, [developed]);
+type Tab = 'home' | 'calendar' | 'rolls' | 'desk';
+const TABS: Tab[] = ['home', 'calendar', 'rolls', 'desk'];
+const PAGE: Record<Tab, string> = { home: 'home-min', calendar: 'home', rolls: 'rolls', desk: 'profile' };
+const TAB_OF: Record<string, Tab> = { 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+const ROOM: Record<Tab, string> = { home: '#F4F2ED', calendar: '#FAFAF8', rolls: '#FAFAF8', desk: '#FAFAF8' };
 
-  const [i, setI] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const [dayChip, setDayChip] = useState<string | null>(null);
-  const [turn] = useState(() => new Animated.Value(0));      // 0 = resting, 1 = flipped up and away
-  const busy = useRef(false);
+export default function Shell() {
+  const insets = useSafeAreaInsets();
+  const [base, setBase] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('home');
+  const [opened, setOpened] = useState<Tab[]>(['home']);
+  const [camera, setCamera] = useState(false);
+  const [sheet, setSheet] = useState<{ page: string; query: string } | null>(null);
+  const pages = useRef<Partial<Record<Tab, WebPageHandle | null>>>({});
+  const stale = useRef(new Set<Tab>());
 
-  // the card fills the space between the sender line and the tab bar, never wider than 86% of the screen
-  const cardW = Math.max(0, Math.min(stage.w * 0.86, (stage.h - 24) / 1.414));
-  const card = cards[i];
-  const done = i >= cards.length;
+  useEffect(() => { installWeb().then(setBase, (e) => setFailed(String(e))); }, []);
 
-  function go(d: number) {
-    if (busy.current) return;
-    const to = i + d; if (to < 0 || to > cards.length) return;
-    busy.current = true; Haptics.selectionAsync();
-    Animated.timing(turn, { toValue: d > 0 ? 1 : -1, duration: 200, useNativeDriver: true }).start(() => {
-      setI(to); setFlipped(false); turn.setValue(d > 0 ? -0.4 : 0.4);
-      const next = cards[to], prev = cards[to - 1];
-      if (next && prev && next.day !== prev.day) { setDayChip(next.day); setTimeout(() => setDayChip(null), 1400); }
-      Animated.spring(turn, { toValue: 0, useNativeDriver: true, friction: 9, tension: 90 }).start(() => (busy.current = false));
+  // what the camera or the postcard changed (kept prints, stamps, the roll) shows up when you come back
+  const touched = () => { stale.current.add('calendar'); stale.current.add('rolls'); stale.current.add('desk'); };
+  const show = (t: Tab) => {
+    setOpened((o) => (o.includes(t) ? o : [...o, t]));
+    setTab(t);
+    if (stale.current.delete(t)) pages.current[t]?.reload();
+  };
+  const closeCamera = (then?: Tab) => { setCamera(false); touched(); show(then ?? tab); };
+  const closeSheet = (then?: Tab) => { setSheet(null); touched(); show(then ?? tab); };
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (sheet) { closeSheet(); return true; }
+      if (camera) { closeCamera(); return true; }
+      if (tab !== 'home') { show('home'); return true; }
+      return false;
     });
-  }
-  // vertical swipe anywhere on the screen: captured from the card so a drag never counts as a tap
-  const startY = useRef(0);
-  const swipe = {
-    onTouchStart: (e: GestureResponderEvent) => { startY.current = e.nativeEvent.pageY; },
-    onMoveShouldSetResponderCapture: (e: GestureResponderEvent) => Math.abs(e.nativeEvent.pageY - startY.current) > 12,
-    onResponderRelease: (e: GestureResponderEvent) => { const dy = e.nativeEvent.pageY - startY.current; if (dy < -40) go(1); else if (dy > 40) go(-1); },
+    return () => sub.remove();
+  });
+
+  const navigate = (from: 'tab' | 'camera' | 'sheet', page: string, query: string) => {
+    if (page === 'index') { if (from === 'camera') closeCamera(); else if (from === 'sheet') closeSheet(); return; }
+    if (page === 'camera') { setSheet(null); setCamera(true); return; }
+    if (page === 'postcard' || page === 'stamp') { setSheet({ page, query }); return; }
+    const t = TAB_OF[page];
+    if (!t) return;
+    if (t === 'desk' && query.includes('stamp')) stale.current.add('desk');   // a stamp you just cut lands on the desk
+    if (from === 'camera') closeCamera(t);
+    else if (from === 'sheet') closeSheet(t);
+    else show(t);
   };
 
-  const rotateX = turn.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-70deg', '0deg', '70deg'] });
-  const translateY = turn.interpolate({ inputRange: [-1, 0, 1], outputRange: [height * 0.25, 0, -height * 0.25] });
-  const opacity = turn.interpolate({ inputRange: [-1, -0.4, 0, 0.4, 1], outputRange: [0, 0.6, 1, 0.6, 0] });
+  const navTab = (page: string, query: string) => navigate('tab', page, query);
+  const navCamera = (page: string, query: string) => navigate('camera', page, query);
+  const navSheet = (page: string, query: string) => navigate('sheet', page, query);
 
-  return (
-    <View style={[styles.room, { backgroundColor: c.room }]} {...swipe}>
-      {!done && card && (
-        <View style={[styles.who, { top: insets.top + 10 }]}>
-          <Image source={card.avatar} style={styles.avatar} contentFit="cover" />
-          <View>
-            <Text style={[styles.name, { color: c.text }]}>{card.from}</Text>
-            <Text style={[styles.ago, { color: c.textTertiary }]}>{card.when}</Text>
-          </View>
-        </View>
-      )}
-      {dayChip && <Text style={[styles.day, { top: insets.top + 18, color: c.textTertiary }]}>{dayChip.toUpperCase()}</Text>}
+  const onTabMessage = (m: PageMessage) => {
+    if (m.type === 'tab' && TABS.includes(m.name as Tab)) show(m.name as Tab);
+    else if (m.type === 'camera') setCamera(true);
+  };
 
-      <View style={[styles.stage, { marginTop: insets.top + 52, marginBottom: insets.bottom + 72 }]} onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-        {cardW === 0 ? null : !done && card ? (
-          <Animated.View style={{ transform: [{ perspective: 1200 }, { translateY }, { rotateX }], opacity }}>
-            <PostcardView key={card.id} card={card} width={cardW} flipped={flipped}
-              onPress={() => { setFlipped((f) => !f); Haptics.selectionAsync(); }}
-              onLongPress={() => { setMenu(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }} />
-          </Animated.View>
-        ) : (
-          <Pressable onPress={() => go(-1)} style={[styles.empty, { width: cardW * 0.7, borderColor: c.hair }]}>
-            <View style={[styles.shutter, { borderColor: c.textTertiary }]} />
-            <Text style={[styles.emptyText, { color: c.textSecondary }]}>That’s everyone.{'\n'}Your shots develop tonight.</Text>
-          </Pressable>
-        )}
+  if (!base) {
+    return (
+      <View style={[styles.fill, styles.center, { backgroundColor: ROOM.home }]}>
+        {failed ? <Text style={styles.err}>Poto couldn’t set itself up.{'\n'}{failed}</Text> : <ActivityIndicator color="#8a867f" />}
       </View>
+    );
+  }
 
-      <Modal visible={menu} transparent animationType="fade" onRequestClose={() => setMenu(false)}>
-        <Pressable style={styles.dim} onPress={() => setMenu(false)}>
-          <View style={[styles.menu, { backgroundColor: c.card }]}>
-            {['Reply with a postcard', 'Keep on my desk', 'Leave a sticker'].map((t) => (
-              <Pressable key={t} onPress={() => setMenu(false)} style={({ pressed }) => [styles.item, pressed && { backgroundColor: c.well }]}>
-                <Text style={{ fontSize: 16, color: '#1A1917' }}>{t}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+  const pad = Platform.OS === 'android' ? { paddingTop: insets.top, paddingBottom: insets.bottom } : null;
+  return (
+    <View style={[styles.fill, { backgroundColor: ROOM[tab] }]}>
+      <StatusBar style={camera ? 'light' : 'dark'} />
+      {opened.map((t) => (
+        <View key={t} style={[StyleSheet.absoluteFill, pad, { backgroundColor: ROOM[t] }, t === tab ? styles.front : styles.back]} pointerEvents={t === tab ? 'auto' : 'none'}>
+          <WebPage ref={(r) => { pages.current[t] = r; }} base={base} page={PAGE[t]} onMessage={onTabMessage} onNavigate={navTab} />
+        </View>
+      ))}
+      {camera && (
+        <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)} style={[StyleSheet.absoluteFill, styles.top]}>
+          <CameraLayer base={base} onNavigate={navCamera} />
+        </Animated.View>
+      )}
+      {sheet && (
+        <Animated.View entering={SlideInDown.duration(280)} exiting={SlideOutDown.duration(220)} style={[StyleSheet.absoluteFill, styles.top, pad, { backgroundColor: '#FAFAF8' }]}>
+          <WebPage base={base} page={sheet.page} query={sheet.query} onNavigate={navSheet} />
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  room: { flex: 1 },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  who: { position: 'absolute', left: 20, zIndex: 5, flexDirection: 'row', alignItems: 'center', gap: 9 },
-  avatar: { width: 28, height: 28, borderRadius: 14 },
-  name: { fontSize: 14, fontWeight: '500', letterSpacing: -0.1 },
-  ago: { fontSize: 11 },
-  day: { position: 'absolute', alignSelf: 'center', zIndex: 5, fontFamily: Type.mono, fontSize: 10, letterSpacing: 1.6 },
-  empty: { aspectRatio: 1024 / 1448, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 3, alignItems: 'center', justifyContent: 'center', gap: 18 },
-  shutter: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.6 },
-  emptyText: { textAlign: 'center', fontSize: 13, lineHeight: 19 },
-  dim: { flex: 1, backgroundColor: 'rgba(20,18,16,0.35)', alignItems: 'center', justifyContent: 'center' },
-  menu: { width: 240, borderRadius: 20, padding: 6 },
-  item: { height: 46, borderRadius: 14, justifyContent: 'center', paddingHorizontal: 14 },
+  fill: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  front: { zIndex: 2, opacity: 1 },
+  back: { zIndex: 1, opacity: 0 },
+  top: { zIndex: 10 },
+  err: { color: '#6D6A64', textAlign: 'center', fontSize: 14, lineHeight: 20, paddingHorizontal: 32 },
 });

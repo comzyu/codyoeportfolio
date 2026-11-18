@@ -170,26 +170,82 @@ function wireHold(slot) {
 }
 const closeMenu = () => { menu.classList.remove('on'); dim.classList.remove('on'); deck.querySelectorAll('.held').forEach((x) => x.classList.remove('held')); };
 dim.onclick = closeMenu; menu.querySelectorAll('button').forEach((b) => b.onclick = closeMenu);
-function go(d) {
-  if (busy) return;
-  if (empty.classList.contains('on')) { if (d < 0) { empty.classList.remove('on'); i = F.length - 1; render(); } return; }
-  const to = i + d; if (to < 0) return; busy = true; whoEl.classList.add('fade');
-  const s = deck.querySelector('.slot:not(.under)');
-  if (d > 0) { s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-18%)'; s.style.opacity = 0; const u = deck.querySelector('.slot.under'); if (u) u.classList.remove('under'); }
-  else { s.style.transform = 'scale(.96) translateY(8px)'; s.style.opacity = .4; }
-  setTimeout(() => {
-    if (to >= F.length) { deck.innerHTML = ''; showEmpty(); busy = false; return; }
-    i = to; render();
-    if (d < 0) { const n = deck.querySelector('.slot:not(.under)'); n.style.transition = 'none'; n.style.transformOrigin = '50% 0'; n.style.transform = 'rotateX(80deg) translateY(-18%)'; n.style.opacity = 0;
-      requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = ''; n.style.transform = ''; n.style.opacity = ''; })); }
-    busy = false;
-  }, 220);
-  try { navigator.vibrate && navigator.vibrate(5); } catch (e) {}
+// ---- swiping (Cody, 18 Nov): the card follows your finger. Drag up and it tilts back over its top edge as it rises;
+//      let go past a third of the way (or flick) and it flips away over the top while the next card steps forward.
+//      Drag down and the previous card swings back down from above. Let go early and everything springs back. ----
+const cur = () => deck.querySelector('.slot:not(.under):not(.prev)'), nxt = () => deck.querySelector('.slot.under');
+const easeOut = (t) => 1 - Math.pow(1 - t, 3), easeBack = (t) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+let drag = null;
+function pose(dir, p) {                       // p: 0 = resting, 1 = the swap is complete
+  const s = cur(), u = nxt();
+  if (dir > 0) {
+    if (s) { s.style.transform = 'translateY(' + (-p * 18) + '%) rotateX(' + (p * 80) + 'deg)'; s.style.opacity = p < 0.55 ? 1 : Math.max(0, 1 - (p - 0.55) / 0.45); }
+    if (u) { u.style.transform = 'translateY(' + (8 * (1 - p)) + 'px) scale(' + (0.96 + 0.04 * p) + ')'; u.style.opacity = 0.85 + 0.15 * p; }
+  } else if (dir < 0) {
+    const pv = deck.querySelector('.slot.prev');
+    if (pv) { pv.style.transform = 'translateY(' + (-(1 - p) * 18) + '%) rotateX(' + ((1 - p) * 80) + 'deg)'; pv.style.opacity = p > 0.45 ? 1 : p / 0.45; }
+    if (s) { s.style.transform = 'translateY(' + (8 * p) + 'px) scale(' + (1 - 0.04 * p) + ')'; s.style.opacity = 1 - 0.15 * p; }
+  } else if (s) { s.style.transform = 'translateY(' + p + 'px)'; }   // nothing that way: the card only gives a little
+  whoEl.style.opacity = dir ? Math.max(0, 1 - p * 2.2) : '';
 }
-const ph0 = document.getElementById('phone'); let sy = null, sx = 0;
-ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar, .who, .menu, .dim, .empty')) return; sy = e.clientY; sx = e.clientX; moved = false; });
-ph0.addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 10) moved = true; });
-ph0.addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy, dx = e.clientX - sx; sy = null; if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) go(dy < 0 ? 1 : -1); setTimeout(() => (moved = false), 0); });
+function settle(dir, from, to, done) {         // animate p from -> to, then finish
+  busy = true; const t0 = performance.now(), back = to < from, ms = back ? 300 : 90 + 230 * Math.abs(to - from);
+  (function step(now) {
+    const t = Math.min(1, (now - t0) / ms), e = back ? easeBack(t) : easeOut(t);
+    pose(dir, from + (to - from) * e);
+    if (t < 1) return requestAnimationFrame(step);
+    busy = false; done && done();
+  })(t0);
+}
+function prepare(dir) {                        // lift the slots out of their CSS transitions; add the previous card above when going back
+  deck.querySelectorAll('.slot').forEach((s) => { s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; });
+  if (dir < 0 && i > 0 && !deck.querySelector('.slot.prev')) {
+    const s = document.createElement('div'); s.className = 'slot prev'; s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; s.innerHTML = card(F[i - 1]); deck.appendChild(s); pose(-1, 0);
+  }
+}
+function commit(dir) {
+  try { navigator.vibrate && navigator.vibrate(6); } catch (e) {}
+  if (dir > 0 && i + 1 >= F.length) { deck.innerHTML = ''; i = F.length; showEmpty(); whoEl.style.opacity = ''; return; }
+  i += dir; render(); whoEl.style.opacity = '';
+}
+function go(d) {                               // keyboard, wheel: the same motion, without a finger
+  if (busy || drag) return;
+  if (empty.classList.contains('on')) { if (d < 0 && F.length) { empty.classList.remove('on'); i = F.length - 1; render(); } return; }
+  if (d < 0 && i === 0) return;
+  prepare(d); settle(d, 0, 1, () => commit(d));
+}
+const ph0 = document.getElementById('phone');
+ph0.addEventListener('pointerdown', (e) => {
+  if (busy || e.target.closest('.bar, .who, .menu, .dim, .empty, .proto-back')) return;
+  drag = { y0: e.clientY, x0: e.clientX, dir: 0, p: 0, ys: [[e.timeStamp, e.clientY]] }; moved = false;
+});
+ph0.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dy = e.clientY - drag.y0, dx = e.clientX - drag.x0;
+  drag.ys.push([e.timeStamp, e.clientY]); if (drag.ys.length > 6) drag.ys.shift();
+  if (!drag.dir) {
+    if (Math.abs(dy) < 8 || Math.abs(dy) < Math.abs(dx)) return;
+    moved = true; clearTimeout(holdT);
+    drag.dir = dy < 0 ? 1 : (i > 0 ? -1 : 0); if (dy > 0 && i === 0) drag.dir = 2;   // 2: nothing above, just give a little
+    if (empty.classList.contains('on')) { drag = null; if (dy > 0) go(-1); return; }
+    prepare(drag.dir === 2 ? 0 : drag.dir); drag.y0 = e.clientY;
+  }
+  const d = e.clientY - drag.y0, span = deck.clientHeight * 0.55;
+  if (drag.dir === 2) { pose(0, Math.max(0, d) * 0.12); return; }
+  drag.p = Math.max(0, Math.min(1, (drag.dir > 0 ? -d : d) / span));
+  pose(drag.dir, drag.p);
+});
+function release(e) {
+  if (!drag) return; const g = drag; drag = null;
+  setTimeout(() => (moved = false), 0);
+  if (!g.dir) return;
+  if (g.dir === 2) { const s = cur(); if (s) { s.style.transition = 'transform .3s cubic-bezier(.3,1.4,.5,1)'; s.style.transform = ''; } return; }
+  const [t0, y0] = g.ys[0], [t1, y1] = g.ys[g.ys.length - 1], v = (y1 - y0) / Math.max(1, t1 - t0);   // px per ms; up is negative
+  const flick = g.dir > 0 ? v < -0.45 : v > 0.45;
+  if (g.p > 0.33 || (flick && g.p > 0.04)) settle(g.dir, g.p, 1, () => commit(g.dir));
+  else settle(g.dir, g.p, 0, () => { const pv = deck.querySelector('.slot.prev'); if (pv) pv.remove(); deck.querySelectorAll('.slot').forEach((s) => { s.style.transition = ''; s.style.transform = ''; s.style.opacity = ''; }); whoEl.style.opacity = ''; });
+}
+ph0.addEventListener('pointerup', release); ph0.addEventListener('pointercancel', release);
 ph0.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 30) { e.preventDefault(); go(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
 addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowRight') go(1); if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') go(-1); if (e.key === ' ') { e.preventDefault(); const c = deck.querySelector('.slot:not(.under) .card'); if (c) c.classList.toggle('over'); } });
 document.querySelectorAll('.bar button').forEach((b) => b.addEventListener('pointerdown', () => { b.classList.add('say'); clearTimeout(b.t); b.t = setTimeout(() => b.classList.remove('say'), 900); }));
