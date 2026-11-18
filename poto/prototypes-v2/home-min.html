@@ -91,12 +91,16 @@
   .note2 { max-width: 390px; margin: 8px auto 0; font: 400 12px/17px -apple-system, system-ui, sans-serif; color: #8a867f; text-align: center; }
   @media (max-width: 500px) { .note2 { display: none; } }
   @media (max-width: 500px) { body { background: var(--room); } .phone { width: 100vw; height: 100svh; aspect-ratio: auto; border-radius: 0; box-shadow: none; } .sb, .cap { display: none; } }
+  /* prototype only: a way back to the list of pages (not part of the app) */
+  .proto-back { position: absolute; z-index: 20; right: 16px; top: calc(56px + env(safe-area-inset-top, 0px)); height: 26px; padding: 0 10px; border-radius: 999px; display: inline-flex; align-items: center;
+    font: 500 12px/1 -apple-system, system-ui, sans-serif; color: rgba(24,23,26,.6); text-decoration: none; background: rgba(255,255,255,.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.8); }
 </style>
 </head>
 <body>
 <div>
   <div class="phone" id="phone">
     <div class="sb"><span>9:41</span><i></i><span>●●●</span></div>
+    <a class="proto-back" href="index.html" aria-label="Back to all prototypes">‹ All</a>
     <div class="who" id="who"></div>
     <div class="deck" id="deck"></div>
     <div class="empty" id="empty"><div class="stack"><div class="frame"><i></i></div><div class="say2" id="say2"></div></div></div>
