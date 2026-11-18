@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Design</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@500&family=La+Belle+Aurore&family=Pinyon+Script&family=Mrs+Saint+Delafield&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@500&family=La+Belle+Aurore&family=Pinyon+Script&family=Mrs+Saint+Delafield&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
   /* Poto design direction, round 1 (Cody, 18 Nov): colours, type, and the embossed postcard back. Built from his 49 picked references. */
   :root { --room: #F4F2ED; --room-2: #EAE7E0; --card: #FBFAF6; --ink: #1A1917; --ink-2: #6D6A64; --ink-3: #A7A39C; --hair: rgba(26,25,23,.09);
@@ -41,7 +41,7 @@
   .ty .s1 { font-family: "Pinyon Script", cursive; font-size: 48px; font-weight: 400; } .ty .s2 { font-family: "Mrs Saint Delafield", cursive; font-size: 54px; font-weight: 400; } .ty .s3 { font-family: "Instrument Serif", serif; font-style: italic; font-size: 44px; font-weight: 400; letter-spacing: -.01em; }
   .ty .meta { margin-top: 18px; display: flex; justify-content: space-between; } .ty p { margin: 10px 0 0; font-size: 13px; color: var(--ink-2); }
   /* emboss */
-  .emb { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; align-items: start; }
+  .emb { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; align-items: start; }
   .card { position: relative; perspective: 1200px; }
   .card canvas { width: 100%; height: auto; display: block; border-radius: 4px; box-shadow: 0 1px 2px rgba(20,20,30,.14), 0 26px 40px -24px rgba(20,20,30,.45); transition: transform .25s ease-out; touch-action: none; }
   .card .cap { display: grid; gap: 3px; margin-top: 12px; } .card .cap b { font-size: 15px; font-weight: 600; } .card .cap span { font-size: 12px; line-height: 16px; color: var(--ink-2); }
@@ -87,11 +87,11 @@
   <p style="margin-top:14px;font-size:13px;color:var(--ink-2)">The handwriting on postcards stays its own thing (what friends write), so it never competes with the app's script.</p>
 
   <h2>The embossed back</h2>
-  <p>A detailed artwork across the whole back, pressed into the paper with no ink, quieter under the writing so the note stays clear. <b>Move your mouse or finger over a card</b> to move the light, like tilting it. Each country carries both marks: a thin strip of colour at the bottom and a small wax seal.</p>
+  <p>One clear image of the country across the back, pressed into the paper with no ink, under the postcard's real layout: typed message, the handwritten note, the caption. <b>Move your mouse or finger over a card</b> to move the light, like tilting it. Each country carries both marks: a thin strip of colour at the bottom and a small wax seal.</p>
   <div class="emb" id="emb"></div>
   <div class="notes">
     <span><b>How it works:</b> each pattern is a height map (white is raised, grey is flat). The light is calculated per pixel from it, the same way the 3D postcard will do it, so your own designs drop straight in (see the design spec: 2048 × 2896, 50% grey = flat).</span>
-    <span><b>The artworks are public-domain prints</b> from the Art Institute of Chicago's open-access collection (Hokusai, Meryon, a songket textile), turned into height maps. They show the effect; the final artworks are yours. Singapore isn't here because I couldn't find a public-domain artwork of it in that collection.</span>
+    <span><b>Each image is clean line art I drew for this,</b> made into a height map (white raised, grey flat): the orchid, Fuji and the sun, the Eiffel Tower, the Petronas Towers. They show the direction; your own artworks drop into the same files.</span>
     <span><b>Colour strips use flag colours as two or three thin bands,</b> not the flag itself, which keeps clear of the "no official marks" rule. The wax seals are rendered as real wax: a pool with uneven edges, a raised rim, a stamped face with a monogram, tiny bubbles and a glossy highlight.</span>
   </div>
 </main>
@@ -103,9 +103,10 @@ document.getElementById('refs').innerHTML = REFS.map(([s, c]) => '<figure><img s
 // ---- embossed postcard backs ----
 const W = 560, H = Math.round(560 * 2896 / 2048);
 const C = [
-  { name: 'Japan', word: '郵便はがき', emb: 'emb/emb-jp.png', strip: ['#FFFFFF', '#BC002D', '#FFFFFF'], seal: 'emb/seal-jp.png', art: 'after Hokusai, The Great Wave off Kanagawa (c. 1830)' },
-  { name: 'France', word: 'CARTE POSTALE', emb: 'emb/emb-fr.png', strip: ['#1F3E8C', '#FFFFFF', '#D33B2E'], seal: 'emb/seal-fr.png', art: 'after Charles Meryon, The Apse of Notre-Dame (1854)' },
-  { name: 'Malaysia', word: 'POSKAD', emb: 'emb/emb-my.png', strip: ['#CC0001', '#FFFFFF', '#010066', '#FFCC00'], seal: 'emb/seal-my.png', art: 'after a songket shoulder cloth (19th–20th c.)' },
+  { name: 'Singapore', word: 'POSTCARD', emb: 'emb/icon-sg.png', strip: ['#D52B1E', '#FFFFFF'], seal: 'emb/seal-sg.png', art: 'Vanda Miss Joaquim, the national orchid' },
+  { name: 'Japan', word: '郵便はがき', emb: 'emb/icon-jp.png', strip: ['#FFFFFF', '#BC002D', '#FFFFFF'], seal: 'emb/seal-jp.png', art: 'Mount Fuji under a rising sun' },
+  { name: 'France', word: 'CARTE POSTALE', emb: 'emb/icon-fr.png', strip: ['#1F3E8C', '#FFFFFF', '#D33B2E'], seal: 'emb/seal-fr.png', art: 'the Eiffel Tower' },
+  { name: 'Malaysia', word: 'POSKAD', emb: 'emb/icon-my.png', strip: ['#CC0001', '#FFFFFF', '#010066', '#FFCC00'], seal: 'emb/seal-my.png', art: 'the Petronas Towers' },
 ];
 function heightMap(src) {
   // a full-page artwork, turned into a height map (white raised, grey flat): drawn from a public-domain print
@@ -113,7 +114,7 @@ function heightMap(src) {
     x.drawImage(im, 0, 0, W, H); const d = x.getImageData(0, 0, W, H).data, h = new Float32Array(W * H); for (let i = 0; i < W * H; i++) h[i] = (d[i * 4] - 128) / 127; res(h); }; im.src = src; });
 }
 function normals(h) {
-  const n = new Float32Array(W * H * 3), k = 3;
+  const n = new Float32Array(W * H * 3), k = 4.6;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, l = h[y * W + Math.max(0, x - 1)], r = h[y * W + Math.min(W - 1, x + 1)], u = h[Math.max(0, y - 1) * W + x], dn = h[Math.min(H - 1, y + 1) * W + x];
     let nx = (l - r) * k, ny = (u - dn) * k, nz = 1; const m = Math.hypot(nx, ny, nz); n[i * 3] = nx / m; n[i * 3 + 1] = ny / m; n[i * 3 + 2] = nz / m; }
   return n;
@@ -123,20 +124,41 @@ const cards = C.map((c) => {
   const el = document.createElement('div'); el.className = 'card';
   el.innerHTML = '<canvas width="' + W + '" height="' + H + '"></canvas><div class="cap"><b>' + c.name + '</b><span>' + c.art + '</span></div>';
   document.getElementById('emb').appendChild(el);
-  const cv = el.querySelector('canvas'), x = cv.getContext('2d'), img = x.createImageData(W, H); let N = null; const seal = new Image(); seal.src = c.seal; const ready = Promise.all([heightMap(c.emb).then((h) => (N = normals(h))), new Promise((r) => (seal.onload = r))]); const base = [251, 249, 244];
+  const cv = el.querySelector('canvas'), x = cv.getContext('2d'), img = x.createImageData(W, H); let N = null; const seal = new Image(); seal.src = c.seal; const ready = Promise.all([heightMap(c.emb).then((h) => (N = normals(h))), new Promise((r) => (seal.onload = r)), new Promise((r) => { const t = new Image(); t.onload = r; t.onerror = r; t.src = 'img/photo-07-t.jpg'; })]); const base = [251, 249, 244];
   const grain = new Float32Array(W * H); for (let i = 0; i < grain.length; i++) grain[i] = (Math.random() - .5) * 5;
+  // the back, laid out exactly as the postcard's: header word, signature stamp + postmark, typed message, a rule, the handwritten note, the caption
+  const K = W / 1024, sig = new Image(); sig.src = 'img/photo-07-t.jpg';
   function overlay() {
-    // printed bits: the word, a thin divider, address lines, the poto mark. All in a quiet grey ink, nothing else coloured.
-    x.fillStyle = 'rgba(70,64,58,.72)'; x.font = '600 ' + (c.word.length > 8 ? 13 : 15) + 'px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '5px'; x.textBaseline = 'top'; x.fillText(c.word, 34, 38); if (x.letterSpacing !== undefined) x.letterSpacing = '0px';
-    x.strokeStyle = 'rgba(70,64,58,.22)'; x.lineWidth = 1; x.beginPath(); x.moveTo(W * .56, H * .2); x.lineTo(W * .56, H * .8); x.stroke();
-    for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(W * .61, H * (.52 + k * .07)); x.lineTo(W - 34, H * (.52 + k * .07)); x.stroke(); }
-    x.strokeStyle = 'rgba(70,64,58,.28)'; x.setLineDash([3, 3]); x.strokeRect(W - 34 - 84, 36, 84, 104); x.setLineDash([]);
-    x.fillStyle = '#24314f'; x.font = '400 26px "La Belle Aurore", cursive'; ['the light here', 'is something else.', 'wish you could', 'see it.'].forEach((l, k) => x.fillText(l, 34, H * .27 + k * 40)); x.fillText('— cody', 34, H * .27 + 196);
-    x.fillStyle = 'rgba(70,64,58,.5)'; x.font = '500 9px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px'; x.fillText('POTO', W - 64, H - 40); if (x.letterSpacing !== undefined) x.letterSpacing = '0px';
-    // the country mark
-    if (mode !== 'seal') { const sw = 92, sh = 5, sx = W / 2 - sw / 2, sy = H - 26; x.save(); x.beginPath(); x.roundRect(sx, sy, sw, sh, 3); x.clip(); c.strip.forEach((col, k) => { x.fillStyle = col; x.fillRect(sx + k * sw / c.strip.length, sy, sw / c.strip.length + 1, sh); }); x.restore();
-      x.strokeStyle = 'rgba(0,0,0,.16)'; x.lineWidth = .8; x.beginPath(); x.roundRect(sx, sy, sw, sh, 3); x.stroke(); }
-    if (mode !== 'strip') { const sz = 92; x.drawImage(seal, W - 34 - sz + 8, H - 34 - sz - 14, sz, sz); }
+    const ink = 'rgba(78,72,64,.78)', mono = (px) => '500 ' + Math.round(px * K * 10) / 10 + 'px "IBM Plex Mono", monospace';
+    x.save(); x.scale(K, K); x.textBaseline = 'alphabetic';
+    // header
+    x.fillStyle = ink; x.font = mono(17).replace(Math.round(17 * K * 10) / 10 + 'px', '17px'); if (x.letterSpacing !== undefined) x.letterSpacing = '7px'; x.fillText(c.word, 86, 150);
+    // signature stamp (perforated) + postmark ring, top right
+    const sx = 1024 - 86 - 170, sy = 84, sw = 170, sh = 212;
+    x.save(); x.shadowColor = 'rgba(40,30,20,.25)'; x.shadowBlur = 5; x.shadowOffsetY = 2; x.fillStyle = '#FCFBF7'; x.fillRect(sx, sy, sw, sh); x.restore();
+    if (sig.complete) { const k2 = Math.max((sw - 30) / sig.width, (sh - 30) / sig.height); x.save(); x.beginPath(); x.rect(sx + 15, sy + 15, sw - 30, sh - 30); x.clip(); x.drawImage(sig, sx + 15, sy + 15, sig.width * k2, sig.height * k2); x.restore(); }
+    x.save(); x.globalCompositeOperation = 'destination-out'; for (let i = 0; i <= 12; i++) for (const yy of [sy, sy + sh]) { x.beginPath(); x.arc(sx + i * sw / 12, yy, 6, 0, 7); x.fill(); } for (let j = 1; j < 15; j++) for (const xx of [sx, sx + sw]) { x.beginPath(); x.arc(xx, sy + j * sh / 15, 6, 0, 7); x.fill(); } x.restore();
+    x.strokeStyle = 'rgba(36,49,79,.5)'; x.lineWidth = 3; x.beginPath(); x.arc(sx - 30, sy + 150, 92, 0, 7); x.stroke(); x.lineWidth = 1.6; x.beginPath(); x.arc(sx - 30, sy + 150, 62, 0, 7); x.stroke();
+    x.fillStyle = 'rgba(36,49,79,.6)'; x.font = '600 17px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px'; x.textAlign = 'center'; x.fillText('17 NOV', sx - 30, sy + 146); x.fillText('2026', sx - 30, sy + 170); x.textAlign = 'left';
+    // typed message (typewriter)
+    if (x.letterSpacing !== undefined) x.letterSpacing = '0px';
+    x.fillStyle = 'rgba(38,35,31,.9)'; x.font = '37px "Special Elite", "Courier New", monospace';
+    ['the lights came on all at', 'once and nobody said', 'anything for a minute.', '', 'you would have loved it.'].forEach((l, k) => x.fillText(l, 86, 610 + k * 60));
+    // the rule, the note label and its two lines
+    x.strokeStyle = 'rgba(90,84,76,.5)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(80, 1010); x.lineTo(1024 - 80, 1010); x.stroke();
+    for (let i = 0; i < 2; i++) { x.beginPath(); x.moveTo(250, 1122 + i * 84); x.lineTo(1024 - 96, 1122 + i * 84); x.stroke(); }
+    x.fillStyle = ink; x.font = '500 14px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px'; x.fillText('NOTE', 96, 1120);
+    // handwritten note
+    if (x.letterSpacing !== undefined) x.letterSpacing = '0px'; x.fillStyle = '#1c2947';
+    x.font = '56px "La Belle Aurore", cursive'; x.fillText('a photo for you,', 262, 1112); x.font = '52px "La Belle Aurore", cursive'; x.fillText('from cody', 262, 1196);
+    // caption
+    x.fillStyle = ink; x.font = '500 14px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = '2px'; x.fillText('SHOT ON SUNDAY · FRAME 14 OF 27', 86, 1448 - 78); x.fillText('POTO', 1024 - 86 - 48, 1448 - 78);
+    if (x.letterSpacing !== undefined) x.letterSpacing = '0px';
+    // the country: a strip of colour at the bottom, and a wax seal above the caption
+    const sw2 = 170, sh2 = 9, sx2 = 512 - sw2 / 2, sy2 = 1448 - 42; x.save(); x.beginPath(); x.roundRect(sx2, sy2, sw2, sh2, 5); x.clip(); c.strip.forEach((col, k) => { x.fillStyle = col; x.fillRect(sx2 + k * sw2 / c.strip.length, sy2, sw2 / c.strip.length + 1, sh2); }); x.restore();
+    x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = 1.2; x.beginPath(); x.roundRect(sx2, sy2, sw2, sh2, 5); x.stroke();
+    x.drawImage(seal, 1024 - 86 - 150, 1448 - 300, 168, 168);
+    x.restore();
   }
   function shade(lx, ly) {
     if (!N) return;
@@ -151,7 +173,7 @@ const cards = C.map((c) => {
   cv.addEventListener('pointerleave', () => { cv.style.transform = ''; shade(-.45, -.55); });
   return { shade, ready };
 });
-Promise.all([document.fonts.load('26px "La Belle Aurore"'), document.fonts.load('600 15px "IBM Plex Mono"'), ...cards.map((c) => c.ready)]).then(() => cards.forEach((c) => c.shade(-.45, -.55)));
+Promise.all([document.fonts.load('26px "La Belle Aurore"'), document.fonts.load('37px "Special Elite"'), document.fonts.load('600 15px "IBM Plex Mono"'), ...cards.map((c) => c.ready)]).then(() => cards.forEach((c) => c.shade(-.45, -.55)));
 </script>
 </body>
 </html>
