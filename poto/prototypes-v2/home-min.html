@@ -54,6 +54,22 @@
   .empty .frame { width: 58%; aspect-ratio: 1024 / 1448; border-radius: 3px; border: 1.5px dashed rgba(24,23,26,.16); display: grid; place-items: center; }
   .empty .frame i { width: 46px; height: 46px; border-radius: 50%; border: 1.6px solid rgba(24,23,26,.3); position: relative; } .empty .frame i::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: rgba(24,23,26,.18); }
   .cap { margin-top: 16px; font: 500 10px/1 var(--mono); letter-spacing: .12em; color: #9a968f; text-transform: uppercase; text-align: center; }
+  /* who sent it: top left, very small (Cody, 18 Nov). Four versions: A picture + name, B stamp + name, C stamp only, D on the card itself */
+  .who { position: absolute; z-index: 8; left: 20px; top: calc(54px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 9px; transition: opacity .18s; }
+  .who.fade { opacity: 0; }
+  .who .pic { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1.5px var(--card), 0 1px 4px rgba(0,0,0,.18); } .who .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .who .stp { width: 22px; height: 27px; background: #FBFAF6; padding: 2px; filter: drop-shadow(0 1px 1.2px rgba(0,0,0,.22));
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -2.5px -2.5px / 5px 5px, linear-gradient(#000, #000) 2.5px 2.5px / calc(100% - 5px) calc(100% - 5px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -2.5px -2.5px / 5px 5px, linear-gradient(#000, #000) 2.5px 2.5px / calc(100% - 5px) calc(100% - 5px) no-repeat; }
+  .who .stp img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .who .nm { font: 500 13.5px/1.15 -apple-system, system-ui, sans-serif; letter-spacing: -.01em; color: var(--ink); } .who .nm small { display: block; font-size: 11px; color: #A8A49E; font-weight: 400; }
+  .who .tip { position: absolute; left: 30px; top: 50%; transform: translate(0, -50%) scale(.9); opacity: 0; transition: opacity .2s, transform .25s; white-space: nowrap; padding: 5px 9px; border-radius: 999px; font: 500 12px/1 -apple-system, system-ui, sans-serif; background: rgba(255,255,255,.7); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), 0 2px 8px rgba(0,0,0,.08); }
+  .who.show .tip { opacity: 1; transform: translate(0, -50%); }
+  .front .by { position: absolute; left: 5.5%; bottom: 4.2%; font: 500 12px/1 -apple-system, system-ui, sans-serif; color: #5f5c57; display: flex; align-items: center; gap: 6px; } .front .by small { color: #b0aca5; font-size: 11px; font-weight: 400; }
+  .front .by i { width: 16px; height: 16px; border-radius: 50%; overflow: hidden; display: block; } .front .by i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vpick { position: absolute; z-index: 20; right: 14px; top: calc(52px + env(safe-area-inset-top, 0px)); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .vpick button { width: 26px; height: 24px; border-radius: 999px; font: 600 11px/1 -apple-system, system-ui, sans-serif; color: rgba(24,23,26,.45); } .vpick button.on { background: var(--ink); color: #fff; }
+  .note2 { max-width: 390px; margin: 8px auto 0; font: 400 12px/17px -apple-system, system-ui, sans-serif; color: #8a867f; text-align: center; }
+  @media (max-width: 500px) { .note2 { display: none; } }
   @media (max-width: 500px) { body { background: var(--room); } .phone { width: 100vw; height: 100svh; aspect-ratio: auto; border-radius: 0; box-shadow: none; } .sb, .cap { display: none; } }
 </style>
 </head>
@@ -61,6 +77,8 @@
 <div>
   <div class="phone" id="phone">
     <div class="sb"><span>9:41</span><i></i><span>●●●</span></div>
+    <div class="who" id="who"></div>
+    <div class="vpick" id="vpick" role="group" aria-label="Name style"><button type="button" data-v="a">A</button><button type="button" data-v="b">B</button><button type="button" data-v="c">C</button><button type="button" data-v="d">D</button></div>
     <div class="deck" id="deck"></div>
     <div class="empty" id="empty"><div class="frame"><i></i></div></div>
     <nav class="bar" aria-label="Poto">
@@ -72,36 +90,47 @@
     </nav>
   </div>
   <p class="cap">tap to turn over · swipe up for the next</p>
+  <p class="note2">Top right: A · picture and name, B · their stamp and name, C · stamp only (tap it for the name), D · the name sits on the card itself.</p>
 </div>
 <script>
 const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
 const F = [
-  { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'dana', where: 'Tokyo · 17 Nov' },
-  { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'mei', where: 'Paris · 17 Nov' },
-  { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'arjun', where: 'Seoul · 17 Nov' },
-  { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'sofia', where: 'Mexico City · 17 Nov' },
-  { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'leo', where: 'Singapore · 17 Nov' },
+  { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'dana', ago: '2h', where: 'Tokyo · 17 Nov' },
+  { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'mei', ago: '5h', where: 'Paris · 17 Nov' },
+  { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'arjun', ago: '3h', where: 'Seoul · 17 Nov' },
+  { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'sofia', ago: '9h', where: 'Mexico City · 17 Nov' },
+  { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'leo', ago: '12h', where: 'Singapore · 17 Nov' },
 ];
 const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
 const st = (n) => '<span class="st"><img src="' + ph(n, '-t') + '" alt=""></span>';
-const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + '<u>poto</u></div>' +
+const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + (V === 'd' ? '<span class="by"><i><img src="' + ph(f.stamp, '-t') + '" alt=""></i>' + f.name + ' <small>' + f.ago + '</small></span>' : '') + '<u>poto</u></div>' +
   '<div class="face back">' + st(f.stamp) + '<i class="pm"></i><div class="msg">' + f.msg + '<span class="sig">— ' + f.name + '</span></div><u>' + f.where + '</u><u>poto</u></div></div>';
+let V = (new URLSearchParams(location.search).get('v') || 'a').toLowerCase();
+const whoEl = document.getElementById('who');
+function paintWho(f) {
+  if (!f || V === 'd') { whoEl.innerHTML = ''; return; }
+  const name = '<span class="nm">' + f.name + '<small>' + f.ago + '</small></span>';
+  whoEl.innerHTML = V === 'a' ? '<span class="pic"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : V === 'b' ? '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><span class="tip">' + f.name + ' · ' + f.ago + '</span>';
+  whoEl.onclick = () => { if (V !== 'c') return; whoEl.classList.add('show'); clearTimeout(whoEl.t); whoEl.t = setTimeout(() => whoEl.classList.remove('show'), 1800); };
+}
+document.querySelectorAll('#vpick button').forEach((b) => { b.classList.toggle('on', b.dataset.v === V); b.onclick = (e) => { e.stopPropagation(); V = b.dataset.v; document.querySelectorAll('#vpick button').forEach((x) => x.classList.toggle('on', x === b)); if (!empty.classList.contains('on')) render(); }; });
 const deck = document.getElementById('deck'), empty = document.getElementById('empty');
 let i = 0, busy = false, moved = false;
 function render() {
   deck.innerHTML = '';
   for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.innerHTML = card(F[k]); deck.appendChild(s); }
   const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved) c.classList.toggle('over'); };
+  whoEl.classList.remove('fade'); paintWho(F[i]);
 }
 function go(d) {
   if (busy) return;
   if (empty.classList.contains('on')) { if (d < 0) { empty.classList.remove('on'); i = F.length - 1; render(); } return; }
-  const to = i + d; if (to < 0) return; busy = true;
+  const to = i + d; if (to < 0) return; busy = true; whoEl.classList.add('fade');
   const s = deck.querySelector('.slot:not(.under)');
   if (d > 0) { s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-18%)'; s.style.opacity = 0; const u = deck.querySelector('.slot.under'); if (u) u.classList.remove('under'); }
   else { s.style.transform = 'scale(.96) translateY(8px)'; s.style.opacity = .4; }
   setTimeout(() => {
-    if (to >= F.length) { deck.innerHTML = ''; empty.classList.add('on'); busy = false; return; }
+    if (to >= F.length) { deck.innerHTML = ''; empty.classList.add('on'); paintWho(null); busy = false; return; }
     i = to; render();
     if (d < 0) { const n = deck.querySelector('.slot:not(.under)'); n.style.transition = 'none'; n.style.transformOrigin = '50% 0'; n.style.transform = 'rotateX(80deg) translateY(-18%)'; n.style.opacity = 0;
       requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = ''; n.style.transform = ''; n.style.opacity = ''; })); }
@@ -110,7 +139,7 @@ function go(d) {
   try { navigator.vibrate && navigator.vibrate(5); } catch (e) {}
 }
 const ph0 = document.getElementById('phone'); let sy = null, sx = 0;
-ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar')) return; sy = e.clientY; sx = e.clientX; moved = false; });
+ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar, .vpick, .who')) return; sy = e.clientY; sx = e.clientX; moved = false; });
 ph0.addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 10) moved = true; });
 ph0.addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy, dx = e.clientX - sx; sy = null; if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) go(dy < 0 ? 1 : -1); setTimeout(() => (moved = false), 0); });
 ph0.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 30) { e.preventDefault(); go(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
