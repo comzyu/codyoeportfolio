@@ -146,3 +146,10 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Home: one friend's postcard at a time is the premise. Moving on = a simple flip, nothing slow (stamp/file/punch rejected as too slow).
 - The prototypes are for feel; final design must be cleaner (later in Phase 1/2).
 - Open: the viral loop. Viewing friends' photos alone isn't new (Locket, BeReal, Retro). Events and film looks exist elsewhere. Brainstorm in chat 18 Nov.
+
+## Decisions (Cody, 18 Nov, design round 1)
+- Dark mode: Darkroom (warm charcoal). Light: Paper.
+- Script: Pinyon Script (with Inter / SF Pro).
+- Country mark: BOTH the colour strip and a small wax seal.
+- Emboss: not a generic pattern. A detailed artwork per country spanning the whole back, pressed into the paper, quiet enough that the writing stays clear.
+- Wax seal must look like a real one (wax, spill, depth, shine), not a flat coded shape.
