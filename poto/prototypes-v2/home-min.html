@@ -43,8 +43,28 @@
   /* the bar: there, but you hardly notice it */
   .bar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
     background: rgba(255,255,255,.22); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.6), 0 6px 20px -12px rgba(20,20,30,.25); }
-  .bar button { position: relative; width: 44px; height: 40px; display: grid; place-items: center; color: rgba(24,23,26,.38); border-radius: 999px; transition: color .2s; }
-  .bar button.on { color: rgba(24,23,26,.85); }
+  .bar button { position: relative; width: 44px; height: 40px; display: grid; place-items: center; color: rgba(24,23,26,.56); border-radius: 999px; transition: color .2s; }
+  .bar button.on { color: rgba(24,23,26,.92); }
+  .bar .lab { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px); opacity: 0; pointer-events: none; transition: opacity .15s, transform .2s; white-space: nowrap;
+    padding: 4px 8px; border-radius: 999px; font: 500 11px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: rgba(255,255,255,.75); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .bar button.say .lab, .newbie .bar .lab { opacity: 1; transform: translate(-50%, 0); }
+  .newbie .bar .lab { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; bottom: auto; top: calc(100% - 2px); font-size: 9.5px; color: rgba(24,23,26,.55); padding: 0; }
+  .newbie .bar { padding-bottom: 14px; } .newbie .bar button { width: 54px; }
+  /* long-press menu */
+  .menu { position: absolute; z-index: 12; left: 50%; top: 50%; width: 220px; margin-left: -110px; padding: 6px; border-radius: 20px; transform: translateY(-50%) scale(.92); opacity: 0; pointer-events: none; transition: opacity .18s, transform .25s cubic-bezier(.3,1.3,.45,1);
+    background: rgba(253,252,249,.72); -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), 0 18px 40px -14px rgba(20,20,30,.35); }
+  .menu.on { opacity: 1; pointer-events: auto; transform: translateY(-50%) scale(1); }
+  .menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; padding: 0 14px; border-radius: 14px; font: 400 15px/1 -apple-system, system-ui, sans-serif; color: #1A1917; }
+  .menu button:active { background: rgba(24,23,26,.06); } .menu button + button { box-shadow: 0 -.5px 0 rgba(24,23,26,.08); }
+  .menu svg { width: 18px; height: 18px; color: rgba(24,23,26,.6); }
+  .dim { position: absolute; z-index: 11; inset: 0; background: rgba(244,242,237,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .18s; } .dim.on { opacity: 1; pointer-events: auto; }
+  .slot.held { transform: scale(.97) !important; }
+  /* crossing into an earlier day: one tiny date, then it's gone */
+  .day { position: absolute; z-index: 9; left: 50%; top: calc(60px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0; pointer-events: none; transition: opacity .25s, transform .3s; font: 500 10px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: #8a867f; }
+  .day.on { opacity: 1; transform: translate(-50%, 0); }
+  .empty .say2 { margin-top: 18px; display: grid; justify-items: center; gap: 10px; font: 400 14px/1.4 -apple-system, system-ui, sans-serif; color: #6D6A64; text-align: center; }
+  .empty .say2 button { height: 40px; padding: 0 18px; border-radius: 999px; background: #1A1917; color: #fff; font: 500 14px/1 -apple-system, system-ui, sans-serif; }
+  .empty .stack { display: grid; place-items: center; }
   .bar svg { width: 20px; height: 20px; }
   .bar .cam { width: 48px; } .bar .cam i { width: 26px; height: 26px; border-radius: 50%; border: 1.6px solid currentColor; position: relative; } .bar .cam i::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: currentColor; opacity: .9; }
   .bar .dot::after { content: ""; position: absolute; right: 9px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: #C8553A; }
@@ -78,21 +98,24 @@
   <div class="phone" id="phone">
     <div class="sb"><span>9:41</span><i></i><span>●●●</span></div>
     <div class="who" id="who"></div>
-    <div class="vpick" id="vpick" role="group" aria-label="Name style"><button type="button" data-v="a">A</button><button type="button" data-v="b">B</button><button type="button" data-v="c">C</button><button type="button" data-v="d">D</button></div>
     <div class="deck" id="deck"></div>
-    <div class="empty" id="empty"><div class="frame"><i></i></div></div>
+    <div class="empty" id="empty"><div class="stack"><div class="frame"><i></i></div><div class="say2" id="say2"></div></div></div>
+    <div class="day" id="day"></div>
+    <div class="dim" id="dim"></div>
+    <div class="menu" id="menu" role="menu"><button type="button" role="menuitem">Reply with a postcard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 015 5v1"/></svg></button><button type="button" role="menuitem">Keep on my desk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg></button><button type="button" role="menuitem">Leave a sticker <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg></button></div>
     <nav class="bar" aria-label="Poto">
-      <button type="button" class="on" aria-label="Postcards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8 7h8v7H8z"/></svg></button>
-      <button type="button" aria-label="Calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button>
-      <button type="button" class="cam" aria-label="Camera"><i></i></button>
-      <button type="button" class="dot" aria-label="Rolls (a roll was passed to you)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="7" y="5" width="10" height="15" rx="2"/><path d="M9 3h6v2H9zM9 20h6v1.5H9z"/></svg></button>
-      <button type="button" aria-label="Your desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.3-3.6 4-5.2 7-5.2s5.7 1.6 7 5.2"/></svg></button>
+      <button type="button" class="on" aria-label="Postcards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8 7h8v7H8z"/></svg><span class="lab">Postcards</span></button>
+      <button type="button" aria-label="Calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="lab">Calendar</span></button>
+      <button type="button" class="cam" aria-label="Camera"><i></i><span class="lab">Camera</span></button>
+      <button type="button" class="dot" aria-label="Rolls (a roll was passed to you)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="7" y="5" width="10" height="15" rx="2"/><path d="M9 3h6v2H9zM9 20h6v1.5H9z"/></svg><span class="lab">Rolls</span></button>
+      <button type="button" aria-label="Your desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.3-3.6 4-5.2 7-5.2s5.7 1.6 7 5.2"/></svg><span class="lab">Desk</span></button>
     </nav>
   </div>
-  <p class="cap">tap to turn over · swipe up for the next</p>
-  <p class="note2">Top right: A · picture and name, B · their stamp and name, C · stamp only (tap it for the name), D · the name sits on the card itself.</p>
+  <p class="cap">tap to turn over · swipe up for the next · hold for more</p>
+  <p class="cap" style="margin-top:8px"><a href="?new" style="color:inherit">a new user's Home ›</a></p>
 </div>
 <script>
+const NEW = /[?&]new/.test(location.search);   // ?new shows a brand-new user's Home
 const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
 const F = [
   { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'dana', ago: '2h', where: 'Tokyo · 17 Nov' },
@@ -100,12 +123,16 @@ const F = [
   { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'arjun', ago: '3h', where: 'Seoul · 17 Nov' },
   { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'sofia', ago: '9h', where: 'Mexico City · 17 Nov' },
   { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'leo', ago: '12h', where: 'Singapore · 17 Nov' },
+  { photo: 12, stamp: 7, msg: 'found the good noodle place again.', name: 'dana', ago: 'Mon', where: 'Tokyo · 16 Nov', day: 'Mon 16 Nov' },
+  { photo: 10, stamp: 4, msg: 'rain all day. stayed in. no regrets.', name: 'arjun', ago: 'Mon', where: 'Seoul · 16 Nov', day: 'Mon 16 Nov' },
+  { photo: 8, stamp: 1, msg: 'first frost on the window.', name: 'mei', ago: 'Sun', where: 'Paris · 15 Nov', day: 'Sun 15 Nov' },
 ];
+if (NEW) F.length = 0;
 const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
 const st = (n) => '<span class="st"><img src="' + ph(n, '-t') + '" alt=""></span>';
 const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + (V === 'd' ? '<span class="by"><i><img src="' + ph(f.stamp, '-t') + '" alt=""></i>' + f.name + ' <small>' + f.ago + '</small></span>' : '') + '<u>poto</u></div>' +
   '<div class="face back">' + st(f.stamp) + '<i class="pm"></i><div class="msg">' + f.msg + '<span class="sig">— ' + f.name + '</span></div><u>' + f.where + '</u><u>poto</u></div></div>';
-let V = (new URLSearchParams(location.search).get('v') || 'a').toLowerCase();
+const V = 'a';   // A: picture + name (Cody, 18 Nov)
 const whoEl = document.getElementById('who');
 function paintWho(f) {
   if (!f || V === 'd') { whoEl.innerHTML = ''; return; }
@@ -113,15 +140,32 @@ function paintWho(f) {
   whoEl.innerHTML = V === 'a' ? '<span class="pic"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : V === 'b' ? '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><span class="tip">' + f.name + ' · ' + f.ago + '</span>';
   whoEl.onclick = () => { if (V !== 'c') return; whoEl.classList.add('show'); clearTimeout(whoEl.t); whoEl.t = setTimeout(() => whoEl.classList.remove('show'), 1800); };
 }
-document.querySelectorAll('#vpick button').forEach((b) => { b.classList.toggle('on', b.dataset.v === V); b.onclick = (e) => { e.stopPropagation(); V = b.dataset.v; document.querySelectorAll('#vpick button').forEach((x) => x.classList.toggle('on', x === b)); if (!empty.classList.contains('on')) render(); }; });
 const deck = document.getElementById('deck'), empty = document.getElementById('empty');
 let i = 0, busy = false, moved = false;
+function showEmpty() {
+  empty.classList.add('on'); paintWho(null);
+  document.getElementById('say2').innerHTML = NEW ? '<span>Your friends\' postcards will land here.<br>Poto is better with a few of them.</span><button type="button">Invite a friend</button>' : '';
+}
 function render() {
+  if (!F.length) { showEmpty(); return; }
   deck.innerHTML = '';
   for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.innerHTML = card(F[k]); deck.appendChild(s); }
-  const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved) c.classList.toggle('over'); };
+  const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved && !held) c.classList.toggle('over'); held = false; };
   whoEl.classList.remove('fade'); paintWho(F[i]);
+  const prev = F[i - 1], dayEl = document.getElementById('day');
+  if (F[i].day && (!prev || prev.day !== F[i].day)) { dayEl.textContent = F[i].day; dayEl.classList.add('on'); clearTimeout(dayEl.t); dayEl.t = setTimeout(() => dayEl.classList.remove('on'), 1400); }
+  wireHold(deck.querySelector('.slot:not(.under)'));
 }
+// hold the postcard: a small glass menu (reply, keep, sticker); nothing visible until you ask
+const menu = document.getElementById('menu'), dim = document.getElementById('dim');
+let holdT = 0, held = false;
+function wireHold(slot) {
+  if (!slot) return;
+  slot.addEventListener('pointerdown', () => { held = false; clearTimeout(holdT); holdT = setTimeout(() => { if (moved) return; held = true; slot.classList.add('held'); menu.classList.add('on'); dim.classList.add('on'); try { navigator.vibrate && navigator.vibrate(10); } catch (e) {} }, 450); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => slot.addEventListener(t, () => clearTimeout(holdT)));
+}
+const closeMenu = () => { menu.classList.remove('on'); dim.classList.remove('on'); deck.querySelectorAll('.held').forEach((x) => x.classList.remove('held')); };
+dim.onclick = closeMenu; menu.querySelectorAll('button').forEach((b) => b.onclick = closeMenu);
 function go(d) {
   if (busy) return;
   if (empty.classList.contains('on')) { if (d < 0) { empty.classList.remove('on'); i = F.length - 1; render(); } return; }
@@ -130,7 +174,7 @@ function go(d) {
   if (d > 0) { s.style.transformOrigin = '50% 0'; s.style.transform = 'rotateX(80deg) translateY(-18%)'; s.style.opacity = 0; const u = deck.querySelector('.slot.under'); if (u) u.classList.remove('under'); }
   else { s.style.transform = 'scale(.96) translateY(8px)'; s.style.opacity = .4; }
   setTimeout(() => {
-    if (to >= F.length) { deck.innerHTML = ''; empty.classList.add('on'); paintWho(null); busy = false; return; }
+    if (to >= F.length) { deck.innerHTML = ''; showEmpty(); busy = false; return; }
     i = to; render();
     if (d < 0) { const n = deck.querySelector('.slot:not(.under)'); n.style.transition = 'none'; n.style.transformOrigin = '50% 0'; n.style.transform = 'rotateX(80deg) translateY(-18%)'; n.style.opacity = 0;
       requestAnimationFrame(() => requestAnimationFrame(() => { n.style.transition = ''; n.style.transform = ''; n.style.opacity = ''; })); }
@@ -139,11 +183,13 @@ function go(d) {
   try { navigator.vibrate && navigator.vibrate(5); } catch (e) {}
 }
 const ph0 = document.getElementById('phone'); let sy = null, sx = 0;
-ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar, .vpick, .who')) return; sy = e.clientY; sx = e.clientX; moved = false; });
+ph0.addEventListener('pointerdown', (e) => { if (e.target.closest('.bar, .who, .menu, .dim, .empty')) return; sy = e.clientY; sx = e.clientX; moved = false; });
 ph0.addEventListener('pointermove', (e) => { if (sy != null && Math.abs(e.clientY - sy) > 10) moved = true; });
 ph0.addEventListener('pointerup', (e) => { if (sy == null) return; const dy = e.clientY - sy, dx = e.clientX - sx; sy = null; if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) go(dy < 0 ? 1 : -1); setTimeout(() => (moved = false), 0); });
 ph0.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > 30) { e.preventDefault(); go(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
 addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowRight') go(1); if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') go(-1); if (e.key === ' ') { e.preventDefault(); const c = deck.querySelector('.slot:not(.under) .card'); if (c) c.classList.toggle('over'); } });
+document.querySelectorAll('.bar button').forEach((b) => b.addEventListener('pointerdown', () => { b.classList.add('say'); clearTimeout(b.t); b.t = setTimeout(() => b.classList.remove('say'), 900); }));
+if (NEW) ph0.classList.add('newbie');
 render();
 </script>
 </body>
