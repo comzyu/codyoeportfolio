@@ -44,7 +44,7 @@
   .emb { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; align-items: start; }
   .card { position: relative; perspective: 1200px; }
   .card canvas { width: 100%; height: auto; display: block; border-radius: 4px; box-shadow: 0 1px 2px rgba(20,20,30,.14), 0 26px 40px -24px rgba(20,20,30,.45); transition: transform .25s ease-out; touch-action: none; }
-  .card .cap { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; } .card .cap b { font-size: 15px; font-weight: 600; } .card .cap span { font-size: 12px; color: var(--ink-2); }
+  .card .cap { display: grid; gap: 3px; margin-top: 12px; } .card .cap b { font-size: 15px; font-weight: 600; } .card .cap span { font-size: 12px; line-height: 16px; color: var(--ink-2); }
   .ctrl { display: flex; gap: 6px; margin: 4px 0 18px; flex-wrap: wrap; } .ctrl button { height: 34px; padding: 0 14px; border-radius: 999px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font: 500 12.5px var(--sans); color: var(--ink-2); cursor: pointer; }
   .ctrl button.on { background: var(--ink); color: #fff; box-shadow: none; }
   .notes { margin-top: 28px; display: grid; gap: 8px; max-width: 70ch; font-size: 14px; color: var(--ink-2); } .notes b { color: var(--ink); font-weight: 500; }
@@ -60,7 +60,7 @@
   <p>Six of them, to show the threads. Paper you could touch; one photo as the hero; glass that is barely there; big quiet type next to a hand-written line; warm grain instead of flat colour.</p>
   <div class="refs" id="refs"></div>
 
-  <h2>Colour</h2>
+  <h2>Colour <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-2)">· your pick: Darkroom</span></h2>
   <p>Never pure white, never pure black. Light is a warm paper white; dark is a deep warm charcoal with a hint of brown, like a darkroom. The photos stay the only strong colour; the one accent is a postmark red, used for tiny things only.</p>
   <div class="themes">
     <div class="theme" style="background:#F4F2ED;color:#1A1917"><h3>Paper<em>light</em></h3><p>The default. Warm off-white room, cards a step lighter.</p>
@@ -77,7 +77,7 @@
       <div class="mock" style="background:#1B1E22"><div class="pc" style="background:#E6E7E5"><img src="img/photo-03-t.jpg" alt=""></div><div class="bar" style="background:rgba(255,255,255,.08);color:#E8EAEC;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14)"><i></i><i></i><i></i><i></i></div></div></div>
   </div>
 
-  <h2>Type</h2>
+  <h2>Type <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-2)">· your pick: Pinyon Script</span></h2>
   <p>A clean modern sans for everything you read and tap, with a script for the human moments: names, a month, a note. The contrast is what feels premium. Three script options; the sans stays Inter for now (or SF Pro, Apple's own, in the app).</p>
   <div class="type">
     <div class="ty"><span class="lbl">Option 1 · Pinyon Script</span><div class="big">November <em class="s1">keepsakes</em></div><p>Formal copperplate. The most elegant; wedding-invitation energy.</p><div class="meta"><span class="lbl">sans: Inter</span><span class="lbl">script: names, months</span></div></div>
@@ -87,13 +87,12 @@
   <p style="margin-top:14px;font-size:13px;color:var(--ink-2)">The handwriting on postcards stays its own thing (what friends write), so it never competes with the app's script.</p>
 
   <h2>The embossed back</h2>
-  <p>No ink: a pattern raised out of the paper, lit from above so it reads as 3D. <b>Move your mouse or finger over a card</b> to move the light, like tilting it. The country shows only as a thin strip of colour at the bottom, or a tiny wax seal.</p>
-  <div class="ctrl" id="mark"><button type="button" data-m="strip" class="on">Colour strip</button><button type="button" data-m="seal">Wax seal</button><button type="button" data-m="both">Both</button></div>
+  <p>A detailed artwork across the whole back, pressed into the paper with no ink, quieter under the writing so the note stays clear. <b>Move your mouse or finger over a card</b> to move the light, like tilting it. Each country carries both marks: a thin strip of colour at the bottom and a small wax seal.</p>
   <div class="emb" id="emb"></div>
   <div class="notes">
     <span><b>How it works:</b> each pattern is a height map (white is raised, grey is flat). The light is calculated per pixel from it, the same way the 3D postcard will do it, so your own designs drop straight in (see the design spec: 2048 × 2896, 50% grey = flat).</span>
-    <span><b>Patterns here are my placeholders</b> (seigaiha waves, a Peranakan tile, an Art Nouveau rosette field). You said you'll design your own; these are to judge the effect.</span>
-    <span><b>Colour strips use flag colours as two or three thin bands,</b> not the flag itself, which keeps clear of the "no official marks" rule. Wax seals carry a simple letter mark, not a national emblem.</span>
+    <span><b>The artworks are public-domain prints</b> from the Art Institute of Chicago's open-access collection (Hokusai, Meryon, a songket textile), turned into height maps. They show the effect; the final artworks are yours. Singapore isn't here because I couldn't find a public-domain artwork of it in that collection.</span>
+    <span><b>Colour strips use flag colours as two or three thin bands,</b> not the flag itself, which keeps clear of the "no official marks" rule. The wax seals are rendered as real wax: a pool with uneven edges, a raised rim, a stamped face with a monogram, tiny bubbles and a glossy highlight.</span>
   </div>
 </main>
 <script>
@@ -104,35 +103,14 @@ document.getElementById('refs').innerHTML = REFS.map(([s, c]) => '<figure><img s
 // ---- embossed postcard backs ----
 const W = 560, H = Math.round(560 * 2896 / 2048);
 const C = [
-  { name: 'Singapore', word: 'POSTCARD', pat: 'peranakan', strip: ['#D52B1E', '#FFFFFF'], seal: '#9E2A22', letter: 'S' },
-  { name: 'Japan', word: '郵便はがき', pat: 'seigaiha', strip: ['#F4F2ED', '#BC002D', '#FFFFFF'], seal: '#7E1F24', letter: 'J' },
-  { name: 'France', word: 'CARTE POSTALE', pat: 'rosette', strip: ['#1F3E8C', '#FFFFFF', '#D33B2E'], seal: '#23356B', letter: 'F' },
+  { name: 'Japan', word: '郵便はがき', emb: 'emb/emb-jp.png', strip: ['#FFFFFF', '#BC002D', '#FFFFFF'], seal: 'emb/seal-jp.png', art: 'after Hokusai, The Great Wave off Kanagawa (c. 1830)' },
+  { name: 'France', word: 'CARTE POSTALE', emb: 'emb/emb-fr.png', strip: ['#1F3E8C', '#FFFFFF', '#D33B2E'], seal: 'emb/seal-fr.png', art: 'after Charles Meryon, The Apse of Notre-Dame (1854)' },
+  { name: 'Malaysia', word: 'POSKAD', emb: 'emb/emb-my.png', strip: ['#CC0001', '#FFFFFF', '#010066', '#FFCC00'], seal: 'emb/seal-my.png', art: 'after a songket shoulder cloth (19th–20th c.)' },
 ];
-function heightMap(pat) {
-  // draw the pattern in white on mid-grey, blur it so the edges feel pressed, read it back as heights
-  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d', { willReadFrequently: true });
-  x.fillStyle = '#808080'; x.fillRect(0, 0, W, H);
-  x.save(); x.filter = 'blur(1.6px)'; x.strokeStyle = '#ffffff'; x.lineWidth = 3.2; x.lineCap = 'round'; x.lineJoin = 'round';
-  if (pat === 'seigaiha') {
-    const r = 30; for (let row = -1; row * r * 0.5 < H + r; row++) for (let col = -1; col * r * 2 < W + r * 2; col++) {
-      const cx = col * r * 2 + (row % 2 ? r : 0), cy = row * r * 0.5; for (const k of [1, .72, .44]) { x.beginPath(); x.arc(cx, cy, r * k, Math.PI, 2 * Math.PI); x.stroke(); }
-    }
-  } else if (pat === 'peranakan') {
-    const s = 70; for (let y = 0; y < H + s; y += s) for (let xx = 0; xx < W + s; xx += s) {
-      x.beginPath(); x.rect(xx + 3, y + 3, s - 6, s - 6); x.stroke();
-      for (let k = 0; k < 4; k++) { x.save(); x.translate(xx + s / 2, y + s / 2); x.rotate(k * Math.PI / 2); x.beginPath(); x.moveTo(0, 0); x.bezierCurveTo(9, -10, 9, -24, 0, -28); x.bezierCurveTo(-9, -24, -9, -10, 0, 0); x.stroke(); x.restore(); }
-      x.beginPath(); x.arc(xx + s / 2, y + s / 2, 4, 0, 7); x.fillStyle = '#fff'; x.fill();
-    }
-  } else {
-    const s = 64; for (let y = 0; y < H + s; y += s) for (let xx = 0; xx < W + s; xx += s) { const cx = xx + (Math.floor(y / s) % 2 ? s / 2 : 0), cy = y;
-      for (let k = 0; k < 12; k++) { x.save(); x.translate(cx, cy); x.rotate(k * Math.PI / 6); x.beginPath(); x.ellipse(0, -14, 5, 14, 0, 0, 7); x.stroke(); x.restore(); } }
-  }
-  x.restore();
-  // keep the pattern to a frame: it fades out under the writing so the note stays clean
-  const g = x.createRadialGradient(W * .46, H * .5, Math.min(W, H) * .22, W * .5, H * .5, Math.max(W, H) * .62); g.addColorStop(0, 'rgba(128,128,128,1)'); g.addColorStop(.55, 'rgba(128,128,128,.92)'); g.addColorStop(1, 'rgba(128,128,128,0)');
-  x.fillStyle = g; x.fillRect(0, 0, W, H);
-  const d = x.getImageData(0, 0, W, H).data, h = new Float32Array(W * H); for (let i = 0; i < W * H; i++) h[i] = (d[i * 4] - 128) / 127;
-  return h;
+function heightMap(src) {
+  // a full-page artwork, turned into a height map (white raised, grey flat): drawn from a public-domain print
+  return new Promise((res) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(im, 0, 0, W, H); const d = x.getImageData(0, 0, W, H).data, h = new Float32Array(W * H); for (let i = 0; i < W * H; i++) h[i] = (d[i * 4] - 128) / 127; res(h); }; im.src = src; });
 }
 function normals(h) {
   const n = new Float32Array(W * H * 3), k = 3;
@@ -140,12 +118,12 @@ function normals(h) {
     let nx = (l - r) * k, ny = (u - dn) * k, nz = 1; const m = Math.hypot(nx, ny, nz); n[i * 3] = nx / m; n[i * 3 + 1] = ny / m; n[i * 3 + 2] = nz / m; }
   return n;
 }
-let mode = 'strip';
+const mode = 'both';
 const cards = C.map((c) => {
   const el = document.createElement('div'); el.className = 'card';
-  el.innerHTML = '<canvas width="' + W + '" height="' + H + '"></canvas><div class="cap"><b>' + c.name + '</b><span>back · embossed</span></div>';
+  el.innerHTML = '<canvas width="' + W + '" height="' + H + '"></canvas><div class="cap"><b>' + c.name + '</b><span>' + c.art + '</span></div>';
   document.getElementById('emb').appendChild(el);
-  const cv = el.querySelector('canvas'), x = cv.getContext('2d'), N = normals(heightMap(c.pat)), img = x.createImageData(W, H), base = [251, 249, 244];
+  const cv = el.querySelector('canvas'), x = cv.getContext('2d'), img = x.createImageData(W, H); let N = null; const seal = new Image(); seal.src = c.seal; const ready = Promise.all([heightMap(c.emb).then((h) => (N = normals(h))), new Promise((r) => (seal.onload = r))]); const base = [251, 249, 244];
   const grain = new Float32Array(W * H); for (let i = 0; i < grain.length; i++) grain[i] = (Math.random() - .5) * 5;
   function overlay() {
     // printed bits: the word, a thin divider, address lines, the poto mark. All in a quiet grey ink, nothing else coloured.
@@ -158,15 +136,12 @@ const cards = C.map((c) => {
     // the country mark
     if (mode !== 'seal') { const sw = 92, sh = 5, sx = W / 2 - sw / 2, sy = H - 26; x.save(); x.beginPath(); x.roundRect(sx, sy, sw, sh, 3); x.clip(); c.strip.forEach((col, k) => { x.fillStyle = col; x.fillRect(sx + k * sw / c.strip.length, sy, sw / c.strip.length + 1, sh); }); x.restore();
       x.strokeStyle = 'rgba(0,0,0,.16)'; x.lineWidth = .8; x.beginPath(); x.roundRect(sx, sy, sw, sh, 3); x.stroke(); }
-    if (mode !== 'strip') { const cx = W - 74, cy = H - 92, r = 22; x.save(); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 6; x.shadowOffsetY = 2; x.beginPath();
-      for (let a = 0; a <= 64; a++) { const t = a / 64 * Math.PI * 2, rr = r + Math.sin(t * 9) * 1.6 + Math.sin(t * 4 + 1) * 1.2; a ? x.lineTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr) : x.moveTo(cx + Math.cos(t) * rr, cy + Math.sin(t) * rr); }
-      const g = x.createRadialGradient(cx - 7, cy - 8, 2, cx, cy, r + 2); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(.35, c.seal); g.addColorStop(1, 'rgba(0,0,0,.4)'); x.fillStyle = c.seal; x.fill(); x.shadowColor = 'transparent'; x.fillStyle = g; x.fill();
-      x.beginPath(); x.arc(cx, cy, r * .62, 0, 7); x.strokeStyle = 'rgba(0,0,0,.28)'; x.lineWidth = 1.4; x.stroke(); x.beginPath(); x.arc(cx + .6, cy + .8, r * .62, 0, 7); x.strokeStyle = 'rgba(255,255,255,.18)'; x.stroke();
-      x.fillStyle = 'rgba(0,0,0,.35)'; x.font = '600 15px "Instrument Serif", serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(c.letter, cx + .7, cy + 1); x.fillStyle = 'rgba(255,255,255,.28)'; x.fillText(c.letter, cx, cy); x.textAlign = 'left'; x.restore(); }
+    if (mode !== 'strip') { const sz = 92; x.drawImage(seal, W - 34 - sz + 8, H - 34 - sz - 14, sz, sz); }
   }
   function shade(lx, ly) {
+    if (!N) return;
     const L = [lx, ly, .78], m = Math.hypot(...L); L[0] /= m; L[1] /= m; L[2] /= m; const d = img.data;
-    for (let i = 0, j = 0; i < W * H; i++, j += 4) { const dot = N[i * 3] * L[0] + N[i * 3 + 1] * L[1] + N[i * 3 + 2] * L[2], s = .86 + dot * .19 + grain[i] / 255;
+    for (let i = 0, j = 0; i < W * H; i++, j += 4) { const dot = N[i * 3] * L[0] + N[i * 3 + 1] * L[1] + N[i * 3 + 2] * L[2], s = .84 + dot * .2 + grain[i] / 255;
       d[j] = base[0] * s; d[j + 1] = base[1] * s; d[j + 2] = base[2] * s; d[j + 3] = 255; }
     x.putImageData(img, 0, 0); overlay();
   }
@@ -174,10 +149,9 @@ const cards = C.map((c) => {
   cv.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
     cv.style.transform = 'rotateX(' + (-py * 8) + 'deg) rotateY(' + (px * 8) + 'deg)'; cancelAnimationFrame(raf); raf = requestAnimationFrame(() => shade(-px * 1.4, -py * 1.4)); });
   cv.addEventListener('pointerleave', () => { cv.style.transform = ''; shade(-.45, -.55); });
-  return { shade };
+  return { shade, ready };
 });
-document.fonts.ready.then(() => cards.forEach((c) => c.shade(-.45, -.55)));
-document.querySelectorAll('#mark button').forEach((b) => b.onclick = () => { mode = b.dataset.m; document.querySelectorAll('#mark button').forEach((x) => x.classList.toggle('on', x === b)); cards.forEach((c) => c.shade(-.45, -.55)); });
+Promise.all([document.fonts.load('26px "La Belle Aurore"'), document.fonts.load('600 15px "IBM Plex Mono"'), ...cards.map((c) => c.ready)]).then(() => cards.forEach((c) => c.shade(-.45, -.55)));
 </script>
 </body>
 </html>
