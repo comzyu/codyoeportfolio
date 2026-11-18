@@ -141,3 +141,8 @@ Candidates: the profile desk (#3), stamps cut from your own photo (#9).
 - Don't put everything behind the paywall.
 - Two levels confirmed: Poto+ and Poto+ Events. Event subscribers can step down to Poto+ at a discount to keep their subscription.
 - Photos are stored only while subscribed: cancel means export first or lose them. (Claude flagged: needs a grace period and clear warnings; see chat.)
+
+## Decisions (Cody, 18 Nov)
+- Home: one friend's postcard at a time is the premise. Moving on = a simple flip, nothing slow (stamp/file/punch rejected as too slow).
+- The prototypes are for feel; final design must be cleaner (later in Phase 1/2).
+- Open: the viral loop. Viewing friends' photos alone isn't new (Locket, BeReal, Retro). Events and film looks exist elsewhere. Brainstorm in chat 18 Nov.
