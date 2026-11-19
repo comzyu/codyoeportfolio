@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="lib/shell.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Home</title>
@@ -62,6 +63,9 @@
   /* crossing into an earlier day: one tiny date, then it's gone */
   .day { position: absolute; z-index: 9; left: 50%; top: calc(60px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0; pointer-events: none; transition: opacity .25s, transform .3s; font: 500 10px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: #8a867f; }
   .day.on { opacity: 1; transform: translate(-50%, 0); }
+  .toast { position: absolute; z-index: 13; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 8px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .3s cubic-bezier(.3,1.3,.45,1);
+    padding: 8px 14px; border-radius: 999px; font: 500 13px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: rgba(253,252,249,.8); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), 0 8px 24px -12px rgba(20,20,30,.35); }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
   .empty .say2 { margin-top: 18px; display: grid; justify-items: center; gap: 10px; font: 400 14px/1.4 -apple-system, system-ui, sans-serif; color: #6D6A64; text-align: center; }
   .empty .say2 button { height: 40px; padding: 0 18px; border-radius: 999px; background: #1A1917; color: #fff; font: 500 14px/1 -apple-system, system-ui, sans-serif; }
   .empty .stack { display: grid; place-items: center; }
@@ -95,6 +99,7 @@
   .proto-back { position: absolute; z-index: 20; right: 16px; top: calc(56px + env(safe-area-inset-top, 0px)); height: 26px; padding: 0 10px; border-radius: 999px; display: inline-flex; align-items: center;
     font: 500 12px/1 -apple-system, system-ui, sans-serif; color: rgba(24,23,26,.6); text-decoration: none; background: rgba(255,255,255,.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.8); }
 </style>
+<link rel="stylesheet" href="lib/shell.css">
 </head>
 <body>
 <div>
@@ -104,7 +109,7 @@
     <div class="who" id="who"></div>
     <div class="deck" id="deck"></div>
     <div class="empty" id="empty"><div class="stack"><div class="frame"><i></i></div><div class="say2" id="say2"></div></div></div>
-    <div class="day" id="day"></div>
+    <div class="day" id="day"></div><div class="toast" id="toast" role="status"></div>
     <div class="dim" id="dim"></div>
     <div class="menu" id="menu" role="menu"><button type="button" role="menuitem">Reply with a postcard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 015 5v1"/></svg></button><button type="button" role="menuitem">Keep on my desk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg></button><button type="button" role="menuitem">Leave a sticker <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg></button></div>
     <nav class="bar" aria-label="Poto">
@@ -169,7 +174,24 @@ function wireHold(slot) {
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => slot.addEventListener(t, () => clearTimeout(holdT)));
 }
 const closeMenu = () => { menu.classList.remove('on'); dim.classList.remove('on'); deck.querySelectorAll('.held').forEach((x) => x.classList.remove('held')); };
-dim.onclick = closeMenu; menu.querySelectorAll('button').forEach((b) => b.onclick = closeMenu);
+dim.onclick = closeMenu;
+// what the three do (Cody, 19 Nov: everything works)
+const toastEl = document.getElementById('toast');
+const toast = (t) => { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
+const ACTS = [
+  (f) => {                                    // reply: a postcard of your own, from the print you kept last; nothing kept yet, so the camera
+    let k = []; try { k = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
+    if (k.length) potoGo('postcard.html?' + new URLSearchParams({ src: k[0].src, zoom: k[0].zoom || 1, ev: k[0].ev || 0, to: f.name }));
+    else potoGo('camera.html');
+  },
+  (f) => {                                    // keep on my desk: it's waiting there next time you open the desk
+    let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {}
+    q.push({ type: 'card', src: f.photo, from: f.name, where: f.where }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {}
+    toast('On your desk');
+  },
+  (f) => potoGo('postcard.html?' + new URLSearchParams({ src: ph(f.photo), from: f.name, msg: f.msg, where: f.where, sticker: 1 })),   // their card, turned over, stickers out
+];
+menu.querySelectorAll('button').forEach((b, k) => b.onclick = () => { const f = F[i]; closeMenu(); if (f) ACTS[k](f); });
 // ---- swiping (Cody, 18 Nov): the card follows your finger. Drag up and it tilts back over its top edge as it rises;
 //      let go past a third of the way (or flick) and it flips away over the top while the next card steps forward.
 //      Drag down and the previous card swings back down from above. Let go early and everything springs back. ----

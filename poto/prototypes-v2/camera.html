@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="lib/shell.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Poto · Camera</title>
@@ -28,8 +29,8 @@
   .vf .blade { position: absolute; left: 0; right: 0; height: 51%; background: #000; pointer-events: none; }
   /* exposure, the way the normal camera does it: tap to focus, then slide up or down beside the square */
   /* in the app: the real camera shows through the viewfinder (drawn by the phone underneath this page) */
+  .vf video.live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease), filter .3s; }
   .vf .evshade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .2s, background .2s; }
-  html.in-app, html.in-app body, html.in-app .app { background: transparent; } html.in-app .vf { background: transparent; } html.in-app #scene { display: none; }
   .vf { touch-action: none; } .vf img { -webkit-user-drag: none; user-select: none; }
   .focus { position: absolute; z-index: 2; width: 74px; height: 74px; margin: -37px 0 0 -37px; border-radius: 14px; pointer-events: none; opacity: 0; transform: scale(1.3);
     box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.95), 0 0 0 .5px rgba(0,0,0,.25); transition: opacity .25s, transform .4s var(--spring); }
@@ -107,6 +108,7 @@
   .devlabel { position: absolute; z-index: 10; left: 0; right: 0; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); text-align: center; color: var(--on-dark-2); opacity: 0; transition: opacity .3s; pointer-events: none; padding: 12px 0; }
   .devlabel.on { opacity: 1; pointer-events: auto; }
 </style>
+<link rel="stylesheet" href="lib/shell.css">
 </head>
 <body>
 <main class="app" id="app">
@@ -150,7 +152,7 @@ let ROLL = { look: 'Sunday', shot: 14, n: 4 }; try { ROLL = JSON.parse(localStor
 if (!ROLL.look) ROLL = { look: 'Sunday', shot: 0, n: ROLL.n || 4 };
 count = ROLL.shot;
 { const t = document.querySelector('.film'), c = ROLLC[ROLL.look] || ROLLC.Sunday; t.querySelector('b').textContent = ROLL.look.toUpperCase(); t.setAttribute('aria-label', 'Loaded film: ' + ROLL.look + '. Change the roll');
-  t.querySelector('u').style.background = 'linear-gradient(90deg,' + c[0] + ' 0 62%,#1b1b1c 62% 66%,' + c[1] + ' 66%)'; t.onclick = () => { location.href = 'rolls.html'; }; }
+  t.querySelector('u').style.background = 'linear-gradient(90deg,' + c[0] + ' 0 62%,#1b1b1c 62% 66%,' + c[1] + ' 66%)'; t.onclick = () => { potoGo('rolls.html'); }; }
 odo.innerHTML = '<span>' + count + '</span>';
 function roll(n) {                                   // the counter turns like a little drum
   if (odo.children.length > 1) { odo.getAnimations({ subtree: true }).forEach((a) => a.cancel()); odo.innerHTML = '<span>' + odo.lastElementChild.textContent + '</span>'; }   // shooting fast: settle the last turn first
@@ -171,8 +173,38 @@ document.querySelectorAll('.tools .ic').forEach((b) => (b.onclick = () => {
 document.querySelectorAll('.zoom button').forEach((b) => (b.onclick = () => { document.querySelectorAll('.zoom button').forEach((o) => o.setAttribute('aria-pressed', String(o === b))); scene.style.transform = 'scale(' + ({ '.5': 1, 1: 1.35, 2: 2.5 })[b.dataset.z] + ')'; }));
 scene.style.transform = 'scale(1.35)';
 // in the app: the phone's own camera does the zooming and turning round; this page sends it the buttons
-const APP = !!(window.PotoNative && PotoNative.inApp);
-if (APP) {
+const APP = !!(window.PotoNative && PotoNative.inApp), WEB = APP && PotoNative.platform === 'web';
+// ---- the browser app: your camera, live in the viewfinder where the browser allows it; otherwise the phone's own camera opens for each shot ----
+let live = null, facingWeb = 'environment';
+async function startLive() {
+  if (!WEB || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try {
+    if (live && live.srcObject) live.srcObject.getTracks().forEach((t) => t.stop());
+    const st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingWeb, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+    if (!live) { live = document.createElement('video'); live.className = 'live'; live.playsInline = true; live.muted = true; live.autoplay = true; live.setAttribute('playsinline', ''); scene.after(live); }
+    live.srcObject = st; await live.play().catch(() => {}); scene.style.visibility = 'hidden';
+    live.style.transform = (scene.style.transform || '') + (facingWeb === 'user' ? ' scaleX(-1)' : ''); live.style.filter = scene.style.filter;
+  } catch (e) { live = null; scene.style.visibility = ''; }
+}
+function pickFromCamera() {                   // the phone's own camera (capture), never the photo library on a phone
+  return new Promise((res, rej) => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture', 'environment');
+    inp.onchange = () => (inp.files[0] ? res(inp.files[0]) : rej(new Error('none'))); inp.click(); });
+}
+function webShot(z) {
+  const fromLive = live && live.videoWidth;
+  const src = fromLive ? Promise.resolve(live) : pickFromCamera().then((f) => createImageBitmap(f));
+  return src.then((im) => {
+    const W = fromLive ? im.videoWidth : im.width, H = fromLive ? im.videoHeight : im.height;
+    let w = W, h = w * 4 / 3; if (h > H) { h = H; w = h * 3 / 4; } w /= fromLive ? z : 1; h /= fromLive ? z : 1;   // what the viewfinder shows: the middle, at 3:4, zoomed
+    const c = document.createElement('canvas'); c.width = Math.round(Math.min(1500, w)); c.height = Math.round(c.width * 4 / 3);
+    const x = c.getContext('2d'); if (fromLive && facingWeb === 'user') { x.translate(c.width, 0); x.scale(-1, 1); }
+    x.drawImage(im, (W - w) / 2, (H - h) / 2, w, h, 0, 0, c.width, c.height);
+    return new Promise((r) => c.toBlob(r, 'image/jpeg', 0.92));
+  }).then((blob) => PotoNative.call('saveShot', { blob }));
+}
+if (WEB) { startLive();
+  document.querySelectorAll('.zoom button').forEach((b) => b.addEventListener('click', () => { if (live) live.style.transform = scene.style.transform + (facingWeb === 'user' ? ' scaleX(-1)' : ''); })); }
+if (APP && !WEB) {
   const ZN = { '.5': 0, 1: 0, 2: 0.07, 3: 0.14 };   // the phone's zoom runs 0 (its normal lens) to 1 (its longest); .5 needs the wide lens, not reachable from here yet
   document.querySelectorAll('.zoom button').forEach((b) => b.addEventListener('click', () => PotoNative.call('zoom', { z: ZN[b.dataset.z] != null ? ZN[b.dataset.z] : 0 })));
   const tell = () => { const r = vf.getBoundingClientRect(); PotoNative.post({ type: 'viewfinder', x: r.left, y: r.top, w: r.width, h: r.height, r: 22 }); };
@@ -199,12 +231,13 @@ vf.addEventListener('pointermove', (e) => { if (!evDrag) return; const dy = evDr
 const evUp = () => { if (!evDrag) return; evDrag = null; evIdle = setTimeout(() => { focus.classList.add('dim'); evIdle = setTimeout(() => focus.classList.remove('on', 'dim'), 1800); }, 1400); };
 vf.addEventListener('pointerup', evUp); vf.addEventListener('pointercancel', evUp);
 evPill.onclick = () => { ev = 0; paintEv(); };
-if (APP) { const shade = vf.querySelector('.evshade'), base = paintEv;   // the live picture can't be brightened from here, so a veil of light or shade stands in for it
+if (WEB) { const base0 = paintEv; paintEv = () => { base0(); if (live) live.style.filter = scene.style.filter; }; }
+if (APP && !WEB) { const shade = vf.querySelector('.evshade'), base = paintEv;   // the live picture can't be brightened from here, so a veil of light or shade stands in for it
   paintEv = () => { base(); shade.style.background = ev > 0 ? '#fff' : '#000'; shade.style.opacity = ev > 0 ? Math.min(0.35, ev * 0.14) : Math.min(0.55, -ev * 0.24); }; }
 paintEv();
 function curtain(ms) { if (reduced()) return; const k = (d) => [{ transform: 'translateY(' + d + '101%)' }, { transform: 'translateY(0)', offset: .38, easing: 'ease-in' }, { transform: 'translateY(0)', offset: .56 }, { transform: 'translateY(' + d + '101%)' }];
   vf.querySelector('.blade.t').animate(k('-'), { duration: ms }); vf.querySelector('.blade.b').animate(k(''), { duration: ms }); }
-$('flip').addEventListener('click', () => APP && PotoNative.call('flip'));
+$('flip').addEventListener('click', () => { if (WEB) { facingWeb = facingWeb === 'user' ? 'environment' : 'user'; startLive(); } else if (APP) PotoNative.call('flip'); });
 $('flip').onclick = () => { curtain(260); $('flip').querySelector('svg').animate([{ transform: 'rotate(0)' }, { transform: 'rotate(180deg)' }], { duration: 520, easing: 'cubic-bezier(.3,1.3,.5,1)' }); setTimeout(() => { si = (si + 1) % SCENES.length; scene.src = SCENES[si]; }, 100); };
 
 // ---- shutter: the shot is taken and dropped into the tray, undeveloped. No waiting between shots. ----
@@ -226,7 +259,7 @@ function shoot() {
   curtain(160); count = count >= 27 ? 1 : count + 1; ROLL.shot = count; try { localStorage.setItem('poto.roll', JSON.stringify(ROLL)); } catch (e) {} setTimeout(() => roll(count), 240);
   const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1;
   const shot = { id: Date.now(), src: scene.getAttribute('src'), zoom: z, ev, look: ROLL.look, t: Date.now() };
-  if (APP) { shot.zoom = 1; PotoNative.call('shoot').then((r) => { shot.id = r.id; shot.src = r.src; pending.push(shot); savePending(); paintTray(); }).catch(() => {}); }   // the real photo, saved on the phone
+  if (APP) { shot.zoom = 1; (WEB ? webShot(z) : PotoNative.call('shoot')).then((r) => { shot.id = r.id; shot.src = r.src; pending.push(shot); savePending(); paintTray(); }).catch(() => {}); }   // the real photo, saved on the phone
   else { pending.push(shot); savePending(); }
   if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
   // an undeveloped print slides out of the viewfinder into the tray
@@ -240,10 +273,27 @@ function shoot() {
 // ---- develop all: every shot in the tray comes up together, a beat apart, like prints in one tray of developer ----
 const devall = $('devall'), grid = $('pgrid'), PW = 180, PH = 240, BLANK = [232, 228, 220], NOISE = new Int8Array(PW * PH * 2).map(() => (Math.random() * 2 - 1) * 127);
 let dev = null;
-tray.onclick = () => { if (!pending.length) { location.href = 'home.html'; return; } developAll(); };
+tray.onclick = () => { if (!pending.length) { potoGo('home.html'); return; } developAll(); };
+// developing (Cody, 17 Nov): the first 3 shots of a day come up right away; the rest are ready at 7:00 the next morning
+const DEV_FREE = 3, devDay = () => new Date().toDateString();
+const devLeft = () => { try { const d = JSON.parse(localStorage.getItem('poto.devday') || '{}'); return d.day === devDay() ? Math.max(0, DEV_FREE - d.n) : DEV_FREE; } catch (e) { return DEV_FREE; } };
+const devSpend = (k) => { if (!k) return; const left = devLeft(); try { localStorage.setItem('poto.devday', JSON.stringify({ day: devDay(), n: DEV_FREE - left + k })); } catch (e) {} };
+const at7 = () => { const d = new Date(); if (d.getHours() >= 7) d.setDate(d.getDate() + 1); d.setHours(7, 0, 0, 0); return d.getTime(); };
+let devNow = [];
 async function developAll() {
-  const shots = pending.slice(), n = shots.length; grid.innerHTML = ''; grid.style.setProperty('--cols', n <= 2 ? 2 : 3);
-  $('devh').textContent = 'Developing'; $('devp').textContent = n + (n > 1 ? ' shots' : ' shot') + ' · ' + ROLL.look + ' · tap a print to toss it';
+  const now = Date.now(); let left = devLeft(), spent = 0; const waiting = [];
+  devNow = [];
+  for (const sh of pending) {
+    if (sh.readyAt && sh.readyAt <= now) devNow.push(sh);
+    else if (!sh.readyAt && left > 0) { left--; spent++; sh.readyAt = now; devNow.push(sh); }
+    else { sh.readyAt = sh.readyAt || at7(); waiting.push(sh); }
+  }
+  devSpend(spent); savePending();
+  if (!devNow.length) {                                   // nothing can come up yet: say when
+    const h = $('hintdev'); h.textContent = 'Ready at 7:00'; h.classList.add('on'); clearTimeout(h.t); h.t = setTimeout(() => { h.textContent = 'Tap to develop'; paintTray(); }, 2200); return;
+  }
+  const shots = devNow.slice(), n = shots.length; grid.innerHTML = ''; grid.style.setProperty('--cols', n <= 2 ? 2 : 3);
+  $('devh').textContent = 'Developing'; $('devp').textContent = n + (n > 1 ? ' shots' : ' shot') + ' · ' + ROLL.look + (waiting.length ? ' · ' + waiting.length + ' more ready at 7:00' : '') + ' · tap a print to toss it';
   const items = await Promise.all(shots.map(async (sh, k) => {
     const im = new Image(); im.src = sh.src.replace('.jpg', '-s.jpg'); try { await im.decode(); } catch (e) {}
     const c = document.createElement('canvas'); c.width = PW; c.height = PH; const x = c.getContext('2d', { willReadFrequently: true });
@@ -281,7 +331,7 @@ $('keepall').onclick = () => {
   const keep = dev.items.filter((it) => !it.el.classList.contains('tossed')), toss = dev.items.filter((it) => it.el.classList.contains('tossed'));
   try { const k = JSON.parse(localStorage.getItem('poto.kept') || '[]'); keep.slice().reverse().forEach((it) => k.unshift(Object.assign({}, it.sh))); localStorage.setItem('poto.kept', JSON.stringify(k.slice(0, 40))); } catch (e) {}
   if (keep.length) $('lastimg').src = keep[keep.length - 1].sh.src.replace('.jpg', '-s.jpg');
-  pending = []; savePending();
+  pending = pending.filter((sh) => !devNow.includes(sh)); savePending();   // what's waiting for 7:00 stays in the tray
   // kept prints gather into the corner (the diary); tossed ones slide away
   const b = tray.getBoundingClientRect();
   keep.forEach((it, k) => { const r = it.el.getBoundingClientRect(); it.el.animate([{ transform: getComputedStyle(it.el).transform, opacity: 1 }, { transform: 'translate(' + (b.left + 26 - r.left - r.width / 2) + 'px,' + (b.top + 26 - r.top - r.height / 2) + 'px) scale(.2) rotate(6deg)', opacity: 0.2 }], { duration: reduced() ? 1 : 520, delay: reduced() ? 0 : k * 40, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' }); });

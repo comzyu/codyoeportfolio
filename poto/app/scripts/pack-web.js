@@ -29,14 +29,12 @@ for (const p of PAGES) {
   let h = fs.readFileSync(path.join(SRC, p + '.html'), 'utf8');
   h = h.replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^>]*>/g, '<link rel="stylesheet" href="fonts.css">');
   h = h.replace(/https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/three\.js\/[\d.]+\/three\.min\.js/g, 'lib/three.min.js');
-  h = h.replace(/<head>/, '<head>\n<script src="app.js"></script>');
-  h = h.replace(/<\/head>/, '<link rel="stylesheet" href="app.css">\n</head>');
+  if (!h.includes('lib/shell.js')) throw new Error(p + '.html does not load lib/shell.js');
   if (/googleapis|cdnjs/.test(h)) throw new Error(p + '.html still loads something from the internet');
   text[p + '.html'] = h;
 }
 for (const f of fs.readdirSync(path.join(SRC, 'lib'))) text['lib/' + f] = fs.readFileSync(path.join(SRC, 'lib', f), 'utf8');
 text['lib/three.min.js'] = fs.readFileSync(path.join(EXTRA, 'vendor', 'three.min.js'), 'utf8');
-for (const f of ['app.js', 'app.css']) text[f] = fs.readFileSync(path.join(EXTRA, f), 'utf8');
 
 // fonts: the same faces the pages asked Google for, from the app instead
 fs.mkdirSync(path.join(ASSETS, 'fonts'), { recursive: true });

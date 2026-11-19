@@ -1,0 +1,102 @@
+<title>Poto App Preview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* The whole app in a browser (Cody, 19 Nov): the tested pages, joined the way the phone app joins them.
+     Full screen on a phone; a phone-sized window on a computer. Single light look, like the pages. */
+  :root { --room: #F4F2ED; --desk: #E7E4DD; --ink: #1A1917; --soft: #6D6A64; color-scheme: light; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--desk); color: var(--ink); font: 400 14px/1.4 -apple-system, system-ui, sans-serif; overflow: hidden;
+    padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
+  .device { position: fixed; inset: 0; background: var(--room); overflow: hidden; }
+  @media (min-width: 560px) {
+    .device { inset: auto; left: 50%; top: 50%; width: 390px; height: min(844px, calc(100vh - 40px)); transform: translate(-50%, -50%); border-radius: 44px;
+      box-shadow: 0 0 0 9px #111, 0 0 0 10px #333, 0 40px 60px -30px rgba(0,0,0,.5); }
+  }
+  .device iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: var(--room); }
+  .device iframe.away { visibility: hidden; pointer-events: none; }
+  .device iframe.cam { z-index: 20; background: #0A0A0B; animation: fade .16s ease-out; }
+  .device iframe.sheet { z-index: 30; background: #FAFAF8; animation: rise .3s cubic-bezier(.2,.8,.2,1); }
+  .device iframe.sheet.out { animation: sink .22s ease-in forwards; }
+  .device iframe.cam.out { animation: fadeout .16s ease-in forwards; }
+  @keyframes rise { from { transform: translateY(100%); } } @keyframes sink { to { transform: translateY(100%); } }
+  @keyframes fade { from { opacity: 0; } } @keyframes fadeout { to { opacity: 0; } }
+  .boot { position: absolute; inset: 0; display: grid; place-items: center; color: var(--soft); font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .device iframe { animation: none !important; } }
+</style>
+<div class="device" id="device" aria-live="polite"><p class="boot" id="boot">Opening Poto…</p></div>
+<script>
+(function () {
+  const device = document.getElementById('device');
+  const TABS = { home: 'home-min', calendar: 'home', rolls: 'rolls', desk: 'profile' };
+  const TAB_OF = { 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+  const KEYS = ['poto.kept', 'poto.pending', 'poto.roll', 'poto.rolls', 'poto.stamps', 'poto.desk', 'poto.deskAdd'];
+  const stateNow = () => { try { return KEYS.map((k) => localStorage.getItem(k) || '').join('\u0001'); } catch (e) { return ''; } };
+  const frames = {}, seen = {};
+  let tab = 'home', cam = null, sheet = null;
+
+  // ---- your shots: kept in the browser (IndexedDB) in the three sizes the pages ask for ----
+  const urls = {};                      // 'shots/123.jpg' | 'shots/123-s.jpg' | 'shots/123-t.jpg' -> blob URL
+  const idb = new Promise((res) => {
+    try { const r = indexedDB.open('poto', 1); r.onupgradeneeded = () => r.result.createObjectStore('shots'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); }
+  });
+  const put = async (id, v) => { const db = await idb; if (!db) return; await new Promise((res) => { const t = db.transaction('shots', 'readwrite'); t.objectStore('shots').put(v, id); t.oncomplete = res; t.onerror = res; }); };
+  const remember = (id, v) => { urls['shots/' + id + '.jpg'] = URL.createObjectURL(v.full); urls['shots/' + id + '-s.jpg'] = URL.createObjectURL(v.s); urls['shots/' + id + '-t.jpg'] = URL.createObjectURL(v.t); };
+  async function loadShots() {
+    const db = await idb; if (!db) return;
+    await new Promise((res) => { const t = db.transaction('shots', 'readonly'), c = t.objectStore('shots').openCursor(); c.onsuccess = () => { const k = c.result; if (!k) return; remember(k.key, k.value); k.continue(); }; t.oncomplete = res; t.onerror = res; });
+  }
+  const size = async (bmp, w) => { const c = document.createElement('canvas'); c.width = w; c.height = Math.round(w * 4 / 3); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); return new Promise((r) => c.toBlob(r, 'image/jpeg', w > 600 ? 0.9 : 0.82)); };
+  async function saveShot(blob) {
+    const bmp = await createImageBitmap(blob), id = String(Date.now());
+    const v = { full: await size(bmp, Math.min(1500, bmp.width)), s: await size(bmp, 600), t: await size(bmp, 180) };
+    await put(id, v); remember(id, v);
+    return { id, src: 'shots/' + id + '.jpg' };
+  }
+
+  // ---- frames ----
+  function frame(page, query, cls) {
+    const f = document.createElement('iframe');
+    f.src = page + '.html' + (query ? '?' + query : ''); f.title = page; if (cls) f.className = cls;
+    f.setAttribute('allow', 'camera; fullscreen; clipboard-write'); device.appendChild(f); return f;
+  }
+  function show(t) {
+    if (!frames[t]) { frames[t] = frame(TABS[t]); seen[t] = stateNow(); }
+    else if (t !== 'home' && seen[t] !== stateNow()) { seen[t] = stateNow(); frames[t].contentWindow.location.reload(); }
+    else { try { frames[t].contentWindow.PotoNative && frames[t].contentWindow.PotoNative._shown(); } catch (e) {} }
+    tab = t;
+    for (const k in frames) frames[k].classList.toggle('away', k !== t);
+  }
+  const close = (f, then) => { if (!f) return; f.classList.add('out'); setTimeout(() => f.remove(), 230); show(then || tab); };
+  function openCamera() { closeSheet(); if (!cam) cam = frame('camera', '', 'cam'); }
+  function closeCamera(then) { const f = cam; cam = null; close(f, then); }
+  function openSheet(page, query) { if (sheet) sheet.remove(); sheet = frame(page, query, 'sheet'); }
+  function closeSheet(then) { const f = sheet; sheet = null; if (f) close(f, then); }
+
+  function nav(from, page, query) {
+    if (page === 'index') { if (from === cam) closeCamera(); else if (from === sheet) closeSheet(); return; }
+    if (page === 'camera') { openCamera(); return; }
+    if (page === 'postcard' || page === 'stamp') { openSheet(page, query); return; }
+    const t = TAB_OF[page]; if (!t) return;
+    if (from === cam) closeCamera(t); else if (from === sheet) closeSheet(t); else show(t);
+  }
+  const frameOf = (win) => [cam, sheet, ...Object.values(frames)].find((f) => f && f.contentWindow === win);
+
+  window.PotoShell = {
+    shotURL: (path) => { const m = String(path).match(/shots\/\d+(-s|-t)?\.jpg/); return m ? urls[m[0]] || null : null; },
+    receive(win, m) {
+      const from = frameOf(win);
+      if (m.type === 'tab' && TABS[m.name]) show(m.name);
+      else if (m.type === 'camera') openCamera();
+      else if (m.type === 'nav') nav(from, m.page, m.query);
+      else if (m.type === 'call') {
+        const done = (ok, v) => { try { win.PotoNative._done(m.id, ok, v); } catch (e) {} };
+        if (m.name === 'saveShot') saveShot(m.args.blob).then((r) => done(true, r), (e) => done(false, String(e)));
+        else done(false, 'unknown call ' + m.name);
+      }
+    },
+  };
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (sheet) closeSheet(); else if (cam) closeCamera(); } });
+
+  loadShots().finally(() => { document.getElementById('boot').remove(); show('home'); });
+})();
+</script>

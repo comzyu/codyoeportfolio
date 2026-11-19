@@ -24,3 +24,7 @@ html.in-app.pg-home-min #phone > nav.bar, html.in-app.pg-home nav.dock, html.in-
 /* Home: full screen in the app, so the sender and the day label sit just under the status bar (the prototype left room for a fake one) */
 html.in-app.pg-home-min .who { top: calc(10px + env(safe-area-inset-top, 0px)); }
 html.in-app.pg-home-min .day { top: calc(18px + env(safe-area-inset-top, 0px)); }
+
+/* the camera in the phone app: the phone draws the live picture under this page, so the page is see-through there */
+html.on-phone.pg-camera, html.on-phone.pg-camera body, html.on-phone.pg-camera .app { background: transparent; }
+html.on-phone.pg-camera .vf { background: transparent; } html.on-phone.pg-camera #scene { display: none; }

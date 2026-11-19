@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="lib/shell.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Diary</title>
@@ -91,6 +92,7 @@
   .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
   .dock .cam i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; display: block; }
 </style>
+<link rel="stylesheet" href="lib/shell.css">
 </head>
 <body>
 <main class="app">
@@ -282,9 +284,9 @@ layout();
 // tap the middle print: it comes toward you and opens as a postcard
 function open(o, b) {
   const q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
-  if (reduced) { location.href = 'postcard.html?' + q; return; }
+  if (reduced) { potoGo('postcard.html?' + q); return; }
   cancelAnimationFrame(raf); b.style.transition = 'transform .38s cubic-bezier(.5,0,.2,1)'; b.style.zIndex = 200; b.style.transform = 'translateY(-4%) scale(1.35)';
-  document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => (location.href = 'postcard.html?' + q);
+  document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => potoGo('postcard.html?' + q);
 }
 
 // ---- the month (board #15): a wall calendar you flip. Each month: a hero photo on top, the days below; tap a day and it becomes the hero ----

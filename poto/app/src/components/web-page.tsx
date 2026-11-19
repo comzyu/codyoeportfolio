@@ -13,6 +13,7 @@ import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTyp
 export type PageMessage =
   | { type: 'tab'; name: string }
   | { type: 'camera' }
+  | { type: 'nav'; page: string; query: string }
   | { type: 'viewfinder'; x: number; y: number; w: number; h: number; r: number }
   | { type: 'call'; id: number; name: string; args: Record<string, unknown> };
 
@@ -58,6 +59,7 @@ export const WebPage = forwardRef<WebPageHandle, Props>(function WebPage({ base,
     try { m = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (!m) return;
     if (m.type === 'haptic') { haptic(m.ms); return; }
+    if (m.type === 'nav') { onNavigate(m.page, m.query); return; }
     onMessage?.(m);
   };
 

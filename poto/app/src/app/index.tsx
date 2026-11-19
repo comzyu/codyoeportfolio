@@ -39,6 +39,7 @@ export default function Shell() {
     setOpened((o) => (o.includes(t) ? o : [...o, t]));
     setTab(t);
     if (stale.current.delete(t)) pages.current[t]?.reload();
+    else pages.current[t]?.shown();   // undo a page's leaving animation (a print opening into the postcard)
   };
   const closeCamera = (then?: Tab) => { setCamera(false); touched(); show(then ?? tab); };
   const closeSheet = (then?: Tab) => { setSheet(null); touched(); show(then ?? tab); };

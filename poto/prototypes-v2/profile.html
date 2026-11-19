@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="lib/shell.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Desk</title>
@@ -75,6 +76,7 @@
   .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; border-radius: 999px; display: inline-flex; align-items: center; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
   .dock .cam i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; display: block; }
 </style>
+<link rel="stylesheet" href="lib/shell.css">
 </head>
 <body>
 <main class="app" id="app">
@@ -115,7 +117,7 @@
 <script>
 PotoTex.install();
 const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ph = (n, sz) => 'img/photo-' + String(n).padStart(2, '0') + (sz || '-s') + '.jpg';
+const ph = (n, sz) => typeof n === 'string' ? n.replace('.jpg', (sz || '-s') + '.jpg') : 'img/photo-' + String(n).padStart(2, '0') + (sz || '-s') + '.jpg';   // a number: a stock photo; a path: one of your shots
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const desk = $('desk'), ring = $('ring');
 // sizes as a fraction of the desk's width
@@ -148,6 +150,9 @@ async function init() {
     save();
   }
   topZ = Math.max(10, ...state.items.map((i) => i.z || 0));
+  // postcards you kept from Home: they land on the desk, a little crooked
+  let q = store.get('poto.deskAdd', []);
+  if (q.length) { q.forEach((it, k) => state.items.push(Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), x: 0.5 + (k % 3 - 1) * 0.12, y: 0.4 + k * 0.05, r: Math.random() * 12 - 6, s: 1, z: ++topZ }, it))); store.set('poto.deskAdd', []); if (state.tidy) state.tidy = false; save(); }
   setSurface(state.surface, true); render(); paintStats(); paintTidy();
 }
 
@@ -157,7 +162,7 @@ const els = new Map();
 function make(it) {
   const el = document.createElement('div'); el.className = 'obj ' + it.type; el.dataset.id = it.id;
   if (it.type === 'print') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">15 NOV 2026</i>';
-  else if (it.type === 'card') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">POST CARD · SINGAPORE</i>';
+  else if (it.type === 'card') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">' + (it.from ? 'FROM ' + it.from.toUpperCase() + (it.where ? ' · ' + it.where.split(' · ')[0].toUpperCase() : '') : 'POST CARD · SINGAPORE') + '</i>';
   else if (it.type === 'stamp') { const s = stamps.find((x) => x.id === it.src); el.innerHTML = s ? '<img src="' + s.png + '" alt="" draggable="false">' : ''; }
   else if (it.type === 'can') { el.innerHTML = '<i class="sh"></i>'; const c = makeCan(byLook(it.look || 'Sunday')); c.classList.add('can-inner'); c.style.width = '100%'; c.style.height = 'auto'; c.style.aspectRatio = '58 / 92'; el.appendChild(c); }
   else if (it.type === 'clip') el.innerHTML = CLIPSVG;
@@ -251,7 +256,8 @@ function fillDrawer() {
   const tile = (html, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = html; b.onclick = fn; return b; };
   const put = (it) => { openDrawer(false); if (state.tidy) setTidy(false, true); const n = Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), x: 0.5, y: 0.45, r: (Math.random() * 12 - 6), s: 1, z: ++topZ }, it); state.items.push(n); render(); save(); select(n);
     const el = els.get(n.id); if (!reduced && el.animate) el.animate([{ opacity: 0, translate: '0 -40px', scale: '1.15' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 420, easing: 'cubic-bezier(.3,1.3,.5,1)' }); };
-  $('tprints').replaceChildren(...Array.from({ length: 12 }, (_, k) => tile('<img src="' + ph(k + 1, '-t') + '" alt="">', '', () => put({ type: 'print', src: k + 1 }))));
+  const mine = store.get('poto.kept', []).map((o) => o.src).filter((v, k, a) => v && a.indexOf(v) === k).slice(0, 24);   // yours first, then the samples
+  $('tprints').replaceChildren(...mine.map((src) => tile('<img src="' + ph(src, '-t') + '" alt="">', '', () => put({ type: 'print', src }))), ...Array.from({ length: 12 }, (_, k) => tile('<img src="' + ph(k + 1, '-t') + '" alt="">', '', () => put({ type: 'print', src: k + 1 }))));
   $('tcards').replaceChildren(...[3, 7].map((n) => tile('<img src="' + ph(n, '-t') + '" alt="">', '', () => put({ type: 'card', src: n }))));
   $('nstamps').textContent = stamps.length ? stamps.length + ' cut' : 'none yet';
   $('tstamps').replaceChildren(...stamps.map((s) => tile('<img src="' + s.png + '" alt="">', 'st', () => put({ type: 'stamp', src: s.id }))));
