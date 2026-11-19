@@ -7,7 +7,7 @@
   --ink-2: #6E6E73;
   --ink-3: #A9A9AE;
   --hair: rgba(20, 20, 22, 0.08);
-  --glass: rgba(255, 255, 255, 0.58);
+  --glass: rgba(255, 255, 255, 0.24);   /* Cody, 19 Nov: all UI liquid glass, clear like iOS 26 */
   --glass-edge: rgba(255, 255, 255, 0.95);
   --glass-shade: rgba(20, 20, 30, 0.10);
   --accent: #141416;          /* no colour accent: black is the accent */
@@ -39,15 +39,14 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
    Clear, not frosted-grey: light bends at the rim (bright top edge, faint dark bottom edge), the body barely tints what's behind. */
 .glass {
   position: relative; background: var(--glass); border-radius: 999px;
-  -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%);
-  box-shadow: inset 0 0 0 1px var(--glass-edge), inset 0 1.5px 0.5px rgba(255,255,255,.95), inset 0 -1px 1px rgba(20,20,30,.06),
-              0 1px 1.5px rgba(20,20,30,.07), 0 10px 28px -8px var(--glass-shade), 0 22px 44px -22px rgba(20,20,30,.16);
+  -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08);
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32);
 }
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;      /* the specular sweep across the top */
   background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,0) 42%), radial-gradient(120% 90% at 50% 118%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%); mix-blend-mode: screen; opacity: .7; }
 .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .35;      /* fine grain, baked (no blend mode: blending over a blurred backdrop re-renders on every scroll frame) */
   background: var(--grain, none) 0 0 / 128px 128px; }
-.glass.dark { background: rgba(38, 38, 42, 0.52); --glass-edge: rgba(255,255,255,.14); color: var(--on-dark);
+.glass.dark { background: rgba(38, 38, 42, 0.34); --glass-edge: rgba(255,255,255,.14); color: var(--on-dark);
   box-shadow: inset 0 0 0 1px var(--glass-edge), inset 0 1.5px 0.5px rgba(255,255,255,.22), inset 0 -1px 1px rgba(0,0,0,.35), 0 12px 30px -10px rgba(0,0,0,.6); }
 .glass.dark::before { background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 46%); opacity: 1; mix-blend-mode: normal; }
 

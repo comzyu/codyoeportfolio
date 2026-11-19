@@ -60,6 +60,16 @@
   .selbar button { height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
   .selbar .on { background: var(--ink); color: #fff; }
   .dhint { margin: 12px 0 0; text-align: center; color: var(--ink-3); }
+  /* Cody, 19 Nov: the desk is the whole page. Only your name, small, in the top corner; surface and tidy live in the drawer (+) */
+  .scroll { padding: 0; overflow: hidden; }
+  .scroll > .pad:first-child { position: absolute; z-index: 6; left: 0; top: calc(20px + env(safe-area-inset-top, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+  .who .av, .who h1 span, .stats, .row, .dhint { display: none; }
+  .who h1 { font: 500 14px/1 -apple-system, system-ui, sans-serif; letter-spacing: -.01em; color: var(--ink); }
+  .desk.black ~ * .who h1, .app.on-black .who h1 { color: #F2F2EF; }
+  .scroll > .pad:last-of-type { padding: 0; position: absolute; inset: 0; }
+  .desk { position: absolute; inset: 0; margin: 0; width: 100%; max-width: none; height: 100%; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+  .top { position: absolute; z-index: 7; }
+  .drawer .deskctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 14px; flex-wrap: wrap; }
   .add { height: 36px; width: 36px; }
   /* the drawer: everything you can put on the desk */
   .drawer { position: absolute; z-index: 8; left: 0; right: 0; bottom: 0; max-height: 72%; border-radius: 26px 26px 0 0; padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateY(105%); transition: transform .45s var(--spring); overflow-y: auto; background: rgba(250,250,248,.86); }
@@ -183,6 +193,7 @@ function paintStats() { const kept = store.get('poto.kept', []).length; $('stats
 // ---- surface ----
 const surfURL = {};
 async function setSurface(k, quiet) {
+  document.querySelector('.who h1').style.color = k === 'black' ? '#F2F2EF' : '';   // your name stays readable on the black desk
   state.surface = k; [...$('surf').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === k)));
   surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); desk.style.backgroundImage = 'url(' + surfURL[k] + ')'; desk.classList.toggle('black', k === 'black');
   if (!quiet) save();
@@ -265,6 +276,8 @@ function fillDrawer() {
 }
 // a stamp you just cut lands on the desk
 const fresh = new URLSearchParams(location.search).get('stamp');
+// surface and tidy move into the drawer, so nothing sits on the desk but your things (Cody, 19 Nov)
+{ const ctl = document.createElement('div'); ctl.className = 'deskctl'; ctl.append($('surf'), $('tidy')); $('drawer').querySelector('.grip').after(ctl); }
 init().then(() => { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300)); ['linen', 'cork', 'black', 'paper'].forEach((k, i) => idle(async () => { surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); })); if (fresh && stamps.find((s) => s.id === fresh) && !state.items.find((i) => i.src === fresh)) { const n = { id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: fresh, x: 0.5, y: 0.42, r: -5, s: 1.15, z: ++topZ }; state.items.push(n); render(); save(); select(n); paintStats(); } });
 </script>
 </body>

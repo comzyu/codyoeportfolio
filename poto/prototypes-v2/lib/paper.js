@@ -70,6 +70,8 @@
   };
 
   /* height canvas -> tangent-space normal map canvas */
+  // the same paper is used for every card, so each stock is made once (Home draws a card per friend; this keeps it quick)
+  { const make = P.stock, made = new Map(); P.stock = function (o) { const k = JSON.stringify(o); if (!made.has(k)) made.set(k, make(o)); return made.get(k); }; }
   P.normalFromHeight = function (hc, strength) {
     const w = hc.width, h = hc.height, out = mk(w, h);
     P.normalInto(hc.getContext('2d').getImageData(0, 0, w, h).data, w, h, out.getContext('2d'), 0, 0, w, h, 0, 0, strength);
@@ -135,7 +137,8 @@
     const cy = py + ph + (TH - py - ph) / 2;
     if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '2.2px';
     t.c.globalCompositeOperation = 'multiply'; t.c.fillText(caption.toUpperCase(), m + 4, cy);
-    t.c.textAlign = 'right'; t.c.fillStyle = 'rgba(80,77,72,.3)'; if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '1px'; t.c.fillText('poto', TW - m - 4, cy);
+    // Cody, 19 Nov: the poto mark in the typewriter face
+    t.c.textAlign = 'right'; t.c.fillStyle = 'rgba(80,77,72,.42)'; t.c.font = '24px "Special Elite", "Courier New", monospace'; if (t.c.letterSpacing !== undefined) t.c.letterSpacing = '0.5px'; t.c.fillText('poto', TW - m - 4, cy + 1);
     t.c.globalCompositeOperation = 'source-over';
     const m3 = mk(TW, TH), c3 = m3.getContext('2d'); c3.drawImage(t.col, 0, 0); c3.fillStyle = '#000'; c3.fillRect(m, py, pw, ph); t.map3d = m3;
     return t;
@@ -185,6 +188,11 @@
     const stock = P.stock({ seed: 11, cloud: 0.09, tooth: 0.75, fibres: 80, flecks: 22, inkBite: 2.2 });
     const t = sheet('#FAF7F0', stock, 246, 0.85);
     const c = t.c, r = rnd(5);
+    // Cody's country backs (19 Nov): the design is the card; in 3D its light parts stand up a little, like the emboss it shows
+    if (o.design) {
+      c.drawImage(o.design, 0, 0, TW, TH);
+      t.h.save(); t.h.globalAlpha = 0.45; t.h.filter = 'grayscale(1) contrast(1.6)'; t.h.drawImage(o.design, 0, 0, TW, TH); t.h.restore();
+    }
     typed(t, o.message, 86, 610, 37, 60, '#26231f');
     // printed furniture: offset ink, multiplied so the stock shows through
     c.save(); c.globalCompositeOperation = 'multiply';
@@ -199,14 +207,23 @@
     (o.note || []).forEach((ln, i) => ln && penned(t, ln, 262, 1112 + i * 84, i ? 52 : 56, '#1c2947', [-0.012, -0.004][i]));
     // stamp + postmark are OFF by default (Cody, 16 Nov: keep the back minimal; decoration is up to the sender).
     // Kept here as an option: the plan is a postmark only when a card is actually mailed, and stamps as stickers/drops.
+    // the country: a thin colour strip at the foot, centred like a phone's home bar, and a wax seal at the lower right (design page, 18 Nov)
+    if (o.strip && o.strip.length) {
+      const W0 = 170, H0 = 9, x0 = (TW - W0) / 2, y0 = TH - 40, seg = W0 / o.strip.length;
+      c.save(); c.beginPath(); c.roundRect ? c.roundRect(x0, y0, W0, H0, H0 / 2) : c.rect(x0, y0, W0, H0); c.clip();
+      o.strip.forEach((col, k) => { c.fillStyle = col; c.fillRect(x0 + k * seg, y0, seg + 0.5, H0); });
+      c.restore(); c.save(); c.strokeStyle = 'rgba(60,50,40,.18)'; c.lineWidth = 1; c.beginPath(); c.roundRect ? c.roundRect(x0, y0, W0, H0, H0 / 2) : c.rect(x0, y0, W0, H0); c.stroke(); c.restore();
+    }
+    if (o.seal) c.drawImage(o.seal, TW - 236, TH - 300, 168, 168);
     if (!o.stamp) return t;
+    const sp = o.stampPhoto || photo;   // the sender's own signature stamp
     // the stamp: a perforated piece of gummed paper with a small print of the photo
     const sw = 196, sh = 244, sx = TW - 86 - sw, sy = 84, hole = 7.2, nx = 12, ny = 15;
     const stamp = (ctx, fill) => { ctx.save(); ctx.translate(sx + sw / 2, sy + sh / 2); ctx.rotate(0.03); ctx.translate(-sw / 2, -sh / 2); ctx.fillStyle = fill; ctx.fillRect(0, 0, sw, sh); };
     const perf = (ctx) => { ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000'; for (let i = 0; i <= nx; i++) for (const y of [0, sh]) { ctx.beginPath(); ctx.arc(i * sw / nx, y, hole, 0, 7); ctx.fill(); } for (let j = 1; j < ny; j++) for (const x of [0, sw]) { ctx.beginPath(); ctx.arc(x, j * sh / ny, hole, 0, 7); ctx.fill(); } ctx.globalCompositeOperation = 'source-over'; };
     const layer = mk(TW, TH), l = layer.getContext('2d');
-    stamp(l, '#FCFBF7'); const s2 = Math.max((sw - 36) / photo.width, (sh - 74) / photo.height);
-    l.drawImage(photo, (photo.width - (sw - 36) / s2) / 2, (photo.height - (sh - 74) / s2) / 2, (sw - 36) / s2, (sh - 74) / s2, 18, 18, sw - 36, sh - 74);
+    stamp(l, '#FCFBF7'); const s2 = Math.max((sw - 36) / sp.width, (sh - 74) / sp.height);
+    l.drawImage(sp, (sp.width - (sw - 36) / s2) / 2, (sp.height - (sh - 74) / s2) / 2, (sw - 36) / s2, (sh - 74) / s2, 18, 18, sw - 36, sh - 74);
     l.fillStyle = '#2a2826'; l.font = '500 15px "IBM Plex Mono", ui-monospace, monospace'; if (l.letterSpacing !== undefined) l.letterSpacing = '3px'; l.textBaseline = 'alphabetic'; l.fillText('POTO', 18, sh - 26);
     l.textAlign = 'right'; l.font = '500 24px "IBM Plex Mono", ui-monospace, monospace'; if (l.letterSpacing !== undefined) l.letterSpacing = '0px'; l.fillText('27', sw - 18, sh - 22); perf(l); l.restore();
     c.save(); c.shadowColor = 'rgba(40,30,20,.28)'; c.shadowBlur = 4; c.shadowOffsetX = 1; c.shadowOffsetY = 2; c.drawImage(layer, 0, 0); c.restore();

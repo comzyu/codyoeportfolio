@@ -5,8 +5,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Home</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Special+Elite&family=La+Belle+Aurore&display=swap">
 <script src="lib/develop.js" defer></script>
+<script src="lib/paper.js"></script>
 <style>
   /* Home, minimal (Cody, 18 Nov): only the postcard. No header, no tabs, no words. A barely-there glass bar at the bottom.
      Tap the postcard to turn it over; swipe up for the next one. */
@@ -43,7 +44,7 @@
   .back u + u { left: auto; right: 8%; }
   /* the bar: there, but you hardly notice it */
   .bar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
-    background: rgba(255,255,255,.22); -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.6), 0 6px 20px -12px rgba(20,20,30,.25); }
+    background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12)); -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
   .bar button { position: relative; width: 44px; height: 40px; display: grid; place-items: center; color: rgba(24,23,26,.56); border-radius: 999px; transition: color .2s; }
   .bar button.on { color: rgba(24,23,26,.92); }
   .bar .lab { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px); opacity: 0; pointer-events: none; transition: opacity .15s, transform .2s; white-space: nowrap;
@@ -53,7 +54,7 @@
   .newbie .bar { padding-bottom: 14px; } .newbie .bar button { width: 54px; }
   /* long-press menu */
   .menu { position: absolute; z-index: 12; left: 50%; top: 50%; width: 220px; margin-left: -110px; padding: 6px; border-radius: 20px; transform: translateY(-50%) scale(.92); opacity: 0; pointer-events: none; transition: opacity .18s, transform .25s cubic-bezier(.3,1.3,.45,1);
-    background: rgba(253,252,249,.72); -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), 0 18px 40px -14px rgba(20,20,30,.35); }
+    background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.16)); -webkit-backdrop-filter: blur(16px) saturate(200%) brightness(1.08); backdrop-filter: blur(16px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
   .menu.on { opacity: 1; pointer-events: auto; transform: translateY(-50%) scale(1); }
   .menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 44px; padding: 0 14px; border-radius: 14px; font: 400 15px/1 -apple-system, system-ui, sans-serif; color: #1A1917; }
   .menu button:active { background: rgba(24,23,26,.06); } .menu button + button { box-shadow: 0 -.5px 0 rgba(24,23,26,.08); }
@@ -64,7 +65,7 @@
   .day { position: absolute; z-index: 9; left: 50%; top: calc(60px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); opacity: 0; pointer-events: none; transition: opacity .25s, transform .3s; font: 500 10px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: #8a867f; }
   .day.on { opacity: 1; transform: translate(-50%, 0); }
   .toast { position: absolute; z-index: 13; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 8px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .3s cubic-bezier(.3,1.3,.45,1);
-    padding: 8px 14px; border-radius: 999px; font: 500 13px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: rgba(253,252,249,.8); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.9), 0 8px 24px -12px rgba(20,20,30,.35); }
+    padding: 8px 14px; border-radius: 999px; font: 500 13px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.16)); -webkit-backdrop-filter: blur(16px) saturate(200%) brightness(1.08); backdrop-filter: blur(16px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
   .empty .say2 { margin-top: 18px; display: grid; justify-items: center; gap: 10px; font: 400 14px/1.4 -apple-system, system-ui, sans-serif; color: #6D6A64; text-align: center; }
   .empty .say2 button { height: 40px; padding: 0 18px; border-radius: 999px; background: #1A1917; color: #fff; font: 500 14px/1 -apple-system, system-ui, sans-serif; }
@@ -81,6 +82,19 @@
   /* who sent it: top left, very small (Cody, 18 Nov). Four versions: A picture + name, B stamp + name, C stamp only, D on the card itself */
   .who { position: absolute; z-index: 8; left: 20px; top: calc(54px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 9px; transition: opacity .18s; }
   .who.fade { opacity: 0; }
+  /* when it was posted (Cody, 19 Nov): centred in the space above the card */
+  .who { left: 0; right: 0; flex-direction: column; gap: 5px; text-align: center; pointer-events: none;
+    top: calc((var(--cardTop, 150px) + env(safe-area-inset-top, 0px)) / 2 - 17px); }
+  .who .d { font: 600 15px/1 -apple-system, system-ui, sans-serif; letter-spacing: -.01em; color: var(--ink); }
+  .who .t { font: 500 10.5px/1 var(--mono); letter-spacing: .14em; color: #8a867f; }
+  /* the drawn faces lie over the stand-in; the signature stamp and its clip stay on top */
+  .face .tex { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; object-fit: cover; }
+  .front .st, .front .clip { z-index: 2; }
+  .front .nm0 { position: absolute; left: 5.5%; bottom: 4.4%; font: 500 7px/1 var(--mono); letter-spacing: .16em; color: #8a867f; text-transform: uppercase; }
+  .drawn .front .st { top: 2.4%; }
+  /* turning over: the card lifts off the table mid-turn */
+  .card.turn .face { animation: lift .6s cubic-bezier(.3,1,.45,1); }
+  @keyframes lift { 45% { box-shadow: 0 2px 4px rgba(20,20,30,.1), 0 60px 80px -34px rgba(20,20,30,.55); } }
   .who .pic { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1.5px var(--card), 0 1px 4px rgba(0,0,0,.18); } .who .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .who .stp { width: 22px; height: 27px; background: #FBFAF6; padding: 2px; filter: drop-shadow(0 1px 1.2px rgba(0,0,0,.22));
     -webkit-mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -2.5px -2.5px / 5px 5px, linear-gradient(#000, #000) 2.5px 2.5px / calc(100% - 5px) calc(100% - 5px) no-repeat; mask: radial-gradient(circle at 50% 50%, transparent 32%, #000 34%) -2.5px -2.5px / 5px 5px, linear-gradient(#000, #000) 2.5px 2.5px / calc(100% - 5px) calc(100% - 5px) no-repeat; }
@@ -124,31 +138,66 @@
   <p class="cap" style="margin-top:8px"><a href="?new" style="color:inherit">a new user's Home ›</a></p>
 </div>
 <script>
-const NEW = /[?&]new/.test(location.search);   // ?new shows a brand-new user's Home
+const NEW = /[?&]new/.test(location.search);
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];   // ?new shows a brand-new user's Home
 const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
-const F = [
-  { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'dana', ago: '2h', where: 'Tokyo · 17 Nov' },
-  { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'mei', ago: '5h', where: 'Paris · 17 Nov' },
-  { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'arjun', ago: '3h', where: 'Seoul · 17 Nov' },
-  { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'sofia', ago: '9h', where: 'Mexico City · 17 Nov' },
-  { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'leo', ago: '12h', where: 'Singapore · 17 Nov' },
-  { photo: 12, stamp: 7, msg: 'found the good noodle place again.', name: 'dana', ago: 'Mon', where: 'Tokyo · 16 Nov', day: 'Mon 16 Nov' },
-  { photo: 10, stamp: 4, msg: 'rain all day. stayed in. no regrets.', name: 'arjun', ago: 'Mon', where: 'Seoul · 16 Nov', day: 'Mon 16 Nov' },
-  { photo: 8, stamp: 1, msg: 'first frost on the window.', name: 'mei', ago: 'Sun', where: 'Paris · 15 Nov', day: 'Sun 15 Nov' },
+const F = [   // Cody's sample friends (19 Nov); c = the country edition of the back
+  { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'alva', at: '2026-11-17T21:04', city: 'New York', c: 'us' },
+  { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'pupu', at: '2026-11-17T13:22', city: 'Shanghai', c: 'cn' },
+  { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'bubu', at: '2026-11-17T17:48', city: 'Copenhagen', c: 'dk' },
+  { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'vava', at: '2026-11-17T11:05', city: 'Paris', c: 'fr' },
+  { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'alal', at: '2026-11-17T09:31', city: 'Berlin', c: 'de' },
+  { photo: 12, stamp: 7, msg: 'found the good noodle place again.', name: 'alva', at: '2026-11-16T20:12', city: 'New York', c: 'us' },
+  { photo: 10, stamp: 4, msg: 'rain all day. stayed in. no regrets.', name: 'bubu', at: '2026-11-16T15:40', city: 'Copenhagen', c: 'dk' },
+  { photo: 8, stamp: 1, msg: 'first frost on the window.', name: 'pupu', at: '2026-11-15T08:17', city: 'Shanghai', c: 'cn' },
 ];
+F.forEach((f) => { const d = new Date(f.at); f.where = f.city + ' · ' + d.getDate() + ' ' + MON[d.getMonth()]; f.day = d.toDateString(); });
 if (NEW) F.length = 0;
 const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.6" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
 const st = (n) => '<span class="st"><img src="' + ph(n, '-t') + '" alt=""></span>';
-const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + (V === 'd' ? '<span class="by"><i><img src="' + ph(f.stamp, '-t') + '" alt=""></i>' + f.name + ' <small>' + f.ago + '</small></span>' : '') + '<u>poto</u></div>' +
-  '<div class="face back">' + st(f.stamp) + '<i class="pm"></i><div class="msg">' + f.msg + '<span class="sig">— ' + f.name + '</span></div><u>' + f.where + '</u><u>poto</u></div></div>';
-const V = 'a';   // A: picture + name (Cody, 18 Nov)
+// ---- the card itself (Cody, 19 Nov): the full textured postcard, drawn by the same paper as the 3D card.
+//      Front: the photo printed on the stock, the sender's name bottom left, poto bottom right in typewriter.
+//      Back: the country edition (Cody's designs) with the typed message, the note, their signature stamp and postmark,
+//      the colour strip and the wax seal. Until a card's faces are drawn, a plain version stands in. ----
+const BACKS = {
+  us: { strip: ['#B22234', '#F4F1EA', '#3C3B6E'] }, cn: { strip: ['#DE2910', '#FFDE00', '#DE2910'] }, dk: { strip: ['#C8102E', '#F4F1EA', '#C8102E'] },
+  fr: { strip: ['#0055A4', '#F4F1EA', '#EF4135'] }, de: { strip: ['#1B1B1B', '#DD0000', '#FFCE00'] },
+};
+const loadImg = (src) => new Promise((r) => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
+const toURL = (c) => new Promise((r) => c.toBlob((b) => r(URL.createObjectURL(b)), 'image/jpeg', 0.92));
+const wrap = (t, w) => { const out = []; let line = ''; for (const word of t.split(/\s+/)) { if ((line + ' ' + word).trim().length > w) { out.push(line); line = word; } else line = (line + ' ' + word).trim(); } if (line) out.push(line); return out; };
+const fontsIn = Promise.race([Promise.all(['37px "Special Elite"', '24px "Special Elite"', '56px "La Belle Aurore"', '500 19px "IBM Plex Mono"'].map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
+const drawn = new Map();
+const idle = (fn) => new Promise((r) => setTimeout(() => r(fn()), 0));   // let the page paint between the two faces
+function faces(k) {                           // { front, back }: each a promise of an image URL (the front comes first: it's what you see)
+  if (!window.PotoPaper || !F[k]) return { front: Promise.resolve(null), back: Promise.resolve(null) };
+  if (!drawn.has(k)) {
+    const f = F[k], B = BACKS[f.c] || BACKS.us, d = new Date(f.at);
+    const imgs = fontsIn.then(() => Promise.all([loadImg(ph(f.photo)), loadImg(ph(f.stamp, '-s')), loadImg('img/backs/' + f.c + '.jpg'), loadImg('img/backs/seal-' + f.c + '.png')]));
+    const front = imgs.then(([photo]) => photo && idle(() => toURL(PotoPaper.front(photo, f.name, 'matte').col)));
+    const back = front.then(() => imgs).then(([photo, stamp, design, seal]) => photo && idle(() => toURL(PotoPaper.back(photo, { message: wrap(f.msg, 25).slice(0, 6), note: ['for cody,', f.name], noteLabel: 'NOTE',
+      caption: 'Shot on ' + DAYN[d.getDay()] + ' · ' + f.city, city: f.city, look: 'Sunday', date: [d.getDate() + ' ' + MON[d.getMonth()].toUpperCase(), String(d.getFullYear())],
+      stamp: !!stamp, stampPhoto: stamp || photo, design, seal, strip: B.strip }).col)));
+    drawn.set(k, { front, back });
+  }
+  return drawn.get(k);
+}
+function dress(slot, k) {                     // swap the stand-in for the drawn faces as each is ready
+  const fc = faces(k);
+  fc.front.then((u) => { if (!u || !slot.isConnected) return; slot.querySelector('.front').insertAdjacentHTML('afterbegin', '<img class="tex" src="' + u + '" alt="" draggable="false">'); slot.classList.add('drawn'); });
+  fc.back.then((u) => { if (!u || !slot.isConnected) return; slot.querySelector('.back').insertAdjacentHTML('afterbegin', '<img class="tex" src="' + u + '" alt="" draggable="false">'); });
+}
+const card = (f) => '<div class="card"><div class="face front"><img src="' + ph(f.photo) + '" alt="" draggable="false">' + st(f.stamp) + CLIP + '<u>poto</u><span class="nm0">' + f.name + '</span></div>' +
+  '<div class="face back"><i class="pm"></i><div class="msg">' + f.msg + '<span class="sig">— ' + f.name + '</span></div><u>' + f.where + '</u><u>poto</u></div></div>';
+// when it was posted, in the space above the card (Cody, 19 Nov)
 const whoEl = document.getElementById('who');
 function paintWho(f) {
-  if (!f || V === 'd') { whoEl.innerHTML = ''; return; }
-  const name = '<span class="nm">' + f.name + '<small>' + f.ago + '</small></span>';
-  whoEl.innerHTML = V === 'a' ? '<span class="pic"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : V === 'b' ? '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span>' + name : '<span class="stp"><img src="' + ph(f.stamp, '-t') + '" alt=""></span><span class="tip">' + f.name + ' · ' + f.ago + '</span>';
-  whoEl.onclick = () => { if (V !== 'c') return; whoEl.classList.add('show'); clearTimeout(whoEl.t); whoEl.t = setTimeout(() => whoEl.classList.remove('show'), 1800); };
+  if (!f) { whoEl.innerHTML = ''; return; }
+  const d = new Date(f.at), h = d.getHours(), t = (h % 12 || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM');
+  whoEl.innerHTML = '<span class="d">' + DAYN[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + '</span><span class="t">' + t + '</span>';
+  const s = deck.querySelector('.slot:not(.under):not(.prev)'); if (s) phone.style.setProperty('--cardTop', s.getBoundingClientRect().top - phone.getBoundingClientRect().top + 'px');
 }
+const phone = document.getElementById('phone');
 const deck = document.getElementById('deck'), empty = document.getElementById('empty');
 let i = 0, busy = false, moved = false;
 function showEmpty() {
@@ -158,11 +207,10 @@ function showEmpty() {
 function render() {
   if (!F.length) { showEmpty(); return; }
   deck.innerHTML = '';
-  for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.innerHTML = card(F[k]); deck.appendChild(s); }
-  const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved && !held) c.classList.toggle('over'); held = false; };
+  for (let k = Math.min(F.length - 1, i + 1); k >= i; k--) { const s = document.createElement('div'); s.className = 'slot' + (k > i ? ' under' : ''); s.innerHTML = card(F[k]); deck.appendChild(s); dress(s, k); }
+  [i + 2, i - 1].forEach((k) => faces(k));      // draw the neighbours ahead of time
+  const c = deck.querySelector('.slot:not(.under) .card'); c.onclick = () => { if (!moved && !held) { c.classList.toggle('over'); c.classList.remove('turn'); void c.offsetWidth; c.classList.add('turn'); try { navigator.vibrate && navigator.vibrate(5); } catch (e) {} } held = false; };
   whoEl.classList.remove('fade'); paintWho(F[i]);
-  const prev = F[i - 1], dayEl = document.getElementById('day');
-  if (F[i].day && (!prev || prev.day !== F[i].day)) { dayEl.textContent = F[i].day; dayEl.classList.add('on'); clearTimeout(dayEl.t); dayEl.t = setTimeout(() => dayEl.classList.remove('on'), 1400); }
   wireHold(deck.querySelector('.slot:not(.under)'));
 }
 // hold the postcard: a small glass menu (reply, keep, sticker); nothing visible until you ask
@@ -222,7 +270,7 @@ function settle(dir, from, to, done) {         // animate p from -> to, then fin
 function prepare(dir) {                        // lift the slots out of their CSS transitions; add the previous card above when going back
   deck.querySelectorAll('.slot').forEach((s) => { s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; });
   if (dir < 0 && i > 0 && !deck.querySelector('.slot.prev')) {
-    const s = document.createElement('div'); s.className = 'slot prev'; s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; s.innerHTML = card(F[i - 1]); deck.appendChild(s); pose(-1, 0);
+    const s = document.createElement('div'); s.className = 'slot prev'; s.style.transition = 'none'; s.style.transformOrigin = '50% 0'; s.innerHTML = card(F[i - 1]); deck.appendChild(s); dress(s, i - 1); pose(-1, 0);
   }
 }
 function commit(dir) {

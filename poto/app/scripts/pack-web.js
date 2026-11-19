@@ -50,11 +50,14 @@ text['fonts.css'] = css;
 
 // photos the pages use (stock stand-ins, see img/CREDITS.md)
 fs.mkdirSync(path.join(ASSETS, 'img'), { recursive: true });
-for (const f of fs.readdirSync(path.join(SRC, 'img'))) {
+const walk = (rel) => { for (const f of fs.readdirSync(path.join(SRC, 'img', rel))) {   // photos, and the country backs and seals in img/backs
+  const r = rel ? rel + '/' + f : f;
+  if (fs.statSync(path.join(SRC, 'img', r)).isDirectory()) { fs.mkdirSync(path.join(ASSETS, 'img', r), { recursive: true }); walk(r); continue; }
   if (!/\.(jpg|png)$/.test(f)) continue;
-  fs.copyFileSync(path.join(SRC, 'img', f), path.join(ASSETS, 'img', f));
-  files['img/' + f] = 'img/' + f;
-}
+  fs.copyFileSync(path.join(SRC, 'img', r), path.join(ASSETS, 'img', r));
+  files['img/' + r] = 'img/' + r;
+} };
+walk('');
 fs.copyFileSync(path.join(SRC, 'img', 'CREDITS.md'), path.join(ASSETS, 'img', 'CREDITS.md'));
 
 const hash = crypto.createHash('sha1');
