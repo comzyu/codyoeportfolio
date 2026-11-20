@@ -11,7 +11,7 @@
 <style>
   /* Cut a stamp out of your own photo (Cody's board #9). A perforated frame sits on the photo; move it, size it, then Cut:
      the perforation is punched hole by hole, and the stamp lifts out, leaving its shape behind in the photo. */
-  .scroll { position: absolute; inset: 0; overflow-y: auto; padding: calc(64px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(110px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; padding: calc(64px + var(--safe-top)) max(18px, env(safe-area-inset-right, 0px)) calc(110px + var(--safe-bottom)) max(18px, env(safe-area-inset-left, 0px)); }
   .top h1 { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; }
   .stage { position: relative; margin: 6px auto 0; width: fit-content; max-width: 100%; overflow: hidden; border-radius: 6px; touch-action: none; user-select: none; -webkit-user-select: none; }
   .stage > img { display: block; max-width: 100%; max-height: 56vh; border-radius: 6px; box-shadow: 0 18px 40px -24px rgba(20,20,30,.5); }
@@ -30,7 +30,7 @@
   .strip { display: flex; gap: 8px; overflow-x: auto; margin: 16px -18px 0; padding: 4px 18px 8px; scrollbar-width: none; } .strip::-webkit-scrollbar { display: none; }
   .strip button { flex: none; width: 54px; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--hair); padding: 0; }
   .strip button img { width: 100%; height: 100%; object-fit: cover; display: block; } .strip button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
-  .bar { position: absolute; z-index: 6; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; }
+  .bar { position: absolute; z-index: 6; left: 50%; bottom: calc(18px + var(--safe-bottom)); transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; }
   .bar button, .bar a { height: 46px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--ink-2); display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; }
   .bar .go { background: var(--ink); color: #fff; }
   .msg { text-align: center; margin-top: 14px; color: var(--ink-3); min-height: 14px; }

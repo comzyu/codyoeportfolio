@@ -17,6 +17,7 @@
   var page = (location.pathname.split('/').pop() || '').replace('.html', '') || 'home-min';
   var root = document.documentElement;
   root.classList.add('in-app', 'pg-' + page, RN ? 'on-phone' : 'on-web');
+  if (SHELL && SHELL.insets) { try { var ins = SHELL.insets(); root.style.setProperty('--safe-top', ins.top + 'px'); root.style.setProperty('--safe-bottom', ins.bottom + 'px'); } catch (e) {} }
   var post = RN ? function (m) { try { RN.postMessage(JSON.stringify(m)); } catch (e) {} } : function (m) { SHELL.receive(window, m); };
 
   if (RN) navigator.vibrate = function (p) { var ms = Array.isArray(p) ? p[0] : p; post({ type: 'haptic', ms: +ms || 0 }); return true; };

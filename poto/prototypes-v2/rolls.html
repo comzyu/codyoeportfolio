@@ -11,7 +11,7 @@
 <style>
   /* Rolls. Film is a real object here: canisters stand on a shelf (board #20), the loaded one lies in the camera back,
      a finished roll comes out as a contact strip and gets filed in a frosted folder. */
-  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(120px + env(safe-area-inset-bottom, 0px)); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + var(--safe-top)) 0 calc(120px + var(--safe-bottom)); }
   .pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
   .month { display: flex; align-items: baseline; gap: 10px; }
   .month h2 { margin: 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; }
@@ -83,7 +83,7 @@
 
   /* ---- the contact strip: the whole roll at once, then filed ---- */
   .dev { position: fixed; inset: 0; z-index: 20; background: var(--room); display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity .35s;
-    padding: calc(70px + env(safe-area-inset-top, 0px)) 0 calc(28px + env(safe-area-inset-bottom, 0px)); }
+    padding: calc(70px + var(--safe-top)) 0 calc(28px + var(--safe-bottom)); }
   .dev.on { opacity: 1; pointer-events: auto; }
   .dev .head { padding: 0 22px; }
   .dev .head h4 { margin: 4px 0 0; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -.03em; } .dev .head p { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
@@ -113,9 +113,9 @@
   .view { position: fixed; inset: 0; z-index: 40; background: rgba(10,10,11,.94); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .25s; touch-action: none; }
   .view.on { opacity: 1; pointer-events: auto; }
   .view img { max-width: 92vw; max-height: 74vh; object-fit: contain; border-radius: 2px; box-shadow: 0 20px 40px rgba(0,0,0,.5); transition: transform .3s var(--ease), opacity .2s; }
-  .view .vb { position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--on-dark-2); }
+  .view .vb { position: absolute; left: 0; right: 0; bottom: calc(26px + var(--safe-bottom)); display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--on-dark-2); }
   .view .vb button { width: 40px; height: 40px; } .view .vb svg { width: 18px; height: 18px; position: relative; }
-  .view .vx { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 18px; width: 40px; height: 40px; }
+  .view .vx { position: absolute; top: calc(14px + var(--safe-top)); right: 18px; width: 40px; height: 40px; }
 
   .dock button[aria-pressed="true"] { background: rgba(20,20,22,.07); color: var(--ink); box-shadow: none; }
   .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }

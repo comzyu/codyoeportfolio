@@ -1,3 +1,6 @@
+/* the phone's safe areas (Dynamic Island, home indicator), as one value every screen uses.
+   Inside the browser app the pages sit in frames, which never get the phone's insets, so the app hands them in (lib/shell.js). */
+:root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
 /* Poto in-app layer: what changes when the prototypes run inside the app. */
 
 /* prototype-only things: the way back to the list, the fake status bar, captions under the phone */
@@ -9,7 +12,7 @@ html.in-app.pg-home-min #phone > nav.bar, html.in-app.pg-home nav.dock, html.in-
 
 /* the bar (redesign plan, 20 Nov): iOS 26 shape. Four tabs in one floating glass capsule; the camera its own round glass button beside it.
    The selected tab sits on a lighter pill; a label shows while you press. */
-.potobar { position: fixed; z-index: 50; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; -webkit-user-select: none; user-select: none; }
+.potobar { position: fixed; z-index: 50; left: 50%; bottom: calc(18px + var(--safe-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; -webkit-user-select: none; user-select: none; }
 .potobar .tabs, .potobar .camb { background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12)); -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
 .potobar .tabs { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; }
 .potobar button { position: relative; display: grid; place-items: center; background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent; color: rgba(26,25,23,.55); transition: color .2s, background .25s; }

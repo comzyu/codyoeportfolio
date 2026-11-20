@@ -10,7 +10,7 @@
 <script src="lib/develop.js" defer></script>
 <style>
   /* Gallery white. Type and glass stay quiet; prints and folders are the only things with material. */
-  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + env(safe-area-inset-top, 0px)) 0 calc(120px + env(safe-area-inset-bottom, 0px)); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + var(--safe-top)) 0 calc(120px + var(--safe-bottom)); }
   .pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
   .month { display: flex; align-items: baseline; gap: 10px; }
   .month h2 { margin: 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; }

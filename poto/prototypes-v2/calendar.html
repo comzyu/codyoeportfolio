@@ -12,10 +12,15 @@
      Months scroll; tap a month's name for the year; tap a day to open it. */
   html, body { height: 100%; overflow: hidden; background: var(--room); }
   .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    padding: calc(env(safe-area-inset-top, 0px) + 44px) max(16px, env(safe-area-inset-right, 0px)) calc(120px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-  /* the weekday letters stay at the top while months pass under them */
-  .dow { position: fixed; z-index: 4; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 12px) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--room); box-shadow: 0 1px 0 var(--hair); }
+    padding: calc(var(--safe-top) + 96px) max(16px, env(safe-area-inset-right, 0px)) calc(120px + var(--safe-bottom)) max(16px, env(safe-area-inset-left, 0px)); }
+  /* the full view: pushed in from the right; the weekday letters stay at the top while months pass under them */
+  .full { position: fixed; inset: 0; z-index: 20; background: var(--room); transform: translateX(100%); transition: transform .38s var(--ease); }
+  .full.on { transform: none; }
+  .fhead { position: absolute; z-index: 4; left: 0; right: 0; top: 0; background: var(--room); box-shadow: 0 1px 0 var(--hair); }
+  .ftop { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) max(14px, env(safe-area-inset-right, 0px)) 2px max(14px, env(safe-area-inset-left, 0px)); }
+  .ftop h1 { margin: 0; text-align: center; font: 600 17px/1 var(--sans); color: var(--ink); }
+  .dow { padding: 10px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .dow span { text-align: center; font: 500 12px/1 var(--sans); color: var(--ink-3); }
   .month { padding: 18px 0 8px; }
   .mhead { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 12px; }
@@ -36,7 +41,7 @@
   .day .mark { position: absolute; z-index: 2; right: 4px; top: 4px; width: 8px; height: 10px; border-radius: 1px; background: #FBFAF6; border: 1.5px solid var(--red); box-shadow: 0 1px 2px rgba(0,0,0,.25); }   /* a postcard arrived that day */
   .hint { margin: 18px 4px 0; font: 400 15px/1.4 var(--sans); color: var(--ink-2); text-align: center; }
   /* the year: twelve small months */
-  .year { position: fixed; inset: 0; z-index: 30; background: var(--room); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(20px, env(safe-area-inset-right, 0px)) 120px max(20px, env(safe-area-inset-left, 0px));
+  .year { position: fixed; inset: 0; z-index: 30; background: var(--room); overflow-y: auto; padding: calc(var(--safe-top) + 20px) max(20px, env(safe-area-inset-right, 0px)) 120px max(20px, env(safe-area-inset-left, 0px));
     opacity: 0; pointer-events: none; transform: scale(1.04); transition: opacity .22s, transform .3s var(--ease); }
   .year.on { opacity: 1; pointer-events: auto; transform: none; }
   .year .yh { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 20px; }
@@ -54,10 +59,10 @@
   /* a day, opened: pushed in from the right like any iPhone screen */
   .daypg { position: fixed; inset: 0; z-index: 40; background: var(--room); overflow-y: auto; transform: translateX(100%); transition: transform .38s var(--ease); padding-bottom: 120px; }
   .daypg.on { transform: none; }
-  .daypg .top { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px)); background: linear-gradient(var(--room) 75%, rgba(250,249,246,0)); }
+  .daypg .top { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 10px) max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px)); background: linear-gradient(var(--room) 75%, rgba(250,249,246,0)); }
   .daypg .top h1 { margin: 0; text-align: center; font: 600 17px/1.2 var(--sans); color: var(--ink); }
-  .daypg .back { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
-  .daypg .back svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+  .back { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .back svg { width: 20px; height: 20px; position: relative; z-index: 1; }
   .pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 0; margin-top: 8px; }
   .pager::-webkit-scrollbar { display: none; }
   .pager figure { flex: 0 0 100%; margin: 0; scroll-snap-align: center; display: grid; justify-items: center; }
@@ -76,16 +81,69 @@
   .pc i { display: block; aspect-ratio: 1024 / 1448; background: #FAF9F5; padding: 6px 6px 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(20,20,30,.14), 0 10px 18px -10px rgba(20,20,30,.35); }
   .pc img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
   .pc b { display: block; margin-top: 8px; font: 500 13px/1 var(--sans); color: var(--ink); }
-  .toast { position: fixed; z-index: 60; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
+  .toast { position: fixed; z-index: 60; left: 50%; bottom: calc(96px + var(--safe-bottom)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
   .toast span { position: relative; z-index: 1; }
-  @media (prefers-reduced-motion: reduce) { .daypg, .year { transition: opacity .2s; } }
+  /* the wall calendar you land on (Cody, 20 Nov: the one from before, and nothing else): the month's photo on top, the days below, ring-bound; flip to change month */
+  .wall { position: absolute; left: 0; right: 0; top: calc(var(--safe-top) + 64px); bottom: calc(var(--safe-bottom) + 96px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+  .openfull { position: absolute; z-index: 5; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(var(--safe-top) + 10px); height: 40px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; font: 500 14px/1 var(--sans); color: var(--ink); }
+  .openfull svg, .openfull span { position: relative; z-index: 1; } .openfull svg { width: 16px; height: 16px; }
+  .mcal { position: relative; perspective: 1600px; touch-action: pan-y; }
+  .mcal .half { position: relative; overflow: hidden; z-index: 0; }
+  .mcal .top { border-radius: 18px 18px 0 0; background: #111; }
+  .mcal .bot { border-radius: 0 0 18px 18px; }
+  .mcal .frame { position: absolute; inset: 0; border-radius: 18px; box-shadow: 0 0 0 1px var(--hair), 0 22px 44px -26px rgba(20,20,30,.4); pointer-events: none; }
+  .hero { position: absolute; inset: 0; background: #111; cursor: pointer; }
+  .hero.blank { background: var(--room-2); cursor: default; }
+  .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero::before, .hero::after { content: ""; position: absolute; left: 0; right: 0; height: 32%; pointer-events: none; z-index: 1; }
+  .hero::before { top: 0; background: linear-gradient(180deg, rgba(0,0,0,.36), rgba(0,0,0,0)); } .hero::after { bottom: 0; background: linear-gradient(0deg, rgba(0,0,0,.32), rgba(0,0,0,0)); }
+  .hero.blank::before, .hero.blank::after { display: none; }
+  .hero span { position: absolute; z-index: 2; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+  .hero .m { left: 18px; top: 16px; font: 600 24px/1 var(--sans); letter-spacing: -.02em; }
+  .hero .y { right: 18px; top: 20px; font: 500 14px/1 var(--sans); opacity: .85; }
+  .hero .d { left: 18px; bottom: 18px; font: 500 13px/1 var(--sans); opacity: .95; }
+  .hero.blank span { color: var(--ink); text-shadow: none; } .hero.blank .y { color: var(--ink-3); }
+  .wpage { padding: 14px 12px 12px; background: #FCFBF8 var(--paper-white, none) 0 0 / 256px 256px; }
+  .wdow { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font: 500 11px/1 var(--sans); color: var(--ink-3); padding: 4px 0 8px; }
+  .wcal { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--hair); border-left: 1px solid var(--hair); }
+  .wcal > * { position: relative; aspect-ratio: 1; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); overflow: hidden; }
+  .wcal .wd { padding: 0; background: none; border-top: 0; border-left: 0; cursor: pointer; }
+  .wcal .wd img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .wcal b { position: absolute; right: 3px; top: 3px; z-index: 1; font: 500 9.5px/1 var(--sans); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .wcal .wd b { color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.6); }
+  .wcal .today::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--red); z-index: 2; }
+  .wcal .today b { color: var(--red); font-weight: 700; }
+  .wcal .sel::before { content: ""; position: absolute; inset: 0; z-index: 2; box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3.5px var(--ink); }
+  .wcal .mark { position: absolute; z-index: 3; left: 3px; top: 3px; width: 6px; height: 8px; border-radius: 1px; background: #FBFAF6; border: 1.2px solid var(--red); }
+  .leaf { position: absolute; left: 0; right: 0; transform-origin: 50% 0; transform-style: preserve-3d; z-index: 3; pointer-events: none; }
+  .leaf > div { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+  .leaf .fr { border-radius: 0 0 18px 18px; } .leaf .bk { transform: rotateX(180deg); border-radius: 18px 18px 0 0; }
+  .leaf .shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 4; }
+  .leaf .fr .shade { background: linear-gradient(180deg, rgba(20,20,30,.05), rgba(20,20,30,.35)); } .leaf .bk .shade { background: linear-gradient(0deg, rgba(20,20,30,.05), rgba(20,20,30,.4)); }
+  .mcal .cast { position: absolute; left: 0; right: 0; height: 50%; pointer-events: none; opacity: 0; z-index: 2; }
+  .mcal .rings { position: absolute; left: 0; right: 0; height: 22px; display: flex; justify-content: space-between; padding: 0 9%; z-index: 5; pointer-events: none; }
+  .mcal .rings i { width: 9px; height: 22px; border-radius: 6px; border: 2px solid #b9b9bf; border-left-color: #e9e9ee; border-right-color: #8f8f96; box-shadow: 0 1px 1px rgba(0,0,0,.15); }
+  .mcal .rings i:nth-child(n+4):nth-child(-n+5) { visibility: hidden; }
+  .wnav { display: flex; gap: 10px; }
+  .wnav button { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .wnav button:disabled { opacity: .35; } .wnav svg { width: 18px; height: 18px; position: relative; z-index: 1; }
+  #sharesheet { z-index: 45; }
+  @media (prefers-reduced-motion: reduce) { .daypg, .year, .full { transition: opacity .2s; } }
 </style>
 </head>
 <body>
 <main class="app" id="app">
-  <div class="dow" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-  <div class="scroll" id="scroll"></div>
+  <button type="button" class="glass openfull" id="openfull" aria-label="See all months"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg><span>All months</span></button>
+  <div class="wall" id="wall">
+    <div class="mcal" id="mcal"><div class="half top" id="mtop"></div><div class="half bot" id="mbot"></div><i class="cast" id="mcast"></i><div class="leaf" id="leaf" hidden><div class="fr"></div><div class="bk"></div></div><div class="rings" id="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><i class="frame"></i></div>
+    <div class="wnav"><button type="button" class="glass" id="wprev" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="glass" id="wnext" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
+  </div>
+  <section class="full" id="full" aria-label="All months" aria-hidden="true">
+    <div class="fhead"><div class="ftop"><button type="button" class="glass back" id="fback" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>All months</h1><span></span></div>
+      <div class="dow" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div></div>
+    <div class="scroll" id="scroll"></div>
+  </section>
   <section class="year" id="year" aria-label="The year" aria-hidden="true"></section>
   <section class="daypg" id="daypg" aria-hidden="true">
     <div class="top"><button type="button" class="glass back" id="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="dtitle"></h1><span></span></div>
@@ -150,9 +208,67 @@
       '<div class="grid">' + cells.join('') + '</div></section>';
   }).join('') + (days.size ? '' : '<p class="hint">Your photos will fill in your days.</p>');
   scroll.querySelectorAll('img[data-src]').forEach((im) => { im.onload = () => im.classList.add('in'); io.observe(im); });
-  scroll.scrollTop = scroll.scrollHeight;   // open on this month
-  // tapping the Calendar tab again: back to this month
-  if (window.PotoNative) PotoNative.onShown = () => {};
+  // the full view: pushed in from the right, opening on this month
+  const full = $('full');
+  $('openfull').onclick = () => { full.classList.add('on'); full.setAttribute('aria-hidden', 'false'); scroll.scrollTop = scroll.scrollHeight; };
+  const closeFull = () => { full.classList.remove('on'); full.setAttribute('aria-hidden', 'true'); };
+  $('fback').onclick = closeFull;
+
+  // ---- the wall calendar (the page you land on): a month's photo on top, its days below; tap a day to make it the photo, tap the photo to open the day ----
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, hero = {};
+  let wi = months.length - 1, wflip = false;
+  const dk = (mi, d) => key(new Date(months[mi].getFullYear(), months[mi].getMonth(), d));
+  const lastDay = (mi) => { for (let d = count(months[mi]); d >= 1; d--) if (days.has(dk(mi, d))) return d; return 0; };
+  function heroHTML(mi) {
+    const m = months[mi], d = hero[mi] != null ? hero[mi] : lastDay(mi), list = d ? days.get(dk(mi, d)) : null;
+    return '<div class="hero' + (list ? '' : ' blank') + '"' + (list ? ' data-k="' + dk(mi, d) + '" role="button" aria-label="Open ' + d + ' ' + MONTH[m.getMonth()] + '"' : '') + '>' + (list ? '<img src="' + ph(list[0].src, '-s') + '" alt="">' : '') +
+      '<span class="m">' + MONTH[m.getMonth()] + '</span><span class="y">' + m.getFullYear() + '</span>' + (list ? '<span class="d">' + DAYN[new Date(m.getFullYear(), m.getMonth(), d).getDay()].slice(0, 3) + ' ' + d + ' · ' + list.length + (list.length > 1 ? ' photos' : ' photo') + '</span>' : '') + '</div>';
+  }
+  function pageHTML(mi) {
+    const m = months[mi], sel = hero[mi] != null ? hero[mi] : lastDay(mi); let h = '<div class="wpage"><div class="wdow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="wcal">';
+    for (let i = 0; i < lead(m); i++) h += '<span></span>';
+    for (let d = 1; d <= count(m); d++) { const k = dk(mi, d), list = days.get(k), cls = (k === today ? ' today' : '') + (list && d === sel ? ' sel' : ''), mk = recvOn.has(k) ? '<i class="mark"></i>' : '';
+      h += list ? '<button type="button" class="wd' + cls + '" data-d="' + d + '" aria-label="' + d + ' ' + MONTH[m.getMonth()] + '"><img src="' + ph(list[0].src, '-t') + '" alt="" decoding="async"><b>' + d + '</b>' + mk + '</button>' : '<span class="' + cls.trim() + '"><b>' + d + '</b>' + mk + '</span>'; }
+    for (let i = lead(m) + count(m); i < 42; i++) h += '<span></span>';   // always six rows: every page the same height
+    return h + '</div></div>';
+  }
+  const mtop = $('mtop'), mbot = $('mbot'), leaf = $('leaf'), mcal = $('mcal'), wall = $('wall');
+  function sizeWall() {   // as big as fits between the top and the bar
+    const avail = wall.clientHeight - 62, W = Math.max(220, Math.min(400, innerWidth - 32, (avail - 52) / 1.72));
+    mcal.style.width = W + 'px'; const H = mbot.offsetHeight; mtop.style.height = H + 'px'; leaf.style.top = H + 'px'; leaf.style.height = H + 'px'; $('rings').style.top = H - 11 + 'px';
+  }
+  function showMonth() { mtop.innerHTML = heroHTML(wi); mbot.innerHTML = pageHTML(wi); sizeWall(); $('wprev').disabled = wi === 0; $('wnext').disabled = wi === months.length - 1; }
+  mbot.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-d]'); if (!b || wflip) return; hero[wi] = +b.dataset.d;
+    mbot.querySelectorAll('.sel').forEach((c) => c.classList.remove('sel')); b.classList.add('sel');
+    const old = mtop.querySelector('.hero'), neu = document.createRange().createContextualFragment(heroHTML(wi)).firstChild, img = neu.querySelector('img');
+    neu.style.opacity = 0; mtop.appendChild(neu); const go = () => { neu.style.transition = 'opacity .4s'; requestAnimationFrame(() => { neu.style.opacity = 1; setTimeout(() => old.remove(), 420); }); };
+    img && !img.complete ? (img.onload = img.onerror = go) : go();
+    try { navigator.vibrate && navigator.vibrate(4); } catch (e2) {}
+  });
+  mtop.addEventListener('click', (e) => { const h = e.target.closest('.hero[data-k]'); if (h && !wflip) openDay(h.dataset.k); });
+  // flip: forward, the days page swings up over the rings and its back is next month's photo; back, the photo swings down
+  function wflipTo(dir) {
+    if (wflip) return; const to = wi + dir; if (to < 0 || to >= months.length) return; wflip = true;
+    const fr = leaf.querySelector('.fr'), bk = leaf.querySelector('.bk');
+    if (dir > 0) { fr.innerHTML = pageHTML(wi) + '<i class="shade"></i>'; bk.innerHTML = heroHTML(to) + '<i class="shade"></i>'; mbot.innerHTML = pageHTML(to); }
+    else { fr.innerHTML = pageHTML(to) + '<i class="shade"></i>'; bk.innerHTML = heroHTML(wi) + '<i class="shade"></i>'; mtop.innerHTML = heroHTML(to); }
+    leaf.hidden = false;
+    const T = reduced ? 1 : 900, ease = 'cubic-bezier(.45,.05,.2,1)';
+    const frames = dir > 0 ? [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(110deg)', offset: 0.55 }, { transform: 'rotateX(184deg)', offset: 0.86 }, { transform: 'rotateX(180deg)' }]
+                           : [{ transform: 'rotateX(180deg)' }, { transform: 'rotateX(70deg)', offset: 0.55 }, { transform: 'rotateX(-4deg)', offset: 0.86 }, { transform: 'rotateX(0deg)' }];
+    leaf.querySelectorAll('.shade').forEach((sh) => sh.animate([{ opacity: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: T, easing: ease }));
+    const cast = $('mcast'); cast.style.top = dir > 0 ? mtop.offsetHeight + 'px' : '0px';
+    cast.style.background = dir > 0 ? 'linear-gradient(180deg, rgba(20,20,30,.25), rgba(20,20,30,0) 70%)' : 'linear-gradient(0deg, rgba(20,20,30,.25), rgba(20,20,30,0) 70%)';
+    cast.animate([{ opacity: 0.9 }, { opacity: 0 }], { duration: T * 0.6, easing: 'ease-out', fill: 'forwards' });
+    try { navigator.vibrate && navigator.vibrate(6); } catch (e) {}
+    leaf.animate(frames, { duration: T, easing: ease }).onfinish = () => { leaf.hidden = true; wi = to; showMonth(); wflip = false; };
+  }
+  $('wprev').onclick = () => wflipTo(-1); $('wnext').onclick = () => wflipTo(1);
+  { let sx = 0, sy = 0, on = false; mcal.addEventListener('pointerdown', (e) => { on = true; sx = e.clientX; sy = e.clientY; });
+    mcal.addEventListener('pointerup', (e) => { if (!on) return; on = false; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) wflipTo(dx < 0 ? 1 : -1); });
+    mcal.addEventListener('pointercancel', () => (on = false)); }
+  showMonth(); addEventListener('resize', sizeWall); addEventListener('load', sizeWall);
 
   // ---- the year ----
   const year = $('year');
@@ -199,7 +315,7 @@
   daypg.addEventListener('pointerdown', (e) => { if (e.clientX < 28) edge = { x: e.clientX, id: e.pointerId }; });
   daypg.addEventListener('pointermove', (e) => { if (!edge || e.pointerId !== edge.id) return; const dx = Math.max(0, e.clientX - edge.x); daypg.style.transition = 'none'; daypg.style.transform = 'translateX(' + dx + 'px)'; });
   daypg.addEventListener('pointerup', (e) => { if (!edge) return; const dx = e.clientX - edge.x; edge = null; daypg.style.transition = ''; daypg.style.transform = ''; if (dx > innerWidth * 0.3) closeDay(); });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (sheet.classList.contains('on')) $('sclose').click(); else if (daypg.classList.contains('on')) closeDay(); else closeYear(); } });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (sheet.classList.contains('on')) $('sclose').click(); else if (daypg.classList.contains('on')) closeDay(); else if (year.classList.contains('on')) closeYear(); else closeFull(); } });
 
   // ---- share the month: the calendar as a Story or Post ----
   const sheet = $('sharesheet'), sh = { fmt: 'story', mi: 0 }, load = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });

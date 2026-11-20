@@ -81,7 +81,11 @@
   }
   const frameOf = (win) => [cam, sheet, ...Object.values(frames)].find((f) => f && f.contentWindow === win);
 
+  // the phone's safe areas, measured once here (frames never get them) and handed to every page
+  const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+  document.body.appendChild(probe); const cs = getComputedStyle(probe), INSETS = { top: parseFloat(cs.paddingTop) || 0, bottom: parseFloat(cs.paddingBottom) || 0 }; probe.remove();
   window.PotoShell = {
+    insets: () => INSETS,
     shotURL: (path) => { const m = String(path).match(/shots\/\d+(-s|-t)?\.jpg/); return m ? urls[m[0]] || null : null; },
     receive(win, m) {
       const from = frameOf(win);

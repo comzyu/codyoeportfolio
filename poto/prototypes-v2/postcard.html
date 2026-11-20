@@ -11,7 +11,7 @@
 <style>
   #stage { position: absolute; inset: 0; }
   #stage canvas { display: block; width: 100%; height: 100%; }
-  .tray { position: absolute; z-index: 6; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 14px) scale(.96); display: flex; gap: 4px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .4s var(--spring); }
+  .tray { position: absolute; z-index: 6; left: 50%; bottom: calc(80px + var(--safe-bottom)); transform: translate(-50%, 14px) scale(.96); display: flex; gap: 4px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .4s var(--spring); }
   .tray.open { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
   .tray button { height: 40px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; position: relative; }
   .tray button i { width: 16px; height: 16px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
@@ -24,26 +24,26 @@
     background: rgba(255,255,255,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(20,20,30,.22), inset 0 -1px 0 rgba(20,20,30,.12);
     transition: transform .09s cubic-bezier(.2,.8,.2,1), opacity .25s, background .2s; will-change: transform; }
   .writing .cap { opacity: 1; } .cap.bell { background: rgba(255,214,120,.8); }
-  .done { position: absolute; z-index: 8; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px)); height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 600; font-size: 14px; color: #fff; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .done { position: absolute; z-index: 8; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(14px + var(--safe-top)); height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 600; font-size: 14px; color: #fff; background: var(--ink); opacity: 0; pointer-events: none; transition: opacity .25s; }
   /* selecting: soft highlight boxes on the card, and a small glass bar with Select all / Delete */
   .hl { position: fixed; z-index: 6; left: 0; top: 0; border-radius: 5px; background: rgba(70, 120, 255, .2); box-shadow: inset 0 0 0 1px rgba(70,120,255,.28); pointer-events: none; transform-origin: 0 0; }
-  .edit { position: absolute; z-index: 8; left: 50%; top: calc(62px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -6px); display: flex; gap: 2px; padding: 4px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
+  .edit { position: absolute; z-index: 8; left: 50%; top: calc(62px + var(--safe-top)); transform: translate(-50%, -6px); display: flex; gap: 2px; padding: 4px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
   .writing .edit { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
   .edit button { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink-2); position: relative; }
   .edit button.on { color: #fff; background: var(--ink); } .edit [hidden] { display: none; }
   .writing .done { opacity: 1; pointer-events: auto; } .writing .dock, .writing .hint, .writing .tray { opacity: 0 !important; pointer-events: none !important; }
-  .left { position: absolute; z-index: 8; left: 0; right: 0; pointer-events: none; top: calc(26px + env(safe-area-inset-top, 0px)); text-align: center; opacity: 0; transition: opacity .25s; } .writing .left { opacity: 1; } .writing #side { opacity: 0; }
+  .left { position: absolute; z-index: 8; left: 0; right: 0; pointer-events: none; top: calc(26px + var(--safe-top)); text-align: center; opacity: 0; transition: opacity .25s; } .writing .left { opacity: 1; } .writing #side { opacity: 0; }
   #ta { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0; resize: none; }
   .finish { height: 40px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink); min-width: 84px; }
   .writing .finish { opacity: 0; pointer-events: none; }
   /* sticker mode: a dashed ring round the picked sticker and a bar of actions */
   .ring { position: fixed; z-index: 6; left: 0; top: 0; border-radius: 50%; border: 1.5px dashed rgba(20,20,22,.55); pointer-events: none; opacity: 0; transition: opacity .2s; box-shadow: 0 0 0 4px rgba(255,255,255,.5); }
   .picking .ring { opacity: 1; }
-  .sbar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); display: flex; align-items: center; gap: 2px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
+  .sbar { position: absolute; z-index: 8; left: 50%; bottom: calc(18px + var(--safe-bottom)); transform: translate(-50%, 12px); display: flex; align-items: center; gap: 2px; padding: 5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
   .picking .sbar { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); } .picking .dock, .picking .hint { opacity: 0 !important; pointer-events: none !important; }
   .sbar button { white-space: nowrap; height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-2); position: relative; }
   .sbar button.on { color: #fff; background: var(--ink); }
-  .shint { position: absolute; z-index: 8; left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transition: opacity .2s; pointer-events: none; } .picking .shint { opacity: 1; }
+  .shint { position: absolute; z-index: 8; left: 0; right: 0; bottom: calc(80px + var(--safe-bottom)); text-align: center; opacity: 0; transition: opacity .2s; pointer-events: none; } .picking .shint { opacity: 1; }
   /* four actions: tighter so the bar fits a 360 px phone */
   .dock { gap: 0; } .dock .sep { margin: 0; } .dock button { padding: 0 11px; gap: 6px; font-size: 13.5px; }
   .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 40px; text-align: center; color: var(--ink-2); }
@@ -58,7 +58,7 @@
   .bbar { width: min(40vw, 160px); height: 2px; border-radius: 2px; background: var(--hair); overflow: hidden; } .bbar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .5s var(--ease); }
   .bstep { color: var(--ink-3); }
   /* the handwritten note editor */
-  .notebar { position: absolute; z-index: 9; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: min(92vw, 400px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 10px; border-radius: 22px; display: grid; gap: 6px; transition: opacity .25s, transform .4s var(--spring); }
+  .notebar { position: absolute; z-index: 9; left: 50%; bottom: calc(18px + var(--safe-bottom)); width: min(92vw, 400px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 10px; border-radius: 22px; display: grid; gap: 6px; transition: opacity .25s, transform .4s var(--spring); }
   .noting .notebar { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
   .notebar input { height: 40px; border: 0; border-radius: 14px; padding: 0 14px; background: rgba(255,255,255,.75); font: 400 22px/1 "La Belle Aurore", cursive; color: #1c2947; box-shadow: inset 0 0 0 1px var(--hair); }
   .notebar .row2 { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; } .notebar .row2 button { height: 34px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; }
