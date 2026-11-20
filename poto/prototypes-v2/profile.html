@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Poto · Desk</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Special+Elite&family=La+Belle+Aurore&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
 <script src="lib/develop.js" defer></script>
 <style>
@@ -84,6 +84,57 @@
   .top { position: absolute; z-index: 7; }
   .top .right { display: flex; gap: 8px; }
   .who h1 { pointer-events: auto; cursor: pointer; }
+  /* the profile (Cody, 20 Nov): picture, name, bio and a Customise button above the desk; Customise opens the desk full screen */
+  .scroll > .pad:first-child { right: 0; top: calc(var(--safe-top) + 16px); padding-right: max(20px, env(safe-area-inset-right, 0px)); transition: opacity .25s, transform .35s var(--ease); }
+  .who .av { display: block !important; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: 0 0 0 2px #fff, 0 6px 14px -6px rgba(0,0,0,.35); }
+  .who .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .who h1 { font: 600 22px/1.15 var(--sans) !important; letter-spacing: -.02em; color: var(--ink); }
+  .who .handle { display: block; margin-top: 3px; font: 400 14px/1.2 var(--sans); color: var(--ink-2); }
+  .bio { margin: 12px 0 0; max-width: 34ch; font: 400 15px/1.4 var(--sans); color: var(--ink); }
+  .prow { margin-top: 14px; display: flex; gap: 8px; } .pbtn { height: 36px; padding: 0 16px; border-radius: 999px; font: 500 14px/1 var(--sans); color: var(--ink); } .pbtn span { position: relative; z-index: 1; }
+  .scroll > .pad:last-of-type { top: calc(var(--safe-top) + 196px) !important; transition: top .4s var(--ease); }
+  .desk { border-radius: 24px 24px 0 0; }
+  .app.editing .scroll > .pad:first-child { opacity: 0; transform: translateY(-16px); pointer-events: none; }
+  .app.editing .scroll > .pad:last-of-type { top: 0 !important; } .app.editing .desk { border-radius: 0; }
+  .app:not(.editing) .top .right { display: none; }
+  .app.editing ~ .potobar, .app.editing .potobar { display: none; }
+  .donebtn { height: 40px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: var(--room); font: 600 14px/1 var(--sans); }
+  /* draw */
+  #ink { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 950; pointer-events: none; }
+  .app.drawing #ink { pointer-events: auto; cursor: crosshair; }
+  .drawbar { position: fixed; z-index: 60; left: 50%; bottom: calc(var(--safe-bottom) + 18px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 999px; transition: opacity .2s, transform .3s var(--spring); }
+  .app.drawing .drawbar { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  .drawbar > * { position: relative; z-index: 1; }
+  .drawbar [data-c] { width: 30px; height: 30px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
+  .drawbar [data-c].on { box-shadow: 0 0 0 2px var(--room), 0 0 0 4px var(--ink); }
+  .drawbar #undo, .drawbar .dd { height: 36px; padding: 0 14px; border-radius: 999px; font: 500 14px/1 var(--sans); color: var(--ink); } .drawbar .dd { background: var(--ink); color: var(--room); }
+  .app.drawing #drawbtn { background: var(--ink); color: var(--room); }
+  /* postcards on the desk: the same card as Home, and they turn over */
+  .obj.card { padding: 0; background: none; aspect-ratio: 1024 / 1448; perspective: 900px; }
+  .obj.card .flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,1.2,.45,1); }
+  .obj.card.over .flip { transform: rotateY(180deg); }
+  .obj.card .cf { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #FAF9F5; border-radius: 2px; overflow: hidden; }
+  .obj.card .cf img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; display: block; }
+  .obj.card .cf.back { transform: rotateY(180deg); }
+  .obj.card .fstamp, .obj.card .pclip { transition: opacity .25s; } .obj.card.over .fstamp, .obj.card.over .pclip { opacity: 0; }
+  /* things */
+  .obj.camera .sh, .obj.stapler .sh, .obj.binder .sh, .obj.pin .sh, .obj.sticker .sh, .obj.note .sh { display: none; }
+  .obj.stapler svg, .obj.binder svg, .obj.pin svg, .obj.sticker svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 4px rgba(0,0,0,.25)); }
+  .obj.camera .pcam { filter: drop-shadow(0 8px 8px rgba(0,0,0,.25)); }
+  .obj.note { aspect-ratio: 1; background: #FFE98A; box-shadow: 0 1px 2px rgba(0,0,0,.15), 0 10px 14px -8px rgba(0,0,0,.3); padding: 10px 12px; box-sizing: border-box; overflow: hidden; }
+  .obj.note .nt { font: 400 17px/1.25 "La Belle Aurore", cursive; color: #1c2947; outline: none; word-break: break-word; min-height: 100%; }
+  .tiles .pc small { position: absolute; left: 6px; bottom: 6px; padding: 3px 6px; border-radius: 999px; background: rgba(255,255,255,.85); font: 500 10.5px/1 var(--sans); color: var(--ink); }
+  .tiles .cm small { display: block; margin-top: 4px; font: 500 11px/1 var(--sans); color: var(--ink-2); }
+  .tiles button.thing { grid-template-rows: 1fr auto; padding: 8px 4px 9px; }
+  .tiles .th { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; } .tiles .th svg { width: 62%; max-height: 72%; }
+  .tiles .th.k-clip svg { width: 22%; } .tiles .th.k-pin svg, .tiles .th.k-binder svg { width: 40%; } .tiles .th.k-sticker svg { width: 50%; }
+  .tiles .th .tp { width: 78%; height: 16px; background: rgba(238,226,190,.85); transform: rotate(-8deg); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .tiles .th .nn { width: 58%; aspect-ratio: 1; background: #FFE98A; transform: rotate(3deg); box-shadow: 0 2px 4px rgba(0,0,0,.18); }
+  .dtabs button { padding: 0 11px !important; }
+  .tiles .cm .pcam { width: 80%; margin: 8px auto 0; }
+  .app:not(.editing) .top { display: none; }
+  .dtabs { overflow-x: auto; scrollbar-width: none; } .dtabs::-webkit-scrollbar { display: none; } .dtabs button { flex: none; }
+  .who, .bio, .prow { pointer-events: auto; }
   /* the desk menu (…): surface and tidy, out of the way */
   .deskmenu { position: absolute; z-index: 9; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(var(--safe-top) + 66px); padding: 10px; border-radius: 22px; display: grid; gap: 8px; justify-items: end; opacity: 0; pointer-events: none; transform: translateY(-6px) scale(.97); transform-origin: 100% 0; transition: opacity .18s, transform .25s var(--spring); }
   .deskmenu.on { opacity: 1; pointer-events: auto; transform: none; }
@@ -128,12 +179,12 @@
 <main class="app" id="app">
   <header class="top">
     <a class="glass round" style="color:inherit" href="index.html" aria-label="Back to all prototypes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <div class="right"><button type="button" class="glass round" id="more" aria-label="Desk options" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button><button type="button" class="glass round add" id="add" aria-label="Put something on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <div class="right"><button type="button" class="glass round" id="drawbtn" aria-label="Draw on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button><button type="button" class="glass round" id="more" aria-label="Desk options" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button><button type="button" class="glass round add" id="add" aria-label="Put something on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" class="donebtn" id="donebtn">Done</button></div>
   </header>
   <div class="scroll" id="scroll">
     <div class="pad">
-      <div class="who"><span class="av"><img src="img/photo-04-t.jpg" alt=""></span><div><h1>cody<span>@cody</span></h1></div></div>
-      <div class="stats mono" id="stats"></div>
+      <div class="who"><span class="av"><img src="img/photo-04-t.jpg" alt=""></span><div><h1>cody</h1><span class="handle">@cody</span></div></div>
+      <p class="bio">film, friends and postcards. singapore.</p><div class="prow"><button type="button" class="glass pbtn" id="custom"><span>Customise desk</span></button></div><div class="stats" id="stats" hidden></div>
       <div class="row">
         <div class="seg glass" role="group" aria-label="Desk surface" id="surf"><button type="button" data-s="paper">Paper</button><button type="button" data-s="linen">Linen</button><button type="button" data-s="cork">Cork</button><button type="button" data-s="black">Black</button></div>
         <button type="button" class="glass tidy" id="tidy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Tidy up</span></button>
@@ -142,17 +193,19 @@
     <div class="pad"><div class="desk" id="desk" role="application" aria-label="Your desk. Drag things to move them; pinch or use the round handle to turn them."><button type="button" class="ring glass" id="ring" aria-label="Turn and resize"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button></div></div>
     <p class="dhint mono" id="hint">Drag to move · pinch or the round handle to turn</p>
   </div>
-  <div class="selbar glass" id="selbar"><button type="button" id="front">Bring to front</button><button type="button" id="remove">Remove</button><button type="button" class="on" id="done">Done</button></div>
+  <div class="selbar glass" id="selbar"><button type="button" id="flipsel">Flip</button><button type="button" id="front">Bring to front</button><button type="button" id="remove">Remove</button><button type="button" class="on" id="done">Done</button></div>
   <div class="deskmenu glass" id="deskmenu" role="menu" aria-label="Desk options"></div>
   <div class="ndim" id="ndim"></div>
+  <div class="drawbar glass" id="drawbar"><button type="button" data-c="#1A1917" class="on" aria-label="Ink"></button><button type="button" data-c="#B8442F" aria-label="Red"></button><button type="button" data-c="#2E56A0" aria-label="Blue"></button><button type="button" id="undo">Undo</button><button type="button" class="dd" id="drawdone">Done</button></div>
   <section class="namesheet glass" id="namesheet" aria-label="Your profile" aria-hidden="true"><div class="grip"></div>
     <div class="me"><img src="img/photo-04-t.jpg" alt=""><div><b>cody</b><span>@cody</span></div><i id="nstamp"></i></div>
     <div class="rows"><button type="button" data-row>Friends<small>12</small></button><button type="button" data-row>Invite a friend</button><button type="button" data-row>Poto+</button><button type="button" data-row>Settings</button></div>
   </section>
   <section class="drawer glass" id="drawer" aria-label="Put on the desk" aria-hidden="true"><div class="grip"></div>
-    <div class="seg glass dtabs" role="tablist" aria-label="What to add"><button type="button" data-sec="prints" aria-pressed="true">Prints</button><button type="button" data-sec="cards" aria-pressed="false">Postcards</button><button type="button" data-sec="stamps" aria-pressed="false">Stamps</button><button type="button" data-sec="things" aria-pressed="false">Things</button></div>
+    <div class="seg glass dtabs" role="tablist" aria-label="What to add"><button type="button" data-sec="prints" aria-pressed="true">Prints</button><button type="button" data-sec="cards" aria-pressed="false">Postcards</button><button type="button" data-sec="cams" aria-pressed="false">Cameras</button><button type="button" data-sec="stamps" aria-pressed="false">Stamps</button><button type="button" data-sec="things" aria-pressed="false">Things</button></div>
     <div class="dsec" data-sec="prints"><div class="tiles" id="tprints"></div></div>
     <div class="dsec" data-sec="cards"><div class="tiles" id="tcards"></div></div>
+    <div class="dsec" data-sec="cams"><div class="tiles" id="tcams"></div></div>
     <div class="dsec" data-sec="stamps"><span id="nstamps" hidden></span><a class="mk" href="stamp.html"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h12v18H6z" stroke-dasharray="2 2.6"/><path d="M9 7h6v7H9z"/></svg>Cut a stamp from a photo</a><div class="tiles" id="tstamps"></div></div>
 
         <div class="dsec" data-sec="things"><div class="tiles" id="tbits"></div></div>
@@ -166,6 +219,7 @@
 <script src="lib/paper.js"></script>
 <script src="lib/texture.js"></script>
 <script src="lib/canister.js"></script>
+<script src="lib/cams.js"></script>
 <script src="lib/stamp.js"></script>
 <script>
 PotoTex.install();
@@ -174,7 +228,7 @@ const ph = (n, sz) => typeof n === 'string' ? n.replace('.jpg', (sz || '-s') + '
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 const desk = $('desk'), ring = $('ring');
 // sizes as a fraction of the desk's width
-const SIZE = { print: 0.3, card: 0.36, stamp: 0.17, can: 0.12, clip: 0.05, tape: 0.2 };
+const SIZE = { print: 0.3, card: 0.36, stamp: 0.17, can: 0.12, clip: 0.05, tape: 0.2, camera: 0.3, stapler: 0.3, binder: 0.09, pin: 0.06, sticker: 0.1, note: 0.26 };
 let stamps = store.get('poto.stamps', []);                       // [{id, png (data URL), shape, from}]
 // ---- the desk's state: where everything lies. Scattered like a real desk to start; you move it from there ----
 const START = [
@@ -214,22 +268,64 @@ const CLIPSVG = '<svg viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-wi
 const CLIPMETAL = '<svg viewBox="0 0 20 52" fill="none" stroke-linecap="round"><defs><linearGradient id="metal" x1="0" x2="1"><stop offset="0" stop-color="#7d7f86"/><stop offset=".45" stop-color="#e9eaee"/><stop offset=".6" stop-color="#b5b7be"/><stop offset="1" stop-color="#6c6e75"/></linearGradient></defs>' +
   '<path d="M6 14v24a4 4 0 008 0V10a6 6 0 00-12 0v30a8 8 0 0016 0V16" stroke="#4e5057" stroke-width="3.4" opacity=".55"/><path d="M6 14v24a4 4 0 008 0V10a6 6 0 00-12 0v30a8 8 0 0016 0V16" stroke="url(#metal)" stroke-width="2.4"/><path d="M5.4 15v22" stroke="#fff" stroke-width=".7" opacity=".7"/></svg>';
 const fstamp = (it) => '<span class="fstamp"><span class="p"><img src="' + ph(it.stamp || it.src, '-t') + '" alt="" draggable="false"><span class="foot"><span>POTO</span><span>27</span></span></span><i class="pm"></i></span><span class="pclip">' + CLIPMETAL + '</span>';
+// ---- things to decorate the desk with ----
+const THINGS = {
+  stapler: '<svg viewBox="0 0 120 40"><rect x="4" y="24" width="112" height="11" rx="5.5" fill="#2b2b2e"/><path d="M8 24C22 6 100 5 116 18v6z" fill="#B8442F"/><path d="M14 16C40 9 90 9 110 16" stroke="#fff" stroke-width="2" opacity=".35" fill="none"/><rect x="10" y="32" width="100" height="4" rx="2" fill="#9a9aa2"/></svg>',
+  binder: '<svg viewBox="0 0 40 46"><path d="M6 20h28v20a4 4 0 01-4 4H10a4 4 0 01-4-4z" fill="#1d1d20"/><path d="M8 22h24" stroke="#fff" stroke-width="1" opacity=".2"/><path d="M12 20L8 4M28 20l4-16M8 4h24" stroke="#b9b9bf" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>',
+  pin: '<svg viewBox="0 0 30 40"><path d="M15 24v14" stroke="#9a9aa2" stroke-width="2" stroke-linecap="round"/><ellipse cx="15" cy="13" rx="11" ry="10" fill="#C8553A"/><ellipse cx="11" cy="9" rx="4" ry="3" fill="#fff" opacity=".45"/></svg>',
+  sticker: { Star: '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z" fill="#FFD84D" stroke="#fff" stroke-width="1.6"/></svg>', Heart: '<svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0112 7.3 4.3 4.3 0 0119.5 10c0 5.4-7.5 10-7.5 10z" fill="#FF6B8B" stroke="#fff" stroke-width="1.6"/></svg>', Dot: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#5B8CFF" stroke="#fff" stroke-width="1.6"/></svg>' },
+};
+// postcards you were sent (the samples Home shows)
+const RECV = [{ photo: 3, from: 'alva', where: 'New York', stamp: 7, msg: 'the market at 9pm. everything lit up at once.' }, { photo: 9, from: 'bubu', where: 'Copenhagen', stamp: 4, msg: 'look at this sky. i stopped walking for it.' },
+  { photo: 6, from: 'pupu', where: 'Shanghai', stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.' }, { photo: 2, from: 'vava', where: 'Paris', stamp: 8, msg: 'made it to the top. legs gone, view not.' }, { photo: 5, from: 'alal', where: 'Berlin', stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.' }];
+// ---- postcards on the desk: the same textured card as Home, both faces, so they can turn over ----
+const NAMEC = { alva: 'us', pupu: 'cn', bubu: 'dk', vava: 'fr', alal: 'de', cody: 'us' }, STRIPS = { us: ['#B22234', '#F4F1EA', '#3C3B6E'], cn: ['#DE2910', '#FFDE00', '#DE2910'], dk: ['#C8102E', '#F4F1EA', '#C8102E'], fr: ['#0055A4', '#F4F1EA', '#EF4135'], de: ['#1B1B1B', '#DD0000', '#FFCE00'] };
+const full = (n) => typeof n === 'string' ? n : 'img/photo-' + String(n).padStart(2, '0') + '.jpg';
+const loadImg = (src) => new Promise((r) => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
+const toURL = (c) => new Promise((r) => c.toBlob((b) => r(URL.createObjectURL(b)), 'image/jpeg', 0.9));
+const wrap = (t, w) => { const out = []; let line = ''; for (const word of String(t).split(/\s+/)) { if (!word) continue; if ((line + ' ' + word).trim().length > w) { out.push(line); line = word; } else line = (line + ' ' + word).trim(); } if (line) out.push(line); return out; };
+const fontsIn = Promise.race([Promise.all(['37px "Special Elite"', '24px "Special Elite"', '56px "La Belle Aurore"', '500 19px "IBM Plex Mono"', '600 38px Inter'].map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
+function byline(t, img, name) {
+  const r = 33, cx = 43 + 4 + r, cy = 1448 - (1448 - 43 - Math.round((1024 - 86) * 4 / 3)) / 2;
+  for (const c of [t.col, t.map3d]) { const g = c.getContext('2d'); g.save(); g.save(); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.clip();
+    if (img) { const k = Math.max(2 * r / img.width, 2 * r / img.height); g.drawImage(img, cx - img.width * k / 2, cy - img.height * k / 2, img.width * k, img.height * k); }
+    g.restore(); g.font = '600 38px Inter, -apple-system, system-ui, sans-serif'; g.textBaseline = 'middle'; g.fillStyle = '#1A1917'; g.fillText('@' + name, cx + r + 18, cy + 2); g.restore(); }
+}
+const FACES = new Map();
+function cardFaces(it) {
+  if (!window.PotoPaper) return Promise.resolve(null);
+  if (!FACES.has(it.id)) FACES.set(it.id, fontsIn.then(async () => {
+    const who = it.from || 'cody', c = NAMEC[who] || 'us';
+    const [photo, av, design, seal] = await Promise.all([loadImg(full(it.src)), loadImg(ph(it.stamp || 4, '-t')), loadImg('img/backs/' + c + '.jpg'), loadImg('img/backs/seal-' + c + '.png')]);
+    if (!photo) return null;
+    await new Promise((r) => setTimeout(r, 0)); const f = PotoPaper.front(photo, '', 'matte'); byline(f, av, who);
+    await new Promise((r) => setTimeout(r, 0));
+    const b = PotoPaper.back(photo, { message: wrap(it.msg || '', 25).slice(0, 6), note: who === 'cody' ? ['a photo for you,', 'from cody'] : ['for cody,', who], noteLabel: 'NOTE', caption: 'Shot in ' + (it.where || 'Singapore'),
+      city: it.where || 'Singapore', look: 'Sunday', date: ['17 NOV', '2026'], stamp: !!av, stampPhoto: av || photo, design, seal, strip: STRIPS[c] }).col;
+    return { front: await toURL(f.col), back: await toURL(b) };
+  }));
+  return FACES.get(it.id);
+}
 const els = new Map();
 function make(it) {
   const el = document.createElement('div'); el.className = 'obj ' + it.type; el.dataset.id = it.id;
   if (it.type === 'print') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">15 NOV 2026</i>';
-  else if (it.type === 'card') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">' + (it.from ? 'FROM ' + it.from.toUpperCase() + (it.where ? ' · ' + it.where.split(' · ')[0].toUpperCase() : '') : 'POST CARD · SINGAPORE') + '</i>' + (it.from ? fstamp(it) : '');
+  else if (it.type === 'card') { el.innerHTML = '<i class="sh"></i><div class="flip"><div class="cf front"><img src="' + ph(it.src) + '" alt="" draggable="false"></div><div class="cf back"></div></div>' + (it.from ? fstamp(it) : ''); cardFaces(it).then((fc) => { if (!fc) return; el.querySelector('.front img').src = fc.front; el.querySelector('.back').innerHTML = '<img src="' + fc.back + '" alt="" draggable="false">'; }); }
   else if (it.type === 'stamp') { const s = stamps.find((x) => x.id === it.src); el.innerHTML = s ? '<img src="' + s.png + '" alt="" draggable="false">' : ''; }
   else if (it.type === 'can') { el.innerHTML = '<i class="sh"></i>'; const c = makeCan(byLook(it.look || 'Sunday')); c.classList.add('can-inner'); c.style.width = '100%'; c.style.height = 'auto'; c.style.aspectRatio = '58 / 92'; el.appendChild(c); }
   else if (it.type === 'clip') el.innerHTML = CLIPSVG;
   else if (it.type === 'tape') el.innerHTML = '';
+  else if (it.type === 'camera') el.appendChild(PotoCams.draw(it.cam));
+  else if (THINGS[it.type]) el.innerHTML = it.type === 'sticker' ? THINGS.sticker[it.k || 'Star'] : THINGS[it.type];
+  else if (it.type === 'note') { el.innerHTML = '<div class="nt" spellcheck="false"></div>'; el.firstChild.textContent = it.text || 'write here'; el.firstChild.oninput = () => { it.text = el.firstChild.textContent.slice(0, 80); save(); }; }
+  if (it.over) el.classList.add('over');
   desk.appendChild(el); els.set(it.id, el); return el;
 }
 function place(it, el) {
   // laid out at its natural size, then scaled as one piece: photo, border, caption and texture all keep their proportions (Cody, 17 Nov)
   const D = desk.clientWidth, H = desk.clientHeight, w = SIZE[it.type] * D, k = it.s || 1;
   if (el._w !== w) { el.style.width = w + 'px'; if (it.type === 'tape') el.style.height = w * 0.28 + 'px'; el._w = w; el._h = el.offsetHeight || w * 1.3; }
-  el.style.transform = 'translate(' + (it.x * D - w / 2).toFixed(1) + 'px,' + (it.y * H - el._h / 2).toFixed(1) + 'px) rotate(' + (it.r || 0).toFixed(1) + 'deg) scale(' + k.toFixed(3) + ')';
+  el.style.transform = 'translate(' + (it.x * D - w / 2).toFixed(1) + 'px,' + (it.y * H - el._h / 2).toFixed(1) + 'px) rotate(' + (it.r || 0).toFixed(1) + 'deg) scale(' + k.toFixed(3) + ')' + (it.m ? ' scaleX(-1)' : '');
   el.style.zIndex = it.z || 1;
 }
 function render() { for (const it of state.items) { const el = els.get(it.id) || make(it); place(it, el); } for (const [id, el] of els) if (!state.items.find((i) => i.id === id)) { el.remove(); els.delete(id); } placeRing(); }
@@ -250,6 +346,9 @@ $('surf').onclick = (e) => { const b = e.target.closest('button'); if (b) setSur
 const pts = new Map(); let g = null;
 const local = (e) => { const r = desk.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, px: e.clientX - r.left, py: e.clientY - r.top }; };
 function select(it) {
+  els.forEach((el) => { const n = el.querySelector('.nt'); if (n) n.contentEditable = 'false'; });
+  $('flipsel').hidden = !!(it && it.type === 'note');
+  if (it && it.type === 'note') { const n = els.get(it.id).querySelector('.nt'); n.contentEditable = 'true'; }
   sel = it; els.forEach((el, id) => el.classList.toggle('sel', !!it && id === it.id)); $('selbar').classList.toggle('on', !!it); placeRing();
 }
 function placeRing() {
@@ -259,6 +358,11 @@ function placeRing() {
 }
 desk.addEventListener('pointerdown', (e) => {
   if (e.target.closest('#ring')) return;
+  if (appEl.classList.contains('drawing')) return;
+  if (!appEl.classList.contains('editing')) {   // viewing a profile: postcards turn over; nothing moves
+    const c = e.target.closest('.obj.card'); if (c) { const it = state.items.find((x) => x.id === c.dataset.id); it.over = !it.over; c.classList.toggle('over', it.over); save(); try { navigator.vibrate && navigator.vibrate(5); } catch (e2) {} }
+    return;
+  }
   const el = e.target.closest('.obj'); pts.set(e.pointerId, local(e));
   if (!el) { if (pts.size === 1) select(null); return; }
   const it = state.items.find((i) => i.id === el.dataset.id); desk.setPointerCapture(e.pointerId);
@@ -311,14 +415,25 @@ $('add').onclick = () => openDrawer(!$('drawer').classList.contains('on'));
 document.addEventListener('pointerdown', (e) => { if ($('drawer').classList.contains('on') && !e.target.closest('#drawer, #add')) openDrawer(false); });
 function fillDrawer() {
   const tile = (html, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = html; b.onclick = fn; return b; };
-  const put = (it) => { openDrawer(false); if (state.tidy) setTidy(false, true); const n = Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), x: 0.5, y: 0.45, r: (Math.random() * 12 - 6), s: 1, z: ++topZ }, it); state.items.push(n); render(); save(); select(n);
+  const put = (it) => { openDrawer(false); if (state.tidy) setTidy(false, true); const n = Object.assign({ id: 'i' + Math.random().toString(36).slice(2, 8), x: 0.3 + Math.random() * 0.4, y: 0.32 + Math.random() * 0.3, r: (Math.random() * 12 - 6), s: 1, z: ++topZ }, it); state.items.push(n); render(); save(); select(n);
     const el = els.get(n.id); if (!reduced && el.animate) el.animate([{ opacity: 0, translate: '0 -40px', scale: '1.15' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 420, easing: 'cubic-bezier(.3,1.3,.5,1)' }); };
   const mine = store.get('poto.kept', []).map((o) => o.src).filter((v, k, a) => v && a.indexOf(v) === k).slice(0, 24);   // yours first, then the samples
   $('tprints').replaceChildren(...mine.map((src) => tile('<img src="' + ph(src, '-t') + '" alt="">', '', () => put({ type: 'print', src }))), ...Array.from({ length: 12 }, (_, k) => tile('<img src="' + ph(k + 1, '-t') + '" alt="">', '', () => put({ type: 'print', src: k + 1 }))));
-  $('tcards').replaceChildren(...[3, 7].map((n) => tile('<img src="' + ph(n, '-t') + '" alt="">', '', () => put({ type: 'card', src: n }))));
+  // postcards you got sent, and the ones you sent (Cody, 20 Nov: only what you were sent, or your own)
+  const sent = store.get('poto.sent', []).filter((p) => p.src).slice(0, 12);
+  $('tcards').replaceChildren(...RECV.map((p) => tile('<img src="' + ph(p.photo, '-t') + '" alt=""><small>@' + p.from + '</small>', 'pc', () => put({ type: 'card', src: p.photo, from: p.from, where: p.where, stamp: p.stamp, msg: p.msg }))),
+    ...sent.map((p) => tile('<img src="' + ph(p.src, '-t') + '" alt=""><small>yours</small>', 'pc', () => put({ type: 'card', src: p.src }))));
+  // cameras you decorated
+  const mineC = PotoCams.owned();
+  $('tcams').replaceChildren(...PotoCams.CAMS.filter((c) => mineC[c.id]).map((c) => { const b = tile('<small>' + c.id + '</small>', 'cm', () => put({ type: 'camera', cam: c.id })); b.prepend(PotoCams.draw(c.id)); return b; }));
   $('nstamps').textContent = stamps.length ? stamps.length + ' cut' : 'none yet';
   $('tstamps').replaceChildren(...stamps.map((s) => tile('<img src="' + s.png + '" alt="">', 'st', () => put({ type: 'stamp', src: s.id }))));
-  $('tbits').replaceChildren(tile('<span>Film</span>', '', () => put({ type: 'can', look: 'Harbour' })), tile('<span>Clip</span>', '', () => put({ type: 'clip' })), tile('<span>Tape</span>', '', () => put({ type: 'tape' })));
+  // things to decorate with
+  const T = [['Film', { type: 'can', look: 'Harbour' }], ['Clip', { type: 'clip' }], ['Tape', { type: 'tape' }], ['Stapler', { type: 'stapler' }], ['Binder clip', { type: 'binder' }], ['Push pin', { type: 'pin' }],
+    ['Star', { type: 'sticker', k: 'Star' }], ['Heart', { type: 'sticker', k: 'Heart' }], ['Dot', { type: 'sticker', k: 'Dot' }], ['Note', { type: 'note', text: 'write here' }]];
+  const look = (it) => it.type === 'sticker' ? THINGS.sticker[it.k] : it.type === 'clip' ? CLIPSVG : it.type === 'tape' ? '<i class="tp"></i>' : it.type === 'note' ? '<i class="nn"></i>' : it.type === 'can' ? '' : THINGS[it.type];
+  $('tbits').replaceChildren(...T.map(([n, it]) => { const b = tile('<div class="th k-' + it.type + '">' + look(it) + '</div><span>' + n + '</span>', 'thing', () => put(Object.assign({}, it)));
+    if (it.type === 'can') { const c = makeCan(byLook('Harbour')); c.classList.add('can-inner'); c.style.cssText += ';width:42%;height:auto;aspect-ratio:58/92'; b.firstChild.appendChild(c); } return b; }));
 }
 // a stamp you just cut lands on the desk
 const fresh = new URLSearchParams(location.search).get('stamp');
@@ -335,7 +450,28 @@ document.querySelectorAll('.dsec').forEach((sec) => (sec.hidden = sec.dataset.se
 { const sheet = $('namesheet'), dim = $('ndim'), openN = () => { const st = stamps[0]; $('nstamp').innerHTML = st ? '<img src="' + st.png + '" alt="Your signature stamp">' : ''; sheet.classList.add('on'); dim.classList.add('on'); sheet.setAttribute('aria-hidden', 'false'); },
     closeN = () => { sheet.classList.remove('on'); dim.classList.remove('on'); sheet.setAttribute('aria-hidden', 'true'); };
   document.querySelector('.who h1').onclick = openN; dim.onclick = closeN; sheet.querySelectorAll('[data-row]').forEach((r) => (r.onclick = closeN)); }
-init().then(() => { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300)); ['linen', 'cork', 'black', 'paper'].forEach((k, i) => idle(async () => { surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); })); if (fresh && stamps.find((s) => s.id === fresh) && !state.items.find((i) => i.src === fresh)) { const n = { id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: fresh, x: 0.5, y: 0.42, r: -5, s: 1.15, z: ++topZ }; state.items.push(n); render(); save(); select(n); paintStats(); } });
+// ---- the desk as a profile (Cody, 20 Nov): you land on the page (picture, name, bio, the desk); Customise opens the desk for arranging ----
+const appEl = $('app');
+function editMode(on) { appEl.classList.toggle('editing', on); if (!on) { select(null); openDrawer(false); drawMode(false); $('deskmenu').classList.remove('on'); }
+  setTimeout(() => { els.forEach((el) => (el._w = 0)); render(); sizeInk(); }, 430); }
+$('custom').onclick = () => editMode(true); $('donebtn').onclick = () => editMode(false);
+$('flipsel').onclick = () => { if (!sel || sel.type === 'note') return; if (sel.type === 'card') { sel.over = !sel.over; els.get(sel.id).classList.toggle('over', sel.over); } else { sel.m = !sel.m; place(sel, els.get(sel.id)); } save(); };
+// ---- draw: write or draw straight on the desk ----
+const ink = document.createElement('canvas'); ink.id = 'ink'; desk.appendChild(ink);
+let pen = '#1A1917', stroke = null;
+function sizeInk() { const d = Math.min(2, devicePixelRatio || 1); ink.width = Math.round(desk.clientWidth * d); ink.height = Math.round(desk.clientHeight * d); paintInk(); }
+function paintInk() { const x = ink.getContext('2d'), d = ink.width / Math.max(1, desk.clientWidth); x.clearRect(0, 0, ink.width, ink.height); x.lineCap = 'round'; x.lineJoin = 'round';
+  for (const s2 of (state && state.ink) || []) { x.strokeStyle = s2.c; x.lineWidth = s2.w * d; x.beginPath(); s2.p.forEach(([u, v], k) => { const X = u * ink.width, Y = v * ink.height; k ? x.lineTo(X, Y) : x.moveTo(X, Y); }); x.stroke(); } }
+function drawMode(on) { appEl.classList.toggle('drawing', on); if (on) { select(null); openDrawer(false); } }
+$('drawbtn').onclick = () => drawMode(!appEl.classList.contains('drawing')); $('drawdone').onclick = () => drawMode(false);
+document.querySelectorAll('#drawbar [data-c]').forEach((b) => { b.style.setProperty('--c', b.dataset.c); b.onclick = () => { pen = b.dataset.c; document.querySelectorAll('#drawbar [data-c]').forEach((o) => o.classList.toggle('on', o === b)); }; });
+$('undo').onclick = () => { if (state.ink && state.ink.length) { state.ink.pop(); paintInk(); save(); } };
+const at2 = (e) => { const r = ink.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+ink.addEventListener('pointerdown', (e) => { if (!appEl.classList.contains('drawing')) return; ink.setPointerCapture(e.pointerId); stroke = { c: pen, w: 2.6, p: [at2(e)] }; (state.ink = state.ink || []).push(stroke); });
+ink.addEventListener('pointermove', (e) => { if (!stroke) return; stroke.p.push(at2(e)); paintInk(); });
+const endInk = () => { if (!stroke) return; stroke = null; save(); }; ink.addEventListener('pointerup', endInk); ink.addEventListener('pointercancel', endInk);
+addEventListener('resize', sizeInk);
+init().then(() => { sizeInk(); const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300)); ['linen', 'cork', 'black', 'paper'].forEach((k, i) => idle(async () => { surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); })); if (fresh && stamps.find((s) => s.id === fresh) && !state.items.find((i) => i.src === fresh)) { const n = { id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: fresh, x: 0.5, y: 0.42, r: -5, s: 1.15, z: ++topZ }; state.items.push(n); render(); save(); select(n); paintStats(); } });
 </script>
 </body>
 </html>

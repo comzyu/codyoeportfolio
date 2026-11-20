@@ -75,7 +75,7 @@
   function nav(from, page, query) {
     if (page === 'index') { if (from === cam) closeCamera(); else if (from === sheet) closeSheet(); return; }
     if (page === 'camera') { openCamera(query); return; }
-    if (page === 'postcard' || page === 'stamp') { if (from === cam && cam) { cam.remove(); cam = null; } openSheet(page, query); return; }
+    if (page === 'postcard' || page === 'stamp') { if (from === cam && cam && /postcard=1/.test(cam.src)) { cam.remove(); cam = null; } openSheet(page, query); return; }   // a live reply closes the camera; editing your developed shots keeps it underneath
     const t = TAB_OF[page]; if (!t) return;
     if (from === cam) closeCamera(t); else if (from === sheet) closeSheet(t); else show(t);
   }

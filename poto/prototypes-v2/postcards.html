@@ -27,14 +27,10 @@
   .end button { height: 44px; border-radius: 999px; font: 500 15px/1 var(--sans); color: var(--ink); }
   .end button.main { background: var(--ink); color: var(--room); }
   .empty .page { border-style: dashed; }
-  /* hold: Reply, Keep, Sticker */
-  .dim { position: absolute; inset: 0; z-index: 10; background: rgba(250,249,246,.4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .18s; }
-  .dim.on { opacity: 1; pointer-events: auto; }
-  .menu { position: absolute; z-index: 11; left: 50%; top: 50%; width: 236px; padding: 6px; border-radius: 22px; transform: translate(-50%, -50%) scale(.94); opacity: 0; pointer-events: none; transition: opacity .18s, transform .28s var(--spring); }
-  .menu.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-  .menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 46px; padding: 0 14px; border-radius: 16px; font: 400 16px/1 var(--sans); color: var(--ink); position: relative; z-index: 1; }
-  .menu button:active { background: rgba(26,25,23,.06); }
-  .menu svg { width: 19px; height: 19px; color: var(--ink-2); }
+  /* Reply: a small glass pill under the card */
+  .reply { position: absolute; z-index: 4; left: 50%; bottom: calc(var(--safe-bottom) + 92px); transform: translateX(-50%); height: 38px; padding: 0 16px 0 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s; }
+  .reply svg { width: 17px; height: 17px; position: relative; z-index: 1; } .reply span { position: relative; z-index: 1; }
+  .app.ended .reply { opacity: 0; pointer-events: none; }
   .toast { position: absolute; z-index: 12; left: 50%; bottom: calc(96px + var(--safe-bottom)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
   @media (prefers-reduced-motion: reduce) { .stage { transition: none !important; } }
@@ -45,12 +41,7 @@
   <div class="when" id="when" aria-live="polite"></div>
   <div class="stage" id="stage" role="img" aria-label="A postcard. Drag to turn it, tap to turn it over, swipe up for the next."></div>
   <section class="end" id="end" aria-live="polite"></section>
-  <div class="dim" id="dim"></div>
-  <div class="menu glass" id="menu" role="menu">
-    <button type="button" role="menuitem" data-a="0">Reply with a postcard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 015 5v1"/></svg></button>
-    <button type="button" role="menuitem" data-a="1">Keep on my desk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg></button>
-    <button type="button" role="menuitem" data-a="2">Leave a sticker <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg></button>
-  </div>
+  <button type="button" class="glass reply" id="reply" aria-label="Reply with a postcard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 015 5v1"/></svg><span>Reply</span></button>
   <div class="toast glass" id="toast" role="status"></div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
@@ -132,14 +123,14 @@
     [k + 1, k - 1].forEach((n) => setTimeout(() => faces(n), 300));   // the neighbours are drawn while you look
   }
   function showEnd(empty) {
-    atEnd = true; paintWhen(null); stage.style.opacity = 0; stage.style.pointerEvents = 'none';
+    atEnd = true; $('app').classList.add('ended'); paintWhen(null); stage.style.opacity = 0; stage.style.pointerEvents = 'none';
     end.className = 'end on' + (empty ? ' empty' : '');
     end.innerHTML = empty
       ? '<div class="page"><h2>No postcards yet</h2><p>Your friends’ postcards land here.</p><div class="acts"><button type="button" class="main glass" data-go="invite">Invite a friend</button></div></div>'
       : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html?postcard=1">Send yours</button><button type="button" class="glass" data-go="calendar.html">Earlier days</button></div></div>';
     end.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { if (b.dataset.go !== 'invite') potoGo(b.dataset.go); }));
   }
-  function hideEnd() { atEnd = false; end.className = 'end'; stage.style.pointerEvents = ''; }
+  function hideEnd() { atEnd = false; $('app').classList.remove('ended'); end.className = 'end'; stage.style.pointerEvents = ''; }
 
   // ---- swiping: up flips the card away over the top and the next rises from below; down brings the previous back ----
   const ease = (t) => 1 - Math.pow(1 - t, 3);
@@ -166,7 +157,6 @@
   stage.addEventListener('pointerdown', (e) => {
     if (busy || !pc) return;
     g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, axis: '', ys: [[e.timeStamp, e.clientY]] };
-    clearTimeout(holdT); holdT = setTimeout(() => { if (g && !g.axis) { cancelCard(g.id); g = null; openMenu(); } }, 450);
   }, true);
   stage.addEventListener('pointermove', (e) => {
     if (!g || e.pointerId !== g.id) return;
@@ -197,18 +187,8 @@
   end.addEventListener('pointerup', (e) => { if (ey != null && e.clientY - ey > 50 && F.length) { hideEnd(); i = F.length - 1; show(i).then(() => tween(300, (t) => { stage.style.opacity = ease(t); when.style.opacity = ease(t); })); } ey = null; });
   addEventListener('keydown', (e) => { if (busy || atEnd && e.key !== 'ArrowUp') return; if (e.key === 'ArrowDown') commit(1, 0); if (e.key === 'ArrowUp' && atEnd) { end.dispatchEvent(new PointerEvent('pointerdown', { clientY: 0 })); end.dispatchEvent(new PointerEvent('pointerup', { clientY: 100 })); } else if (e.key === 'ArrowUp' && i > 0) commit(-1, 0); if (e.key === ' ') { e.preventDefault(); pc && pc.flip(); } });
 
-  // ---- hold: Reply, Keep, Sticker ----
-  const menu = $('menu'), dim = $('dim'), toastEl = $('toast');
-  function openMenu() { if (atEnd) return; buzz(10); menu.classList.add('on'); dim.classList.add('on'); }
-  const closeMenu = () => { menu.classList.remove('on'); dim.classList.remove('on'); };
-  const toast = (t) => { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
-  dim.onclick = closeMenu;
-  const ACTS = [
-    (f) => potoGo('camera.html?' + new URLSearchParams({ postcard: 1, to: f.name })),   // a reply is always a photo taken now (Cody, 20 Nov: everything is live)
-    (f) => { let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {} q.push({ type: 'card', src: f.photo, from: f.name, where: f.city, stamp: f.stamp }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {} toast('On your desk'); },
-    (f) => potoGo('postcard.html?' + new URLSearchParams({ src: ph(f.photo), from: f.name, msg: f.msg, where: f.city, sticker: 1 })),
-  ];
-  menu.querySelectorAll('button').forEach((b) => (b.onclick = () => { closeMenu(); if (F[i]) ACTS[+b.dataset.a](F[i]); }));
+  // ---- Reply (Cody, 20 Nov): one small button, no press-and-hold. A reply is always a photo taken now ----
+  $('reply').onclick = () => { if (F[i]) potoGo('camera.html?' + new URLSearchParams({ postcard: 1, to: F[i].name })); };
 
   // ---- start ----
   if (!window.THREE || !document.createElement('canvas').getContext('webgl2')) { showEnd(!F.length); return; }

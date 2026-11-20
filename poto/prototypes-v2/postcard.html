@@ -34,6 +34,25 @@
   .writing .done { opacity: 1; pointer-events: auto; } .writing .dock, .writing .hint, .writing .tray { opacity: 0 !important; pointer-events: none !important; }
   .left { position: absolute; z-index: 8; left: 0; right: 0; pointer-events: none; top: calc(26px + var(--safe-top)); text-align: center; opacity: 0; transition: opacity .25s; } .writing .left { opacity: 1; } .writing #side { opacity: 0; }
   #ta { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0; resize: none; }
+  /* Send (redesign plan): top right; with no one chosen yet, a short list of friends */
+  #side, .hint { display: none !important; }
+  .tr { display: flex; gap: 8px; }
+  .send { height: 40px; padding: 0 18px; border-radius: 999px; font: 600 14px/1 var(--sans); color: var(--room); background: var(--ink); }
+  .send:disabled { opacity: .35; }
+  .sdim { position: fixed; inset: 0; z-index: 30; background: rgba(250,249,246,.35); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity .2s; } .sdim.on { opacity: 1; pointer-events: auto; }
+  .tosheet { position: fixed; z-index: 31; left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom)); border-radius: 30px; padding: 10px 16px 16px; transform: translateY(115%); transition: transform .38s var(--ease); }
+  .tosheet.on { transform: none; } .tosheet > * { position: relative; z-index: 1; }
+  .tosheet .grip { width: 36px; height: 5px; border-radius: 3px; background: rgba(26,25,23,.15); margin: 0 auto 12px; }
+  .tosheet h2 { margin: 0 4px 10px; font: 600 19px/1.2 var(--sans); color: var(--ink); }
+  .tosheet .who { display: grid; border-radius: 18px; background: rgba(255,255,255,.55); overflow: hidden; margin-bottom: 12px; }
+  .tosheet .who button { display: flex; align-items: center; gap: 12px; height: 54px; padding: 0 16px; font: 400 16px/1 var(--sans); color: var(--ink); text-align: left; }
+  .tosheet .who button + button { box-shadow: 0 -.5px 0 var(--hair); }
+  .tosheet .who img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+  .tosheet .who i { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+  .tosheet .who button[aria-pressed="true"] i { background: var(--ink); box-shadow: inset 0 0 0 6px var(--ink), inset 0 0 0 8px #fff; }
+  .tosheet .big { width: 100%; height: 50px; font-size: 16px; }
+  .sent { position: fixed; z-index: 40; left: 50%; top: 45%; transform: translate(-50%, -50%) scale(.9); padding: 14px 22px; border-radius: 999px; background: var(--ink); color: var(--room); font: 600 16px/1 var(--sans); opacity: 0; pointer-events: none; transition: opacity .2s, transform .35s var(--spring); }
+  .sent.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   .finish { height: 40px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--ink); min-width: 84px; }
   .writing .finish { opacity: 0; pointer-events: none; }
   /* sticker mode: a dashed ring round the picked sticker and a bar of actions */
@@ -73,8 +92,11 @@
   <header class="top">
     <a class="glass round" style="color:inherit" href="index.html" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
     <span class="mono soft" id="side">Front</span>
-    <button type="button" class="glass finish" id="finish" aria-label="Photo finish">Matte</button>
+    <div class="tr"><button type="button" class="glass finish" id="finish" aria-label="Photo finish">Matte</button><button type="button" class="send" id="send">Send</button></div>
   </header>
+  <div class="sdim" id="sdim"></div>
+  <section class="tosheet glass" id="tosheet" aria-label="Send to" aria-hidden="true"><div class="grip"></div><h2>Send to</h2><div class="who" id="who"></div><button type="button" class="send big" id="sendgo" disabled>Send</button></section>
+  <div class="sent" id="sent" aria-live="polite"></div>
   <div id="stage" role="img" aria-label="A postcard you can turn, flip and put stickers on"></div>
   <div class="boot" id="boot" aria-live="polite"><div class="bcard"><img id="bimg" alt=""><span class="bcap mono">developing</span></div><div class="bbar"><i id="bfill"></i></div><span class="bstep mono" id="bstep">Loading your photo</span></div>
   <div class="tray glass" id="tray" role="group" aria-label="Sticker finish">
@@ -279,6 +301,23 @@
     const t0 = performance.now(); (function go(now) { const t = Math.min(1, (now - t0) / 320), e = 1 - Math.pow(1 - t, 3); s.u.uFoldP.value.set(0.8, 0.6).multiplyScalar(-0.26 + e * 0.56); if (t < 1) requestAnimationFrame(go); else { s.u.uPeel.value = 0; adding = false; } })(t0);
   }));
   setTimeout(() => ($('hint').style.opacity = 0), 9000);
+  // ---- Send: straight to the person you're replying to, or pick friends ----
+  const FRIENDS = [['alva', 7], ['pupu', 1], ['bubu', 4], ['vava', 8], ['alal', 11]], picked = new Set(TO ? [TO] : []);
+  const sheetT = $('tosheet'), sdim = $('sdim');
+  $('who').innerHTML = FRIENDS.map(([n, p]) => '<button type="button" data-n="' + n + '" aria-pressed="false"><img src="img/photo-' + String(p).padStart(2, '0') + '-t.jpg" alt="">@' + n + '<i></i></button>').join('');
+  $('who').querySelectorAll('button').forEach((b) => (b.onclick = () => { const on = !picked.has(b.dataset.n); on ? picked.add(b.dataset.n) : picked.delete(b.dataset.n); b.setAttribute('aria-pressed', String(on)); $('sendgo').disabled = !picked.size; }));
+  const closeTo = () => { sheetT.classList.remove('on'); sdim.classList.remove('on'); sheetT.setAttribute('aria-hidden', 'true'); };
+  sdim.onclick = closeTo;
+  function deliver() {
+    closeTo(); const names = [...picked];
+    try { const s = JSON.parse(localStorage.getItem('poto.sent') || '[]'); s.unshift({ src: SRC, to: names, t: Date.now() }); localStorage.setItem('poto.sent', JSON.stringify(s.slice(0, 100))); } catch (e) {}
+    try { navigator.vibrate && navigator.vibrate(14); } catch (e) {}
+    const el = $('sent'); el.textContent = 'Sent to ' + names.map((n) => '@' + n).join(', '); el.classList.add('on');
+    setTimeout(() => potoGo('index.html'), 1100);
+  }
+  $('send').onclick = () => { if (FROM) return; if (TO) { deliver(); return; } sheetT.classList.add('on'); sdim.classList.add('on'); sheetT.setAttribute('aria-hidden', 'false'); };
+  $('sendgo').onclick = deliver;
+  if (FROM) $('send').hidden = true;   // someone else's card: nothing to send
   if (Q.get('sticker')) setTimeout(() => { pc.flip(1); setTimeout(() => stick.click(), 450); }, 500);   // "Leave a sticker" from Home: turned over, the stickers out
 })();
 </script>

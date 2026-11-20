@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <script src="lib/shell.js"></script>
+<script src="lib/canister.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Poto · Camera</title>
@@ -46,6 +47,8 @@
   .zoom button { position: relative; min-width: 36px; height: 30px; border-radius: 999px; font: 500 12.5px/1 var(--sans); color: #d0d0d2; transition: background .2s, color .2s; }
   .zoom button[aria-pressed="true"] { background: rgba(255,255,255,.92); color: #000; }
   .tools { display: none; }
+  .pr .toss { position: absolute; z-index: 3; right: -8px; top: -8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(40,40,44,.85); color: #F2F2EF; font: 500 16px/26px var(--sans); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.4); opacity: 0; transition: opacity .3s; }
+  .devall.done .pr .toss { opacity: 1; } .pr { position: relative; cursor: pointer; }
   html.pcard .tray2, html.pcard .hintdev, html.pcard .film { visibility: hidden; }   /* postcard mode: just the shot */   /* flash, timer, grid, date and double exposure: back one by one, in a small menu, once each really works */
   .deck { flex: 1; min-height: 108px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 26px calc(10px + var(--safe-bottom)); }
   /* the film tab: the roll's look, shown as the end-flap torn off a film box and tucked beside the shutter */
@@ -180,6 +183,7 @@ document.querySelectorAll('.zoom button').forEach((b) => (b.onclick = () => { do
 scene.style.transform = 'scale(1.35)';
 // in the app: the phone's own camera does the zooming and turning round; this page sends it the buttons
 const APP = !!(window.PotoNative && PotoNative.inApp), WEB = APP && PotoNative.platform === 'web';
+if (window.byLook) vf.style.filter = byLook(ROLL.look).filt;   // the viewfinder shows the camera's look (browser; the phone's own preview can't be filtered)
 // ---- the browser app: your camera, live in the viewfinder where the browser allows it; otherwise the phone's own camera opens for each shot ----
 let live = null, facingWeb = 'environment';
 async function startLive() {
@@ -303,16 +307,19 @@ async function developAll() {
     const h = $('hintdev'); h.textContent = 'Ready at 7:00'; h.classList.add('on'); clearTimeout(h.t); h.t = setTimeout(() => { h.textContent = 'Tap to develop'; paintTray(); }, 2200); return;
   }
   const shots = devNow.slice(), n = shots.length; grid.innerHTML = ''; grid.style.setProperty('--cols', n <= 2 ? 2 : 3);
-  $('devh').textContent = 'Developing'; $('devp').textContent = n + (n > 1 ? ' shots' : ' shot') + ' · ' + ROLL.look + (waiting.length ? ' · ' + waiting.length + ' more ready at 7:00' : '') + ' · tap a print to toss it';
+  $('devh').textContent = 'Developing'; $('devp').textContent = n + (n > 1 ? ' shots' : ' shot') + ' · ' + ROLL.look + (waiting.length ? ' · ' + waiting.length + ' more ready at 7:00' : '') + ' · tap one to make it a postcard';
   const items = await Promise.all(shots.map(async (sh, k) => {
     const im = new Image(); im.src = sh.src.replace('.jpg', '-s.jpg'); try { await im.decode(); } catch (e) {}
     const c = document.createElement('canvas'); c.width = PW; c.height = PH; const x = c.getContext('2d', { willReadFrequently: true });
     const s = Math.max(PW / im.width, PH / im.height) * (sh.zoom || 1), dw = im.width * s, dh = im.height * s;
-    if (sh.ev) x.filter = 'brightness(' + Math.pow(2, sh.ev * 0.75).toFixed(3) + ')'; x.drawImage(im, (PW - dw) / 2, (PH - dh) / 2, dw, dh); x.filter = 'none';
+    { const L = window.byLook ? byLook(sh.look || ROLL.look) : null; x.filter = ((L ? L.filt : '') + (sh.ev ? ' brightness(' + Math.pow(2, sh.ev * 0.75).toFixed(3) + ')' : '')).trim() || 'none'; }   // the camera's look, printed in x.drawImage(im, (PW - dw) / 2, (PH - dh) / 2, dw, dh); x.filter = 'none';
     const px = x.getImageData(0, 0, PW, PH).data, late = new Float32Array(PW * PH);
     for (let i = 0; i < PW * PH; i++) late[i] = 1 - (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) / 255;   // dark areas come up last
     const el = document.createElement('div'); el.className = 'pr'; el.style.setProperty('--r', ((k * 37) % 7 - 3) * 0.7 + 'deg'); el.style.setProperty('--k', k); el.appendChild(c);
-    el.onclick = () => { if (dev && !dev.done) return; el.classList.toggle('tossed'); paintActs(); };
+    // developed: tap a photo to make it a postcard (stickers, message, note), then send it; the small x tosses it (Cody, 20 Nov)
+    const tb = document.createElement('button'); tb.type = 'button'; tb.className = 'toss'; tb.setAttribute('aria-label', 'Toss this one'); tb.textContent = '\u00d7'; el.appendChild(tb);
+    tb.onclick = (e) => { e.stopPropagation(); if (dev && !dev.done) return; el.classList.toggle('tossed'); paintActs(); };
+    el.onclick = () => { if (dev && !dev.done) return; if (el.classList.contains('tossed')) { el.classList.remove('tossed'); paintActs(); return; } potoGo('postcard.html?' + new URLSearchParams({ src: sh.src, zoom: 1, ev: sh.ev || 0 })); };
     grid.appendChild(el); return { sh, el, c, x, px, late, img: x.createImageData(PW, PH), delay: k * 140 };
   }));
   devall.classList.add('on'); devall.setAttribute('aria-hidden', 'false'); $('devlabel').classList.add('on'); $('devacts').classList.remove('on');
@@ -321,7 +328,7 @@ async function developAll() {
   const tick = (now) => {
     const ms = now - t0; let all = true;
     for (const it of items) { const p = dev.skip ? 1 : Math.min(1, Math.max(0, (ms - 500 - it.delay) / (total - 500))); if (p < 1) all = false; if (it.p !== p) { it.p = p; drawPrint(it, p * p * (3 - 2 * p)); } }
-    if (all) { dev.done = true; $('devlabel').classList.remove('on'); $('devh').textContent = 'Your shots'; paintActs(); $('devacts').classList.add('on'); return; }
+    if (all) { dev.done = true; devall.classList.add('done'); $('devlabel').classList.remove('on'); $('devh').textContent = 'Your shots'; paintActs(); $('devacts').classList.add('on'); return; }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -335,7 +342,7 @@ function drawPrint(it, p) {                                    // blank paper ->
   it.x.putImageData(it.img, 0, 0);
 }
 function paintActs() { const keep = dev.items.filter((it) => !it.el.classList.contains('tossed')).length; $('keepall').textContent = keep === dev.items.length ? 'Keep all' : keep ? 'Keep ' + keep : 'Toss all'; }
-function closeDev() { devall.classList.remove('on'); devall.setAttribute('aria-hidden', 'true'); $('devacts').classList.remove('on'); $('devlabel').classList.remove('on'); }
+function closeDev() { devall.classList.remove('on', 'done'); devall.setAttribute('aria-hidden', 'true'); $('devacts').classList.remove('on'); $('devlabel').classList.remove('on'); }
 $('later').onclick = () => { closeDev(); };                                         // they stay in the tray, undeveloped
 $('keepall').onclick = () => {
   const keep = dev.items.filter((it) => !it.el.classList.contains('tossed')), toss = dev.items.filter((it) => it.el.classList.contains('tossed'));

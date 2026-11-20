@@ -57,7 +57,7 @@ export default function Shell() {
   const navigate = (from: 'tab' | 'camera' | 'sheet', page: string, query: string) => {
     if (page === 'index') { if (from === 'camera') closeCamera(); else if (from === 'sheet') closeSheet(); return; }
     if (page === 'camera') { setSheet(null); setCamera(query); return; }
-    if (page === 'postcard' || page === 'stamp') { if (from === 'camera') setCamera(null); setSheet({ page, query }); return; }
+    if (page === 'postcard' || page === 'stamp') { if (from === 'camera' && (camera ?? '').includes('postcard')) setCamera(null); setSheet({ page, query }); return; }
     const t = TAB_OF[page];
     if (!t) return;
     if (t === 'desk' && query.includes('stamp')) stale.current.add('desk');   // a stamp you just cut lands on the desk
