@@ -357,7 +357,11 @@
     }
 
     /* ---------- frame loop ---------- */
-    let last = performance.now(), raf = 0, visible = true, slow = 0, shadowTick = 0;
+    let last = performance.now(), raf = 0, visible = true, slow = 0, shadowTick = 0, wakeUntil = 0;
+    // Home felt laggy (Cody, 20 Nov): the card drew every frame even lying still. Now it draws only while something moves,
+    // and for a moment after any touch or change from the page.
+    const wake = (ms) => { wakeUntil = Math.max(wakeUntil, performance.now() + (ms || 1200)); };
+    for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel']) window.addEventListener(ev, () => wake(), { passive: true, capture: true });
     function frame(now) {
       raf = requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000), gap = now - last; last = now; if (!visible) return;
       if (!opts.lite && slow >= 0) { slow = gap > 45 ? slow + 1 : Math.max(0, slow - 1); if (slow > 40) { slow = -1; renderer.setPixelRatio(1); key.shadow.blurSamples = 8; key.shadow.radius = 10; resize(); } }
@@ -370,17 +374,20 @@
       // (wall shadow switched off)
       card.rotation.set(pitch, yaw + REST_YAW * (1 - wk), ROLL * (1 - wk), 'YXZ');
       camera.position.set(-0.11 * wk, -0.06 * wk, camZ * (1 - 0.2 * wk));
+      const moving = dragging || anims.length || Math.abs(yv) > 2e-4 || Math.abs(pv) > 2e-4 || Math.abs(yaw - yawT) > 2e-4 || Math.abs(wk - (writing ? 1 : 0)) > 1e-3;
+      if (!moving && now > wakeUntil) return;   // still: the last frame is already on screen
       stepAnims(dt); renderer.render(scene, camera);
     }
     function resize() { const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h;
       const tn = Math.tan((camera.fov * Math.PI) / 360); camZ = camera.position.z = Math.max((CH / 0.6) / (2 * tn), (CW / 0.76) / (2 * tn * camera.aspect)); camera.updateProjectionMatrix(); }
-    new ResizeObserver(resize).observe(el); resize();
+    new ResizeObserver(() => { resize(); wake(); }).observe(el); resize();
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; last = performance.now(); });
     raf = requestAnimationFrame(frame);
     // texture pixel on the back -> screen point (for the marker that follows your words)
     this.backToScreen = (px, py) => { const v = card.localToWorld(new V3((0.5 - px / 1024) * CW, (0.5 - py / 1448) * CH, -CT / 2)).project(camera), r = dom.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height, scale: r.width / (CW * 1024) }; };
     this.renderer = renderer; this.card = card; this.scene = scene; this.key = key; this.cam = camera;
     this.pose = (y, p) => { yaw = yawT = y; pitch = p; yv = pv = 0; lastFace = faceOf(y); };      // for screenshots and tests
+    for (const k of Object.keys(this)) if (typeof this[k] === 'function') { const f = this[k]; this[k] = function () { wake(); return f.apply(this, arguments); }; }   // anything the page asks for gets drawn
   }
   window.PotoPostcard = Postcard;
 })();

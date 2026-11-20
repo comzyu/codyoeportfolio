@@ -88,7 +88,11 @@
   .wall { position: absolute; left: 0; right: 0; top: calc(var(--safe-top) + 64px); bottom: calc(var(--safe-bottom) + 96px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
   .openfull { position: absolute; z-index: 5; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(var(--safe-top) + 10px); height: 40px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; font: 500 14px/1 var(--sans); color: var(--ink); }
   .openfull svg, .openfull span { position: relative; z-index: 1; } .openfull svg { width: 16px; height: 16px; }
-  .mcal { position: relative; perspective: 1600px; touch-action: pan-y; }
+  .mcal { position: relative; perspective: 1600px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .mcal img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
+  /* a real pad of pages: the stack shows under the current month, paper grain over the photo */
+  .mcal .bot { box-shadow: 0 2px 0 -1px #F1EEE7, 0 3px 0 -1px rgba(0,0,0,.06), 0 5px 0 -2px #ECE9E1, 0 6px 0 -2px rgba(0,0,0,.06), 0 8px 0 -3px #E8E4DB; }
+  .mcal .top .hero::after, .leaf .bk .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--grain, none) 0 0 / 256px 256px; opacity: .5; mix-blend-mode: multiply; }
   .mcal .half { position: relative; overflow: hidden; z-index: 0; }
   .mcal .top { border-radius: 18px 18px 0 0; background: #111; }
   .mcal .bot { border-radius: 0 0 18px 18px; }
@@ -248,26 +252,50 @@
   });
   mtop.addEventListener('click', (e) => { const h = e.target.closest('.hero[data-k]'); if (h && !wflip) openDay(h.dataset.k); });
   // flip: forward, the days page swings up over the rings and its back is next month's photo; back, the photo swings down
-  function wflipTo(dir) {
-    if (wflip) return; const to = wi + dir; if (to < 0 || to >= months.length) return; wflip = true;
+  // the leaf: forward, the days page swings up over the rings and its back is next month's photo; back, the photo swings down.
+  // It follows your finger (Cody, 20 Nov: flipping should feel physically possible); let go past halfway and it turns over.
+  const ease = 'cubic-bezier(.45,.05,.2,1)';
+  function prepLeaf(dir) {
+    const to = wi + dir; if (to < 0 || to >= months.length) return null;
     const fr = leaf.querySelector('.fr'), bk = leaf.querySelector('.bk');
     if (dir > 0) { fr.innerHTML = pageHTML(wi) + '<i class="shade"></i>'; bk.innerHTML = heroHTML(to) + '<i class="shade"></i>'; mbot.innerHTML = pageHTML(to); }
     else { fr.innerHTML = pageHTML(to) + '<i class="shade"></i>'; bk.innerHTML = heroHTML(wi) + '<i class="shade"></i>'; mtop.innerHTML = heroHTML(to); }
-    leaf.hidden = false;
-    const T = reduced ? 1 : 900, ease = 'cubic-bezier(.45,.05,.2,1)';
-    const frames = dir > 0 ? [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(110deg)', offset: 0.55 }, { transform: 'rotateX(184deg)', offset: 0.86 }, { transform: 'rotateX(180deg)' }]
-                           : [{ transform: 'rotateX(180deg)' }, { transform: 'rotateX(70deg)', offset: 0.55 }, { transform: 'rotateX(-4deg)', offset: 0.86 }, { transform: 'rotateX(0deg)' }];
-    leaf.querySelectorAll('.shade').forEach((sh) => sh.animate([{ opacity: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: T, easing: ease }));
-    const cast = $('mcast'); cast.style.top = dir > 0 ? mtop.offsetHeight + 'px' : '0px';
+    leaf.hidden = false; const cast = $('mcast'); cast.style.top = dir > 0 ? mtop.offsetHeight + 'px' : '0px';
     cast.style.background = dir > 0 ? 'linear-gradient(180deg, rgba(20,20,30,.25), rgba(20,20,30,0) 70%)' : 'linear-gradient(0deg, rgba(20,20,30,.25), rgba(20,20,30,0) 70%)';
-    cast.animate([{ opacity: 0.9 }, { opacity: 0 }], { duration: T * 0.6, easing: 'ease-out', fill: 'forwards' });
-    try { navigator.vibrate && navigator.vibrate(6); } catch (e) {}
-    leaf.animate(frames, { duration: T, easing: ease }).onfinish = () => { leaf.hidden = true; wi = to; showMonth(); wflip = false; };
+    return to;
+  }
+  function poseLeaf(a) {   // a: 0 (page down) .. 180 (page up, over the rings)
+    leaf.style.transform = 'rotateX(' + a.toFixed(1) + 'deg)'; const lift = Math.sin(a * Math.PI / 180);
+    leaf.querySelectorAll('.shade').forEach((sh) => (sh.style.opacity = lift.toFixed(2))); $('mcast').style.opacity = (1 - Math.abs(a - 90) / 90) * 0.9;
+  }
+  function settle(from, end, to, T) {   // finish (end = the far side) or fall back
+    const done = (end === 180) === (to > wi);
+    const a = leaf.animate([{ transform: 'rotateX(' + from + 'deg)' }, { transform: 'rotateX(' + end + 'deg)' }], { duration: reduced ? 1 : T, easing: ease });
+    const s0 = leaf.querySelector('.shade') ? parseFloat(leaf.querySelector('.shade').style.opacity || 0) : 0;
+    leaf.querySelectorAll('.shade').forEach((sh) => sh.animate([{ opacity: s0 }, { opacity: 0 }], { duration: T, easing: ease, fill: 'forwards' }));
+    $('mcast').animate([{ opacity: $('mcast').style.opacity || 0 }, { opacity: 0 }], { duration: T * 0.6, fill: 'forwards' });
+    if (done) try { navigator.vibrate && navigator.vibrate(6); } catch (e) {}
+    a.onfinish = () => { leaf.hidden = true; leaf.style.transform = ''; leaf.querySelectorAll('.shade').forEach((sh) => { sh.getAnimations().forEach((x) => x.cancel()); sh.style.opacity = 0; }); $('mcast').getAnimations().forEach((x) => x.cancel()); $('mcast').style.opacity = 0; if (done) wi = to; showMonth(); wflip = false; };
+  }
+  function wflipTo(dir) {
+    if (wflip) return; const to = prepLeaf(dir); if (to == null) return; wflip = true;
+    settle(dir > 0 ? 0 : 180, dir > 0 ? 180 : 0, to, 900);
   }
   $('wprev').onclick = () => wflipTo(-1); $('wnext').onclick = () => wflipTo(1);
-  { let sx = 0, sy = 0, on = false; mcal.addEventListener('pointerdown', (e) => { on = true; sx = e.clientX; sy = e.clientY; });
-    mcal.addEventListener('pointerup', (e) => { if (!on) return; on = false; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) wflipTo(dx < 0 ? 1 : -1); });
-    mcal.addEventListener('pointercancel', () => (on = false)); }
+  { let sx = 0, sy = 0, on = false, drag = null;
+    mcal.addEventListener('pointerdown', (e) => { if (wflip) return; on = true; drag = null; sx = e.clientX; sy = e.clientY; });
+    mcal.addEventListener('pointermove', (e) => {
+      if (!on) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!drag) { if (Math.abs(dy) < 8 || Math.abs(dy) < Math.abs(dx)) return; const dir = dy < 0 ? 1 : -1, to = prepLeaf(dir); if (to == null) { on = false; return; } wflip = true; drag = { dir, to, H: mbot.offsetHeight }; try { mcal.setPointerCapture(e.pointerId); } catch (e2) {} }
+      const p = Math.max(0, Math.min(1, Math.abs(dy) / (drag.H * 1.1)));
+      drag.a = drag.dir > 0 ? (dy < 0 ? p * 180 : 0) : (dy > 0 ? 180 - p * 180 : 180); poseLeaf(drag.a);
+    });
+    const up = (e) => {
+      if (!on) return; on = false; const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (drag) { const a = drag.a || (drag.dir > 0 ? 0 : 180), over = a > 90, end = over ? 180 : 0; settle(a, end, drag.to, 260 + 360 * Math.abs(end - a) / 180); drag = null; return; }
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) wflipTo(dx < 0 ? 1 : -1);
+    };
+    mcal.addEventListener('pointerup', up); mcal.addEventListener('pointercancel', up); mcal.addEventListener('dragstart', (e) => e.preventDefault()); }
   showMonth(); addEventListener('resize', sizeWall); addEventListener('load', sizeWall);
 
   // ---- the year ----

@@ -97,7 +97,7 @@
   .app.editing .scroll > .pad:first-child { opacity: 0; transform: translateY(-16px); pointer-events: none; }
   .app.editing .scroll > .pad:last-of-type { top: 0 !important; } .app.editing .desk { border-radius: 0; }
   .app:not(.editing) .top .right { display: none; }
-  .app.editing ~ .potobar, .app.editing .potobar { display: none; }
+  .app.editing ~ .potobar, .app.editing .potobar, body:has(.app.editing) .potobar { display: none !important; }
   .donebtn { height: 40px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: var(--room); font: 600 14px/1 var(--sans); }
   /* draw */
   #ink { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 950; pointer-events: none; }
@@ -133,6 +133,18 @@
   .dtabs button { padding: 0 11px !important; }
   .tiles .cm .pcam { width: 80%; margin: 8px auto 0; }
   .app:not(.editing) .top { display: none; }
+  /* one view (Cody, 20 Nov): the desk fills the page in both modes; your picture, name and bio float on it as a frosted card */
+  .scroll > .pad:last-of-type { top: 0 !important; } .desk { border-radius: 0 !important; }
+  .scroll > .pad:first-child { left: 14px; right: auto; top: calc(var(--safe-top) + 10px); max-width: min(320px, calc(100% - 28px)); padding: 14px 16px 16px !important; border-radius: 26px;
+    background: rgba(255,255,255,.52); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 1px rgba(255,255,255,.5), 0 18px 34px -18px rgba(20,20,30,.4); transform: rotate(-1.2deg); }
+  .app.editing .scroll > .pad:first-child { opacity: 1; transform: rotate(-1.2deg); pointer-events: none; }
+  .app.editing .prow { display: none; }
+  .who .av { width: 52px !important; height: 52px !important; } .bio { margin-top: 10px; font-size: 14px; }
+  /* customising: the tools sit where the tab bar was */
+  .app.editing .top { top: auto !important; bottom: calc(var(--safe-bottom) + 18px); left: 50%; right: auto; transform: translateX(-50%); padding: 0 !important; transition: opacity .2s; }
+  .app.editing .top > a { display: none; }
+  .app.picking .top, .app.drawing .top { opacity: 0; pointer-events: none; }
+  .deskmenu { top: auto !important; bottom: calc(var(--safe-bottom) + 74px); right: 50% !important; transform-origin: 50% 100%; translate: 50% 0; }
   .dtabs { overflow-x: auto; scrollbar-width: none; } .dtabs::-webkit-scrollbar { display: none; } .dtabs button { flex: none; }
   .who, .bio, .prow { pointer-events: auto; }
   /* the desk menu (…): surface and tidy, out of the way */
@@ -202,7 +214,7 @@
     <div class="rows"><button type="button" data-row>Friends<small>12</small></button><button type="button" data-row>Invite a friend</button><button type="button" data-row>Poto+</button><button type="button" data-row>Settings</button></div>
   </section>
   <section class="drawer glass" id="drawer" aria-label="Put on the desk" aria-hidden="true"><div class="grip"></div>
-    <div class="seg glass dtabs" role="tablist" aria-label="What to add"><button type="button" data-sec="prints" aria-pressed="true">Prints</button><button type="button" data-sec="cards" aria-pressed="false">Postcards</button><button type="button" data-sec="cams" aria-pressed="false">Cameras</button><button type="button" data-sec="stamps" aria-pressed="false">Stamps</button><button type="button" data-sec="things" aria-pressed="false">Things</button></div>
+    <div class="seg glass dtabs" role="tablist" aria-label="What to add"><button type="button" data-sec="prints" aria-pressed="true">Your photos</button><button type="button" data-sec="cards" aria-pressed="false">Postcards</button><button type="button" data-sec="cams" aria-pressed="false">Cameras</button><button type="button" data-sec="stamps" aria-pressed="false">Stamps</button><button type="button" data-sec="things" aria-pressed="false">Things</button></div>
     <div class="dsec" data-sec="prints"><div class="tiles" id="tprints"></div></div>
     <div class="dsec" data-sec="cards"><div class="tiles" id="tcards"></div></div>
     <div class="dsec" data-sec="cams"><div class="tiles" id="tcams"></div></div>
@@ -308,6 +320,7 @@ function cardFaces(it) {
 }
 const els = new Map();
 function make(it) {
+  if (it.type === 'print') it.type = 'card';   // everything on the desk is a real postcard now: your own, or one you were sent (Cody, 20 Nov)
   const el = document.createElement('div'); el.className = 'obj ' + it.type; el.dataset.id = it.id;
   if (it.type === 'print') el.innerHTML = '<i class="sh"></i><img src="' + ph(it.src) + '" alt="" draggable="false"><i class="cap">15 NOV 2026</i>';
   else if (it.type === 'card') { el.innerHTML = '<i class="sh"></i><div class="flip"><div class="cf front"><img src="' + ph(it.src) + '" alt="" draggable="false"></div><div class="cf back"></div></div>' + (it.from ? fstamp(it) : ''); cardFaces(it).then((fc) => { if (!fc) return; el.querySelector('.front img').src = fc.front; el.querySelector('.back').innerHTML = '<img src="' + fc.back + '" alt="" draggable="false">'; }); }
@@ -346,6 +359,7 @@ $('surf').onclick = (e) => { const b = e.target.closest('button'); if (b) setSur
 const pts = new Map(); let g = null;
 const local = (e) => { const r = desk.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, px: e.clientX - r.left, py: e.clientY - r.top }; };
 function select(it) {
+  appEl.classList.toggle('picking', !!it);
   els.forEach((el) => { const n = el.querySelector('.nt'); if (n) n.contentEditable = 'false'; });
   $('flipsel').hidden = !!(it && it.type === 'note');
   if (it && it.type === 'note') { const n = els.get(it.id).querySelector('.nt'); n.contentEditable = 'true'; }

@@ -40,8 +40,13 @@
   .cam .strap.l { left: -3%; } .cam .strap.r { right: -3%; }
   .cam .stk { position: absolute; z-index: 2; right: 10%; bottom: 12%; width: 16%; aspect-ratio: 1; }
   .cam.big { width: min(64vw, 260px); }
-  /* the shop's cameras: a price tag on the shelf edge */
-  .slot.shop .cam { filter: saturate(.9); }
+  /* cameras you have not unlocked yet: free to try */
+  .slot.shop .cam { filter: none; }
+  /* cameras on show: lit from above, bigger, a soft pool of light on the ledge */
+  .shelf { padding-top: 34px !important; background: radial-gradient(60% 90% at 50% 100%, rgba(255,236,200,.55), rgba(255,236,200,0) 70%); }
+  .slot .cam { width: 136px; filter: drop-shadow(0 14px 12px rgba(40,30,20,.22)); }
+  .slot:active .cam { transform: translateY(-6px) scale(1.03); }
+  .tryn { margin: 10px 4px 0; font: 400 13px/1.4 var(--sans); color: var(--ink-3); text-align: center; }
   /* finished rolls: the frosted folders */
   .done { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
   .roll { background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
@@ -107,9 +112,9 @@
   const CAMS = [
     { id: 'Sunday', kind: 'compact', look: 'Sunday', body: '#E8B44C', lenses: ['35mm', '28mm'], frame: 'Date stamp', desc: 'A warm little point-and-shoot. Soft grain, late-afternoon skin.' },
     { id: 'Harbour', kind: 'range', look: 'Harbour', body: '#3E7C80', lenses: ['50mm', '35mm'], frame: 'White border', desc: 'A quiet rangefinder. Cool and clean; blues hold, whites stay white.' },
-    { id: 'Flashbulb', kind: 'instant', look: 'Flashbulb', body: '#EDEDEF', lenses: ['Instant'], frame: 'Instant', desc: 'An instant camera with a hard flash. Bright, a little blown out.', price: '$1.99' },
-    { id: 'Silver', kind: 'slr', look: 'Silver', body: '#232325', lenses: ['50mm', '85mm', 'Fisheye'], frame: 'Film edge', desc: 'A black-and-white SLR. Deep blacks, silver mid-tones.', price: '$2.99' },
-    { id: 'Lido', kind: 'toy', look: 'Lido', body: '#7FB7D9', lenses: ['28mm', 'Fisheye'], frame: 'White border', desc: 'A plastic beach camera. Washed sky, sun in everything.', price: '$1.99' },
+    { id: 'Flashbulb', kind: 'instant', look: 'Flashbulb', body: '#EDEDEF', lenses: ['Instant'], frame: 'Instant', desc: 'An instant camera with a hard flash. Bright, a little blown out.' },
+    { id: 'Silver', kind: 'slr', look: 'Silver', body: '#232325', lenses: ['50mm', '85mm', 'Fisheye'], frame: 'Film edge', desc: 'A black-and-white SLR. Deep blacks, silver mid-tones.' },
+    { id: 'Lido', kind: 'toy', look: 'Lido', body: '#7FB7D9', lenses: ['28mm', 'Fisheye'], frame: 'White border', desc: 'A plastic beach camera. Washed sky, sun in everything.' },
   ];
   const BODY = ['#E8B44C', '#3E7C80', '#C8553A', '#EDEDEF', '#232325', '#7FB7D9', '#8C6A4F', '#B9C7A4'];
   const LEATHER = { Smooth: 'none', Grain: 'radial-gradient(rgba(0,0,0,.35) 0.6px, transparent 0.8px) 0 0 / 3px 3px', Woven: 'repeating-linear-gradient(45deg, rgba(0,0,0,.25) 0 1px, transparent 1px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.25) 0 1px, transparent 1px 4px)', Ribbed: 'repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px)' };
@@ -128,7 +133,7 @@
     $('shelf').innerHTML = '';
     CAMS.slice().sort((a, b) => (owned[b.id] ? 1 : 0) - (owned[a.id] ? 1 : 0)).forEach((C) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'slot' + (C.id === inUse ? ' inuse' : '') + (owned[C.id] ? '' : ' shop');
-      b.appendChild(drawCam(C, cfg(C))); b.insertAdjacentHTML('beforeend', '<b>' + C.id + '</b><small>' + (C.id === inUse ? 'In use' : owned[C.id] ? cfg(C).lens : C.price) + '</small>');
+      b.appendChild(drawCam(C, cfg(C))); b.insertAdjacentHTML('beforeend', '<b>' + C.id + '</b><small>' + (C.id === inUse ? 'In use' : owned[C.id] ? cfg(C).lens : 'Try it') + '</small>');
       b.onclick = () => openCam(C); $('shelf').appendChild(b);
     });
   }
@@ -151,10 +156,10 @@
     group('Lens', C.lenses, 'lens'); group('Frame', Object.keys(FRAMES), 'frame');
     if (has) { group('Body', BODY, 'body', true); group('Leather', Object.keys(LEATHER), 'leather'); group('Strap', Object.keys(STRAP), 'strap'); group('Sticker', Object.keys(STICK), 'sticker'); }
     const cta = document.createElement('div'); cta.className = 'cta';
-    cta.innerHTML = has ? '<button type="button" class="main" id="use"' + (C.id === inUse ? ' disabled' : '') + '>' + (C.id === inUse ? 'In your camera' : 'Use this camera') + '</button>' : '<button type="button" class="main" id="buy">Buy for ' + C.price + '</button>';
+    cta.innerHTML = has ? '<button type="button" class="main" id="use"' + (C.id === inUse ? ' disabled' : '') + '>' + (C.id === inUse ? 'In your camera' : 'Use this camera') + '</button>' : '<button type="button" class="main" id="buy">Try this camera</button><p class="tryn">Shoot a test through it. Keeping and sending photos from it comes with unlocking it.</p>';
     body.appendChild(cta);
     if (has && C.id !== inUse) $('use').onclick = () => { const r = store.get('poto.roll', {}) || {}; store.set('poto.roll', { look: C.look, shot: 0, n: (r.n || 4) + 1 }); store.set('poto.cam', { id: C.id, lens: o.lens, frame: o.frame }); inUse = C.id; paintShelf(); close($('campg')); toast(C.id + ' is in your camera'); try { navigator.vibrate && navigator.vibrate(10); } catch (e) {} };
-    if (!has) $('buy').onclick = () => { owned[C.id] = {}; save(); paintShelf(); openCam(C); toast(C.id + ' is on your shelf'); };
+    if (!has) $('buy').onclick = () => { store.set('poto.cam', { id: C.id, lens: o.lens, frame: o.frame, trial: true, look: C.look, prev: store.get('poto.cam', null) }); close($('campg')); potoGo('camera.html?try=' + encodeURIComponent(C.id)); };   // try any camera: the look is free to see; keeping photos needs it unlocked (Cody, 20 Nov: no prices on the shelf)
     open($('campg'));
   }
   // ---- finished rolls: frosted folders, the camera's swatch clipped on ----
