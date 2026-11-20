@@ -1,12 +1,13 @@
 /* Poto v2 — Gallery white. The interface is nearly invisible: white room, hairlines, clear glass, small dark type.
    Only objects (cards, prints, stickers, folders) carry texture and shadow. Photos are the only colour. */
 :root {
-  --room: #FAFAF8;            /* the wall */
-  --room-2: #F2F2EF;          /* a step down, for wells */
-  --ink: #141416;
-  --ink-2: #6E6E73;
-  --ink-3: #A9A9AE;
-  --hair: rgba(20, 20, 22, 0.08);
+  --room: #FAF9F6;            /* the wall: a white with a breath of warmth (Cody, 20 Nov: slightly off-white) */
+  --room-2: #F2F0EB;          /* a step down, for wells */
+  --ink: #1A1917;
+  --ink-2: #6D6A64;
+  --ink-3: #A7A39C;
+  --hair: rgba(26, 25, 23, 0.09);
+  --red: #B8442F;             /* the postmark: today, badges, destructive only */
   --glass: rgba(255, 255, 255, 0.24);   /* Cody, 19 Nov: all UI liquid glass, clear like iOS 26 */
   --glass-edge: rgba(255, 255, 255, 0.95);
   --glass-shade: rgba(20, 20, 30, 0.10);
@@ -14,7 +15,7 @@
   --dark: #0A0A0B;            /* the camera room */
   --on-dark: #F5F5F3;
   --on-dark-2: #8E8E93;
-  --sans: Inter, -apple-system, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+  --sans: -apple-system, "SF Pro Text", system-ui, Inter, "Segoe UI", sans-serif;   /* one interface sans: the system's own */
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --ease: cubic-bezier(.2, .8, .2, 1);
   --spring: cubic-bezier(.3, 1.45, .45, 1);   /* weight: overshoot a little, settle */

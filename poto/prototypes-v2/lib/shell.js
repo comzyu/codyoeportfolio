@@ -66,7 +66,7 @@
   }
 
   // the bar
-  var TABS = { 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+  var TABS = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
   var tab = TABS[page];
   if (!tab) return;
   var I = {
@@ -79,10 +79,9 @@
   function addBar() {
     var nav = document.createElement('nav');
     nav.className = 'potobar'; nav.setAttribute('aria-label', 'Poto');
-    nav.innerHTML = B.map(function (b) {
-      var icon = b[0] === 'camera' ? '<i class="shut"></i>' : I[b[0]];
-      return '<button type="button" data-t="' + b[0] + '" class="' + (b[0] === tab ? 'on' : '') + (b[0] === 'camera' ? ' cam' : '') + '" aria-label="' + b[1] + '"' + (b[0] === tab ? ' aria-current="page"' : '') + '>' + icon + '<span class="lab">' + b[1] + '</span></button>';
-    }).join('');
+    var btn = function (b) { return '<button type="button" data-t="' + b[0] + '" class="' + (b[0] === tab ? 'on' : '') + '" aria-label="' + b[1] + '"' + (b[0] === tab ? ' aria-current="page"' : '') + '>' + I[b[0]] + '<span class="lab">' + b[1] + '</span></button>'; };
+    nav.innerHTML = '<div class="tabs">' + B.filter(function (b) { return b[0] !== 'camera'; }).map(btn).join('') + '</div>' +
+      '<button type="button" data-t="camera" class="camb" aria-label="Camera"><i class="shut"></i><span class="lab">Camera</span></button>';
     document.body.appendChild(nav);
     nav.querySelectorAll('button').forEach(function (b) {
       b.addEventListener('pointerdown', function () { b.classList.add('say'); clearTimeout(b.t); b.t = setTimeout(function () { b.classList.remove('say'); }, 900); });

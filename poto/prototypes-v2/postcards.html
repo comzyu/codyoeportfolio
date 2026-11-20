@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="lib/shell.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Poto · Postcards</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Special+Elite&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<style>
+  /* Home (redesign plan, 20 Nov): the live postcard, straight away. One friend at a time; the date and time it was posted above it.
+     Drag sideways to turn it, tap to turn it over, swipe up for the next, down for the previous, hold for more. */
+  html, body { height: 100%; overflow: hidden; background: var(--room); }
+  .app { position: fixed; inset: 0; user-select: none; -webkit-user-select: none; }
+  .stage { position: absolute; inset: 0; touch-action: none; transform-origin: 50% 0; will-change: transform, opacity; }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  .when { position: absolute; z-index: 3; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 10vh - 22px); display: grid; justify-items: center; gap: 6px; pointer-events: none; transition: opacity .2s; }
+  .when b { font: 600 17px/1 var(--sans); letter-spacing: -.01em; color: var(--ink); }
+  .when span { font: 400 13px/1 var(--sans); color: var(--ink-3); }
+  /* after the last card */
+  .end { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 0 max(24px, env(safe-area-inset-left, 0px)); opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .end.on { opacity: 1; pointer-events: auto; }
+  .end .page { width: min(68vw, 280px); aspect-ratio: 1024 / 1448; border-radius: 4px; border: 1px solid var(--hair); display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px; }
+  .end h2 { margin: 0; font: 600 20px/1.2 var(--sans); letter-spacing: -.02em; color: var(--ink); }
+  .end p { margin: 0 0 14px; font: 400 15px/1.4 var(--sans); color: var(--ink-2); }
+  .end .acts { display: grid; gap: 8px; width: 100%; }
+  .end button { height: 44px; border-radius: 999px; font: 500 15px/1 var(--sans); color: var(--ink); }
+  .end button.main { background: var(--ink); color: var(--room); }
+  .empty .page { border-style: dashed; }
+  /* hold: Reply, Keep, Sticker */
+  .dim { position: absolute; inset: 0; z-index: 10; background: rgba(250,249,246,.4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .18s; }
+  .dim.on { opacity: 1; pointer-events: auto; }
+  .menu { position: absolute; z-index: 11; left: 50%; top: 50%; width: 236px; padding: 6px; border-radius: 22px; transform: translate(-50%, -50%) scale(.94); opacity: 0; pointer-events: none; transition: opacity .18s, transform .28s var(--spring); }
+  .menu.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  .menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 46px; padding: 0 14px; border-radius: 16px; font: 400 16px/1 var(--sans); color: var(--ink); position: relative; z-index: 1; }
+  .menu button:active { background: rgba(26,25,23,.06); }
+  .menu svg { width: 19px; height: 19px; color: var(--ink-2); }
+  .toast { position: absolute; z-index: 12; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { .stage { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="when" id="when" aria-live="polite"></div>
+  <div class="stage" id="stage" role="img" aria-label="A postcard. Drag to turn it, tap to turn it over, swipe up for the next."></div>
+  <section class="end" id="end" aria-live="polite"></section>
+  <div class="dim" id="dim"></div>
+  <div class="menu glass" id="menu" role="menu">
+    <button type="button" role="menuitem" data-a="0">Reply with a postcard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 015 5v1"/></svg></button>
+    <button type="button" role="menuitem" data-a="1">Keep on my desk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg></button>
+    <button type="button" role="menuitem" data-a="2">Leave a sticker <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a4 4 0 00-4 4v10a4 4 0 004 4h10a4 4 0 004-4v-7"/><path d="M14 3v4a3 3 0 003 3h4z"/></svg></button>
+  </div>
+  <div class="toast glass" id="toast" role="status"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="lib/paper.js"></script>
+<script src="lib/postcard3d.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id), stage = $('stage'), when = $('when'), end = $('end');
+  const ROOM = getComputedStyle(document.documentElement).getPropertyValue('--room').trim() || '#FAF9F6';
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const ph = (n, s) => 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  // the feed: postcards you haven't seen yet, newest first (samples until accounts exist); c = the country edition of the back
+  const F = [
+    { photo: 3, stamp: 7, msg: 'the market at 9pm. everything lit up at once.', name: 'alva', at: '2026-11-17T21:04', city: 'New York', c: 'us' },
+    { photo: 9, stamp: 4, msg: 'look at this sky. i stopped walking for it.', name: 'bubu', at: '2026-11-17T17:48', city: 'Copenhagen', c: 'dk' },
+    { photo: 6, stamp: 1, msg: 'lunch, finally. we queued an hour. worth it.', name: 'pupu', at: '2026-11-17T13:22', city: 'Shanghai', c: 'cn' },
+    { photo: 2, stamp: 8, msg: 'made it to the top. legs gone, view not.', name: 'vava', at: '2026-11-17T11:05', city: 'Paris', c: 'fr' },
+    { photo: 5, stamp: 11, msg: 'sunday reset. coffee, laundry, nowhere to be.', name: 'alal', at: '2026-11-17T09:31', city: 'Berlin', c: 'de' },
+  ];
+  if (/[?&]new/.test(location.search)) F.length = 0;
+  const STRIP = { us: ['#B22234', '#F4F1EA', '#3C3B6E'], cn: ['#DE2910', '#FFDE00', '#DE2910'], dk: ['#C8102E', '#F4F1EA', '#C8102E'], fr: ['#0055A4', '#F4F1EA', '#EF4135'], de: ['#1B1B1B', '#DD0000', '#FFCE00'] };
+  const loadImg = (src) => new Promise((r) => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
+  const wrap = (t, w) => { const out = []; let line = ''; for (const word of t.split(/\s+/)) { if ((line + ' ' + word).trim().length > w) { out.push(line); line = word; } else line = (line + ' ' + word).trim(); } if (line) out.push(line); return out; };
+  const fontsIn = Promise.race([Promise.all(['37px "Special Elite"', '24px "Special Elite"', '56px "La Belle Aurore"', '500 19px "IBM Plex Mono"'].map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
+
+  // their signature stamp, clipped to the front: drawn into the card's lit layer so it keeps its true colour
+  function clipStamp(t, img) {
+    const w = 150, h = 188, x = 1024 - 43 - w - 18, y = 26;
+    for (const [c, ink] of [[t.lit, true], [t.map3d, false], [t.col, true]]) {
+      if (!c) continue; const g = c.getContext('2d'); g.save(); g.translate(x + w / 2, y + h / 2); g.rotate(0.12); g.translate(-w / 2, -h / 2);
+      if (!ink) { g.fillStyle = '#000'; g.fillRect(-4, -4, w + 8, h + 8); g.restore(); continue; }
+      g.shadowColor = 'rgba(0,0,0,.28)'; g.shadowBlur = 5; g.shadowOffsetY = 2; g.fillStyle = '#FBFAF6'; g.fillRect(0, 0, w, h); g.shadowColor = 'transparent';
+      const s = Math.max((w - 20) / img.width, (h - 20) / img.height); g.drawImage(img, (img.width - (w - 20) / s) / 2, (img.height - (h - 20) / s) / 2, (w - 20) / s, (h - 20) / s, 10, 10, w - 20, h - 20);
+      g.globalCompositeOperation = 'destination-out'; for (let i = 0; i <= 10; i++) for (const yy of [0, h]) { g.beginPath(); g.arc(i * w / 10, yy, 4.5, 0, 7); g.fill(); } for (let j = 1; j < 12; j++) for (const xx of [0, w]) { g.beginPath(); g.arc(xx, j * h / 12, 4.5, 0, 7); g.fill(); }
+      g.globalCompositeOperation = 'source-over'; g.restore();
+      // the paper clip over its top edge
+      g.save(); g.translate(x + w * 0.68, y - 14); g.rotate(0.14); g.strokeStyle = '#9a9aa2'; g.lineWidth = 6; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(12, 30); g.lineTo(12, 84); g.arc(22, 84, 10, Math.PI, 0, true); g.lineTo(32, 22); g.arc(17, 22, 15, 0, Math.PI, true); g.lineTo(2, 92); g.arc(22, 92, 20, Math.PI, 0, true); g.lineTo(42, 36); g.stroke(); g.restore();
+    }
+  }
+  const drawn = new Map();
+  function faces(k) {
+    if (!F[k]) return Promise.resolve(null);
+    if (!drawn.has(k)) drawn.set(k, fontsIn.then(async () => {
+      const f = F[k], d = new Date(f.at);
+      const [photo, stamp, design, seal] = await Promise.all([loadImg(ph(f.photo)), loadImg(ph(f.stamp, '-s')), loadImg('img/backs/' + f.c + '.jpg'), loadImg('img/backs/seal-' + f.c + '.png')]);
+      if (!photo) return null;
+      await new Promise((r) => setTimeout(r, 0));
+      const front = PotoPaper.front(photo, f.name, 'matte'); if (stamp) clipStamp(front, stamp);
+      await new Promise((r) => setTimeout(r, 0));
+      const back = PotoPaper.back(photo, { message: wrap(f.msg, 25).slice(0, 6), note: ['for cody,', f.name], noteLabel: 'NOTE', caption: 'Shot on ' + DAYN[d.getDay()] + ' · ' + f.city,
+        city: f.city, look: 'Sunday', date: [d.getDate() + ' ' + MON[d.getMonth()].toUpperCase(), String(d.getFullYear())], stamp: !!stamp, stampPhoto: stamp || photo, design, seal, strip: STRIP[f.c] });
+      return { front, back };
+    }));
+    return drawn.get(k);
+  }
+
+  // ---- the card ----
+  let pc = null, i = 0, busy = false, atEnd = false;
+  const paintWhen = (f) => { if (!f) { when.innerHTML = ''; return; } const d = new Date(f.at), h = d.getHours();
+    when.innerHTML = '<b>' + DAYN[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + '</b><span>' + (h % 12 || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM') + '</span>'; };
+  async function show(k) {
+    const fc = await faces(k); if (!fc || k !== i) return;
+    pc.setFaces(fc.front, fc.back); pc.pose(0, -0.06); paintWhen(F[k]);
+    [k + 1, k - 1].forEach((n) => setTimeout(() => faces(n), 300));   // the neighbours are drawn while you look
+  }
+  function showEnd(empty) {
+    atEnd = true; paintWhen(null); stage.style.opacity = 0; stage.style.pointerEvents = 'none';
+    end.className = 'end on' + (empty ? ' empty' : '');
+    end.innerHTML = empty
+      ? '<div class="page"><h2>No postcards yet</h2><p>Your friends’ postcards land here.</p><div class="acts"><button type="button" class="main glass" data-go="invite">Invite a friend</button></div></div>'
+      : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html">Send yours</button><button type="button" class="glass" data-go="home.html">Earlier days</button></div></div>';
+    end.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { if (b.dataset.go !== 'invite') potoGo(b.dataset.go); }));
+  }
+  function hideEnd() { atEnd = false; end.className = 'end'; stage.style.pointerEvents = ''; }
+
+  // ---- swiping: up flips the card away over the top and the next rises from below; down brings the previous back ----
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+  function poseStage(dir, p) {
+    stage.style.transform = dir > 0 ? 'perspective(1200px) translateY(' + (-p * 22) + '%) rotateX(' + (p * 55) + 'deg)' : 'translateY(' + (p * 16) + '%)';
+    stage.style.opacity = dir > 0 ? (p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5) : 1 - p * 0.8;
+    when.style.opacity = Math.max(0, 1 - p * 2);
+  }
+  function tween(ms, fn) { return new Promise((r) => { const t0 = performance.now(); (function step(now) { const t = Math.min(1, (now - t0) / ms); fn(t); if (t < 1) requestAnimationFrame(step); else r(); })(t0); }); }
+  async function commit(dir, from) {
+    busy = true;
+    await tween(80 + 220 * (1 - from), (t) => poseStage(dir, from + (1 - from) * ease(t)));
+    buzz(6);
+    if (dir > 0 && i + 1 >= F.length) { i = F.length; showEnd(false); stage.style.transform = ''; busy = false; return; }
+    i += dir; await show(i);
+    // the new card comes in from the other side
+    await tween(320, (t) => { const e = ease(t); stage.style.transform = 'translateY(' + ((dir > 0 ? 14 : -14) * (1 - e)) + '%)'; stage.style.opacity = e; when.style.opacity = e; });
+    stage.style.transform = ''; busy = false;
+  }
+  async function springBack(dir, from) { busy = true; await tween(260, (t) => poseStage(dir, from * (1 - ease(t)))); stage.style.transform = ''; stage.style.opacity = ''; when.style.opacity = ''; busy = false; }
+  let quiet = false;   // our own cancel to the card must not end our swipe
+  const cancelCard = (id) => { quiet = true; try { pc.renderer.domElement.dispatchEvent(new PointerEvent('pointercancel', { pointerId: id, bubbles: true })); } catch (e) {} quiet = false; };
+  let g = null, holdT = 0;
+  stage.addEventListener('pointerdown', (e) => {
+    if (busy || !pc) return;
+    g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, axis: '', ys: [[e.timeStamp, e.clientY]] };
+    clearTimeout(holdT); holdT = setTimeout(() => { if (g && !g.axis) { cancelCard(g.id); g = null; openMenu(); } }, 450);
+  }, true);
+  stage.addEventListener('pointermove', (e) => {
+    if (!g || e.pointerId !== g.id) return;
+    const dx = e.clientX - g.x0, dy = e.clientY - g.y0; g.ys.push([e.timeStamp, e.clientY]); if (g.ys.length > 6) g.ys.shift();
+    if (!g.axis && Math.hypot(dx, dy) > 10) {
+      clearTimeout(holdT); g.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? 'y' : 'x';
+      if (g.axis === 'y') { cancelCard(g.id); g.dir = dy < 0 ? 1 : (i > 0 ? -1 : 0); g.y1 = e.clientY; }
+    }
+    if (g.axis !== 'y') return;
+    e.stopPropagation();
+    const d = e.clientY - g.y1, span = innerHeight * 0.5;
+    if (!g.dir) { stage.style.transform = 'translateY(' + Math.max(0, d) * 0.12 + 'px)'; return; }   // nothing above: it only gives a little
+    g.p = Math.max(0, Math.min(1, (g.dir > 0 ? -d : d) / span)); poseStage(g.dir, g.p);
+  }, true);
+  const release = (e) => {
+    if (quiet) return;
+    clearTimeout(holdT); if (!g || e.pointerId !== g.id) return; const s = g; g = null;
+    if (s.axis !== 'y') return;
+    e.stopPropagation();
+    if (!s.dir) { springBack(1, 0); return; }
+    const [t0, y0] = s.ys[0], [t1, y1] = s.ys[s.ys.length - 1], v = (y1 - y0) / Math.max(1, t1 - t0), flick = s.dir > 0 ? v < -0.45 : v > 0.45;
+    if ((s.p || 0) > 0.3 || (flick && (s.p || 0) > 0.04)) commit(s.dir, s.p || 0); else springBack(s.dir, s.p || 0);
+  };
+  stage.addEventListener('pointerup', release, true); stage.addEventListener('pointercancel', release, true);
+  // at the end: swipe down (or tap the empty space) goes back to the last card
+  let ey = null;
+  end.addEventListener('pointerdown', (e) => { if (!e.target.closest('button')) ey = e.clientY; });
+  end.addEventListener('pointerup', (e) => { if (ey != null && e.clientY - ey > 50 && F.length) { hideEnd(); i = F.length - 1; show(i).then(() => tween(300, (t) => { stage.style.opacity = ease(t); when.style.opacity = ease(t); })); } ey = null; });
+  addEventListener('keydown', (e) => { if (busy || atEnd && e.key !== 'ArrowUp') return; if (e.key === 'ArrowDown') commit(1, 0); if (e.key === 'ArrowUp' && atEnd) { end.dispatchEvent(new PointerEvent('pointerdown', { clientY: 0 })); end.dispatchEvent(new PointerEvent('pointerup', { clientY: 100 })); } else if (e.key === 'ArrowUp' && i > 0) commit(-1, 0); if (e.key === ' ') { e.preventDefault(); pc && pc.flip(); } });
+
+  // ---- hold: Reply, Keep, Sticker ----
+  const menu = $('menu'), dim = $('dim'), toastEl = $('toast');
+  function openMenu() { if (atEnd) return; buzz(10); menu.classList.add('on'); dim.classList.add('on'); }
+  const closeMenu = () => { menu.classList.remove('on'); dim.classList.remove('on'); };
+  const toast = (t) => { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
+  dim.onclick = closeMenu;
+  const ACTS = [
+    (f) => { let k = []; try { k = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {} if (k.length) potoGo('postcard.html?' + new URLSearchParams({ src: k[0].src, zoom: k[0].zoom || 1, ev: k[0].ev || 0, to: f.name })); else potoGo('camera.html'); },
+    (f) => { let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {} q.push({ type: 'card', src: f.photo, from: f.name, where: f.city }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {} toast('On your desk'); },
+    (f) => potoGo('postcard.html?' + new URLSearchParams({ src: ph(f.photo), from: f.name, msg: f.msg, where: f.city, sticker: 1 })),
+  ];
+  menu.querySelectorAll('button').forEach((b) => (b.onclick = () => { closeMenu(); if (F[i]) ACTS[+b.dataset.a](F[i]); }));
+
+  // ---- start ----
+  if (!window.THREE || !document.createElement('canvas').getContext('webgl2')) { showEnd(!F.length); return; }
+  if (!F.length) { showEnd(true); return; }
+  pc = new PotoPostcard(stage, { background: ROOM });
+  pc.onFlip = () => buzz(5);
+  show(0);
+})();
+</script>
+<link rel="stylesheet" href="lib/shell.css">
+</body>
+</html>

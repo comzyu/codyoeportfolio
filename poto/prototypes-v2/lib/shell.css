@@ -2,23 +2,25 @@
 
 /* prototype-only things: the way back to the list, the fake status bar, captions under the phone */
 html.in-app .proto-back, html.in-app .phone > .sb, html.in-app p.cap, html.in-app .note2 { display: none !important; }
-html.in-app.pg-home-min a[href="index.html"], html.in-app.pg-home a[href="index.html"], html.in-app.pg-rolls a[href="index.html"], html.in-app.pg-profile a[href="index.html"] { visibility: hidden; }
+html.in-app.pg-postcards a[href="index.html"], html.in-app.pg-home-min a[href="index.html"], html.in-app.pg-home a[href="index.html"], html.in-app.pg-rolls a[href="index.html"], html.in-app.pg-profile a[href="index.html"] { visibility: hidden; }
 
 /* the tab pages' own docks give way to one shared bar */
 html.in-app.pg-home-min #phone > nav.bar, html.in-app.pg-home nav.dock, html.in-app.pg-rolls nav.dock, html.in-app.pg-profile nav.dock { display: none !important; }
 
-/* the bar (from Home, Cody 18 Nov): there, but you hardly notice it; a label shows while you press */
-.potobar { position: fixed; z-index: 50; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12)); -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08);
-  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); -webkit-user-select: none; user-select: none; }
-.potobar button { position: relative; width: 44px; height: 40px; display: grid; place-items: center; color: rgba(24,23,26,.56); border-radius: 999px; transition: color .2s; background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-.potobar button.on { color: rgba(24,23,26,.92); }
-.potobar svg { width: 20px; height: 20px; }
-.potobar .cam { width: 48px; }
+/* the bar (redesign plan, 20 Nov): iOS 26 shape. Four tabs in one floating glass capsule; the camera its own round glass button beside it.
+   The selected tab sits on a lighter pill; a label shows while you press. */
+.potobar { position: fixed; z-index: 50; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; -webkit-user-select: none; user-select: none; }
+.potobar .tabs, .potobar .camb { background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12)); -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
+.potobar .tabs { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; }
+.potobar button { position: relative; display: grid; place-items: center; background: none; border: 0; padding: 0; -webkit-tap-highlight-color: transparent; color: rgba(26,25,23,.55); transition: color .2s, background .25s; }
+.potobar .tabs button { width: 52px; height: 44px; border-radius: 999px; }
+.potobar .tabs button.on { color: #1A1917; background: rgba(255,255,255,.6); box-shadow: 0 1px 2px rgba(20,20,30,.08); }
+.potobar svg { width: 21px; height: 21px; }
+.potobar .camb { width: 52px; height: 52px; border-radius: 50%; color: #1A1917; }
 .potobar .shut { width: 26px; height: 26px; border-radius: 50%; border: 1.6px solid currentColor; position: relative; display: block; }
 .potobar .shut::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: currentColor; opacity: .9; }
-.potobar .lab { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px); opacity: 0; pointer-events: none; transition: opacity .15s, transform .2s; white-space: nowrap;
-  padding: 5px 9px; border-radius: 999px; font: 500 11px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.2)); -webkit-backdrop-filter: blur(14px) saturate(200%); backdrop-filter: blur(14px) saturate(200%); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
+.potobar .lab { position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translate(-50%, 4px); opacity: 0; pointer-events: none; transition: opacity .15s, transform .2s; white-space: nowrap;
+  padding: 5px 9px; border-radius: 999px; font: 500 11px/1 -apple-system, system-ui, sans-serif; color: #1A1917; background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.12)); -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.08); backdrop-filter: blur(14px) saturate(200%) brightness(1.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 14px rgba(255,255,255,.28), 0 1px 2px rgba(20,20,30,.06), 0 12px 32px -14px rgba(20,20,30,.32); }
 .potobar button.say .lab { opacity: 1; transform: translate(-50%, 0); }
 
 /* the camera in the phone app: the phone draws the live picture under this page, so the page is see-through there */

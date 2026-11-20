@@ -3,7 +3,7 @@
 <style>
   /* The whole app in a browser (Cody, 19 Nov): the tested pages, joined the way the phone app joins them.
      Full screen on a phone; a phone-sized window on a computer. Single light look, like the pages. */
-  :root { --room: #F4F2ED; --desk: #E7E4DD; --ink: #1A1917; --soft: #6D6A64; color-scheme: light; }
+  :root { --room: #FAF9F6; --desk: #E7E4DD; --ink: #1A1917; --soft: #6D6A64; color-scheme: light; }
   html, body { height: 100%; }
   body { margin: 0; background: var(--desk); color: var(--ink); font: 400 14px/1.4 -apple-system, system-ui, sans-serif; overflow: hidden;
     padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
@@ -27,8 +27,8 @@
 <script>
 (function () {
   const device = document.getElementById('device');
-  const TABS = { home: 'home-min', calendar: 'home', rolls: 'rolls', desk: 'profile' };
-  const TAB_OF = { 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+  const TABS = { home: 'postcards', calendar: 'home', rolls: 'rolls', desk: 'profile' };
+  const TAB_OF = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
   const KEYS = ['poto.kept', 'poto.pending', 'poto.roll', 'poto.rolls', 'poto.stamps', 'poto.desk', 'poto.deskAdd'];
   const stateNow = () => { try { return KEYS.map((k) => localStorage.getItem(k) || '').join('\u0001'); } catch (e) { return ''; } };
   const frames = {}, seen = {};

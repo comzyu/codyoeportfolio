@@ -16,9 +16,9 @@ import { installWeb } from '@/web/install';
 
 type Tab = 'home' | 'calendar' | 'rolls' | 'desk';
 const TABS: Tab[] = ['home', 'calendar', 'rolls', 'desk'];
-const PAGE: Record<Tab, string> = { home: 'home-min', calendar: 'home', rolls: 'rolls', desk: 'profile' };
-const TAB_OF: Record<string, Tab> = { 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
-const ROOM: Record<Tab, string> = { home: '#F4F2ED', calendar: '#FAFAF8', rolls: '#FAFAF8', desk: '#FAFAF8' };
+const PAGE: Record<Tab, string> = { home: 'postcards', calendar: 'home', rolls: 'rolls', desk: 'profile' };
+const TAB_OF: Record<string, Tab> = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+const ROOM: Record<Tab, string> = { home: '#FAF9F6', calendar: '#FAF9F6', rolls: '#FAF9F6', desk: '#FAF9F6' };
 
 export default function Shell() {
   const insets = useSafeAreaInsets();
