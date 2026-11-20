@@ -45,7 +45,8 @@
   .zoom { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; }
   .zoom button { position: relative; min-width: 36px; height: 30px; border-radius: 999px; font: 500 12.5px/1 var(--sans); color: #d0d0d2; transition: background .2s, color .2s; }
   .zoom button[aria-pressed="true"] { background: rgba(255,255,255,.92); color: #000; }
-  .tools { display: none; }   /* flash, timer, grid, date and double exposure: back one by one, in a small menu, once each really works */
+  .tools { display: none; }
+  html.pcard .tray2, html.pcard .hintdev, html.pcard .film { visibility: hidden; }   /* postcard mode: just the shot */   /* flash, timer, grid, date and double exposure: back one by one, in a small menu, once each really works */
   .deck { flex: 1; min-height: 108px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 26px calc(10px + var(--safe-bottom)); }
   /* the film tab: the roll's look, shown as the end-flap torn off a film box and tucked beside the shutter */
   .film { justify-self: start; width: 58px; padding: 7px 7px 6px; border-radius: 4px; background: #F4F1EA; color: #1b1b1c; transform: rotate(-5deg); box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 8px 18px -6px rgba(0,0,0,.8); text-align: left;
@@ -143,6 +144,9 @@
   <div class="devacts glass dark" id="devacts"><button type="button" id="later">Later</button><button type="button" class="keep" id="keepall">Keep all</button></div>
 </main>
 <script>
+// postcard mode (Cody, 20 Nov: a postcard is always a photo taken now): one shot, straight onto the card
+const CQ = new URLSearchParams(location.search), PCARD = CQ.has('postcard'), PTO = (CQ.get('to') || '').slice(0, 20);
+if (PCARD) document.documentElement.classList.add('pcard');
 const $ = (id) => document.getElementById(id), app = $('app'), vf = $('vf'), scene = $('scene'), odo = $('odo');
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SCENES = ['img/photo-02.jpg', 'img/photo-01.jpg', 'img/photo-06.jpg', 'img/photo-09.jpg', 'img/photo-12.jpg', 'img/photo-07.jpg'];
@@ -155,6 +159,7 @@ count = ROLL.shot;
 { const t = document.querySelector('.film'), c = ROLLC[ROLL.look] || ROLLC.Sunday; t.querySelector('b').textContent = ROLL.look.toUpperCase(); t.setAttribute('aria-label', 'Loaded film: ' + ROLL.look + '. Change the roll');
   t.querySelector('u').style.background = 'linear-gradient(90deg,' + c[0] + ' 0 62%,#1b1b1c 62% 66%,' + c[1] + ' 66%)'; t.onclick = () => { potoGo('rolls.html'); }; }
 odo.innerHTML = '<span>' + (27 - count) + '</span>';
+if (PCARD) { const c = document.querySelector('.count'); c.innerHTML = '<b>' + (PTO ? 'Postcard to @' + PTO : 'A postcard') + '</b>'; c.setAttribute('aria-label', c.textContent); }
 function roll(n) {                                   // the counter turns like a little drum
   if (odo.children.length > 1) { odo.getAnimations({ subtree: true }).forEach((a) => a.cancel()); odo.innerHTML = '<span>' + odo.lastElementChild.textContent + '</span>'; }   // shooting fast: settle the last turn first
   const old = odo.firstElementChild, neu = document.createElement('span'); neu.textContent = n; odo.appendChild(neu);
@@ -262,7 +267,9 @@ function shoot() {
   curtain(160); count = count >= 27 ? 1 : count + 1; ROLL.shot = count; try { localStorage.setItem('poto.roll', JSON.stringify(ROLL)); } catch (e) {} setTimeout(() => roll(27 - count), 240);
   const z = parseFloat(scene.style.transform.replace('scale(', '')) || 1;
   const shot = { id: Date.now(), src: scene.getAttribute('src'), zoom: z, ev, look: ROLL.look, t: Date.now() };
-  if (APP) { shot.zoom = 1; const job = (WEB ? webShot(z) : PotoNative.call('shoot')).then((r) => { shot.id = r.id; shot.src = r.src; pending.push(shot); savePending(); }).catch(() => {}).finally(() => { saving.delete(job); paintTray(); }); saving.add(job); }   // the real photo, saved on the phone
+  const toCard = (src) => potoGo('postcard.html?' + new URLSearchParams(Object.assign({ src, zoom: shot.zoom, ev }, PTO ? { to: PTO } : {})));
+  if (PCARD && !APP) { setTimeout(() => toCard(shot.src), 260); return; }
+  if (APP) { shot.zoom = 1; const job = (WEB ? webShot(z) : PotoNative.call('shoot')).then((r) => { shot.id = r.id; shot.src = r.src; if (PCARD) { toCard(r.src); return; } pending.push(shot); savePending(); }).catch(() => {}).finally(() => { saving.delete(job); paintTray(); }); saving.add(job); }   // the real photo, saved on the phone
   else { pending.push(shot); savePending(); }
   if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
   // an undeveloped print slides out of the viewfinder into the tray

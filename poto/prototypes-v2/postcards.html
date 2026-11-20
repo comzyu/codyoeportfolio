@@ -136,7 +136,7 @@
     end.className = 'end on' + (empty ? ' empty' : '');
     end.innerHTML = empty
       ? '<div class="page"><h2>No postcards yet</h2><p>Your friends’ postcards land here.</p><div class="acts"><button type="button" class="main glass" data-go="invite">Invite a friend</button></div></div>'
-      : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html">Send yours</button><button type="button" class="glass" data-go="calendar.html">Earlier days</button></div></div>';
+      : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html?postcard=1">Send yours</button><button type="button" class="glass" data-go="calendar.html">Earlier days</button></div></div>';
     end.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { if (b.dataset.go !== 'invite') potoGo(b.dataset.go); }));
   }
   function hideEnd() { atEnd = false; end.className = 'end'; stage.style.pointerEvents = ''; }
@@ -204,7 +204,7 @@
   const toast = (t) => { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
   dim.onclick = closeMenu;
   const ACTS = [
-    (f) => { let k = []; try { k = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {} if (k.length) potoGo('postcard.html?' + new URLSearchParams({ src: k[0].src, zoom: k[0].zoom || 1, ev: k[0].ev || 0, to: f.name })); else potoGo('camera.html'); },
+    (f) => potoGo('camera.html?' + new URLSearchParams({ postcard: 1, to: f.name })),   // a reply is always a photo taken now (Cody, 20 Nov: everything is live)
     (f) => { let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {} q.push({ type: 'card', src: f.photo, from: f.name, where: f.city, stamp: f.stamp }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {} toast('On your desk'); },
     (f) => potoGo('postcard.html?' + new URLSearchParams({ src: ph(f.photo), from: f.name, msg: f.msg, where: f.city, sticker: 1 })),
   ];

@@ -3,403 +3,177 @@
 <head>
 <script src="lib/shell.js"></script>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Poto · Rolls</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
-<script src="lib/develop.js" defer></script>
 <style>
-  /* Rolls. Film is a real object here: canisters stand on a shelf (board #20), the loaded one lies in the camera back,
-     a finished roll comes out as a contact strip and gets filed in a frosted folder. */
-  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + var(--safe-top)) 0 calc(120px + var(--safe-bottom)); }
-  .pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
-  .month { display: flex; align-items: baseline; gap: 10px; }
-  .month h2 { margin: 0; font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.035em; }
-  .month span { font-size: 40px; line-height: 44px; font-weight: 300; letter-spacing: -0.03em; color: var(--ink-3); }
-  .sub { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
-  h3 { margin: 40px 0 0; font-size: 13px; font-weight: 600; letter-spacing: -0.005em; display: flex; justify-content: space-between; align-items: baseline; }
-  h3 small { font: 400 10.5px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
-  .p { position: absolute; display: block; background: #FDFCFA; padding: 4% 4% 13%; border-radius: 2.5px;
-    box-shadow: inset 0 0 0 .5px rgba(0,0,0,.05), 0 .5px 0 rgba(0,0,0,.12), 0 1px 1.5px rgba(20,20,30,.16), 0 10px 22px -8px rgba(20,20,30,.28), 0 26px 40px -24px rgba(20,20,30,.22); }
-  .p img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.2); }
-  .p::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,0) 38%); }
-
-  /* ---- a film canister, all CSS: metal caps, a printed label wrapped round a cylinder (the label slides sideways to "turn" it), shading for the curve ---- */
-  .can { position: relative; width: 58px; height: 92px; flex: none; }
-  .can canvas { position: absolute; inset: -6px 0 0 0; width: 100%; height: calc(100% + 6px); }   /* the spool end pokes 6px above the cap */
-
-  /* ---- the camera back: the roll that's in. Dark like the camera, recessed chamber, film leader to the take-up spool ---- */
-  .back { position: relative; margin-top: 18px; border-radius: 24px; padding: 16px 16px 14px; background: #121213; color: var(--on-dark);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 40px -22px rgba(0,0,0,.55); overflow: hidden; }
-  .back::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--grain, none) 0 0 / 96px 96px; opacity: .55; }   /* leatherette: baked grain, no blend mode */
-  .chamber { position: relative; height: 96px; border-radius: 14px; background: linear-gradient(180deg, #0a0a0b, #19191b); box-shadow: inset 0 2px 8px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.05); display: flex; align-items: center; padding: 0 14px; gap: 0; }
-  .chamber .slot { position: relative; width: 92px; height: 58px; flex: none; }
-  .chamber .slot .can { position: absolute; left: 17px; top: -17px; transform: rotate(90deg); }
-  .chamber::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(255,240,210,.55), 0 0 24px rgba(255,230,190,.25); opacity: 0; transition: opacity .2s; }
-  .chamber.hover::after { opacity: 1; }   /* a canister held over the camera: the chamber lights up to say "drop it here" */
-  .leader { position: relative; flex: 1; height: 40px; margin-left: -6px; transform-origin: 0 50%; transition: transform .9s cubic-bezier(.6,0,.4,1);
-    background: linear-gradient(180deg, transparent 0 4px, #2a1d12 4px 36px, transparent 36px), #0000;
-    -webkit-mask: radial-gradient(circle at 5px 8px, transparent 2.2px, #000 2.6px) 0 0 / 10px 40px repeat-x; mask: radial-gradient(circle at 5px 8px, transparent 2.2px, #000 2.6px) 0 0 / 10px 40px repeat-x; }
-  .leader::after { content: ""; position: absolute; inset: 4px 0; background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(0,0,0,0) 10px), linear-gradient(180deg, rgba(255,170,90,.18), rgba(120,60,20,.05) 40%, rgba(255,170,90,.12));
-    -webkit-mask: radial-gradient(circle at 5px 32px, transparent 2.2px, #000 2.6px) 0 -4px / 10px 40px repeat-x; mask: radial-gradient(circle at 5px 32px, transparent 2.2px, #000 2.6px) 0 -4px / 10px 40px repeat-x; }
-  .chamber.empty .leader, .chamber.swapping .leader { transform: scaleX(0); }
-  .spool { width: 22px; height: 70px; flex: none; margin-left: -2px; border-radius: 4px; background: linear-gradient(90deg, #2a2a2c, #5a5a60 35%, #1a1a1b); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
-  .chamber .none { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; color: var(--on-dark-2); opacity: 0; transition: opacity .4s; pointer-events: none; }
-  .chamber.empty .none { opacity: 1; }
-  .meta { position: relative; display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 10px; }
-  .meta .mono { color: var(--on-dark-2); } .meta b { color: var(--on-dark); font-weight: 500; }
-  .meta .frames { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; } .meta .frames i { display: block; height: 100%; background: var(--on-dark); border-radius: 2px; transition: width .6s var(--ease); }
-  .back .act { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 12.5px; font-weight: 500; }
-  .back .act:disabled { opacity: .35; cursor: default; }
-
-  /* ---- the shelf: canisters stand in a row on a white ledge. Native scroll (so momentum is the phone's), snapped one canister at a time ---- */
-  .shelfwrap { position: relative; margin-top: 10px; }
-  /* the shelf runs on its own physics (like the diary's stack), not page scroll: everything moves in the same frame, so nothing lags behind the finger */
-  .shelf { position: relative; z-index: 1; height: 172px; overflow: hidden; touch-action: none; cursor: grab; }
-  .track { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: flex-end; will-change: transform; }
-  .shelf .it { flex: none; width: 84px; height: 168px; display: grid; place-items: end center; position: relative; }
-  .shelf .it .can { transform-origin: 50% 100%; will-change: transform; margin-bottom: 4px; }
-  .shelf .it .floor { position: absolute; left: 50%; bottom: 0; width: 62px; height: 9px; margin-left: -31px; border-radius: 50%; background: radial-gradient(closest-side, rgba(20,20,30,.32), rgba(20,20,30,0)); will-change: transform, opacity; }
-  .shelf .it.lifted .can { visibility: hidden; }
-  .hint2 { display: block; text-align: center; margin-top: 18px; color: var(--ink-3); }
-  .ledge { position: absolute; left: 0; right: 0; bottom: -14px; height: 18px; z-index: 0;
-    background: linear-gradient(180deg, #F1F0EC 0 6px, #FFFFFF 6px 7px, #ECEBE6 7px 100%); box-shadow: 0 1px 0 rgba(20,20,30,.06), 0 16px 22px -14px rgba(20,20,30,.35); }
-  .pick { display: grid; grid-template-columns: 1fr 104px; gap: 18px; align-items: center; margin-top: 22px; min-height: 150px; }
-  .pick h4 { margin: 0; font-size: 26px; line-height: 30px; font-weight: 600; letter-spacing: -.025em; }
-  .pick p { margin: 6px 0 0; font-size: 13.5px; line-height: 19px; color: var(--ink-2); max-width: 30ch; }
-  .pick .mono { display: block; margin-top: 8px; color: var(--ink-3); }
-  .pick .sample { position: relative; height: 140px; }
-  .pick .sample .p { width: 100%; left: 0; top: 0; transform: rotate(4deg); transition: opacity .3s, transform .5s var(--spring); }
-  .load { margin-top: 14px; height: 40px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 6px 14px -6px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.18); transition: transform .3s var(--spring), opacity .2s; }
-  .load:active { transform: scale(.96); } .load:disabled { background: var(--room-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--hair); cursor: default; }
-  .flyer { position: fixed; z-index: 30; left: 0; top: 0; width: 58px; height: 92px; pointer-events: none; transform-origin: 50% 50%; will-change: transform; filter: drop-shadow(0 14px 14px rgba(0,0,0,.25)); }
-  .flyer .can { width: 58px; height: 92px; }
-
-  /* ---- finished rolls ---- */
-  .rolls { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 18px; margin-top: 22px; }
-  .folder .p { position: absolute; }
-  .roll.fresh .folder { animation: fresh 1s var(--spring) both; }
-  @keyframes fresh { 0% { transform: translateY(-40px) scale(.7); opacity: 0; } 100% { transform: none; opacity: 1; } }
-
-  /* ---- the contact strip: the whole roll at once, then filed ---- */
-  .dev { position: fixed; inset: 0; z-index: 20; background: var(--room); display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity .35s;
-    padding: calc(70px + var(--safe-top)) 0 calc(28px + var(--safe-bottom)); }
-  .dev.on { opacity: 1; pointer-events: auto; }
-  .dev .head { padding: 0 22px; }
-  .dev .head h4 { margin: 4px 0 0; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -.03em; } .dev .head p { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
-  .strip { position: relative; z-index: 2; margin: auto 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 0 0 10px; transform-origin: 50% 50%; }
-  .strip::-webkit-scrollbar { display: none; }
-  /* the strip is big now: each frame most of the screen wide, swipe one frame at a time, tap to look closer */
-  .film { --fw: min(66vw, 290px); position: relative; display: flex; gap: 10px; width: max-content; padding: 38px calc(50vw - var(--fw) / 2 - 10px); margin: 0; background: var(--grain, none) 0 0 / 128px 128px, linear-gradient(180deg, #1a1816, #121110 50%, #1a1816);
-    transform: translateY(40px); opacity: 0; transition: transform .9s var(--spring), opacity .4s; box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 18px 30px -16px rgba(0,0,0,.5); }
-  .dev.out .film { transform: none; opacity: 1; }
-  .film::before, .film::after { content: ""; position: absolute; left: 6px; right: 6px; height: 9px; background: radial-gradient(ellipse 3.6px 3px at 50% 50%, #FAFAF8 92%, transparent 100%) 0 0 / 14px 9px repeat-x; }
-  .film::before { top: 7px; } .film::after { bottom: 7px; }
-  .film .f { position: relative; width: var(--fw); aspect-ratio: 3 / 4; flex: none; background: #2a2622; border-radius: 1px; scroll-snap-align: center; padding: 0; cursor: zoom-in; }
-  .film .f img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 1.2s ease; }
-  .film .f.dv img { opacity: 1; }
-  .film .f i { position: absolute; left: 0; top: -17px; font: 500 9px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; font-style: normal; white-space: nowrap; }
-  .film .f u { position: absolute; left: 0; bottom: -17px; font: 500 9px/1 var(--mono); letter-spacing: .08em; color: #E8A25A; text-decoration: none; white-space: nowrap; }
-  .dev .foot { position: relative; z-index: 4; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .dev .foot p { margin: 0; font-size: 12px; line-height: 16px; color: var(--ink-2); max-width: 22ch; }
-  .dev .file { height: 44px; padding: 0 20px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 14px; opacity: 0; transition: opacity .4s; }
-  .dev.ready .file { opacity: 1; }
-  .dev .head { position: relative; z-index: 4; transition: opacity .3s; } .dev.filing .head, .dev.filing .foot { opacity: 0; transition: opacity .3s; }
-  /* the folder the strip is filed into: board behind the strip, frosted pocket in front of it */
-  .dfold { position: absolute; left: 50%; width: min(72vw, 300px); aspect-ratio: 1 / 0.86; transform: translate(-50%, 0); pointer-events: none; }
-  .dfold.back { z-index: 1; } .dfold.front { z-index: 3; }
-  .dfold .pocket { -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); background: rgba(255,255,255,.5); }   /* one folder, not in a list: a live blur is fine here */
-  /* the viewer: one frame, big */
-  .view { position: fixed; inset: 0; z-index: 40; background: rgba(10,10,11,.94); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .25s; touch-action: none; }
-  .view.on { opacity: 1; pointer-events: auto; }
-  .view img { max-width: 92vw; max-height: 74vh; object-fit: contain; border-radius: 2px; box-shadow: 0 20px 40px rgba(0,0,0,.5); transition: transform .3s var(--ease), opacity .2s; }
-  .view .vb { position: absolute; left: 0; right: 0; bottom: calc(26px + var(--safe-bottom)); display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--on-dark-2); }
-  .view .vb button { width: 40px; height: 40px; } .view .vb svg { width: 18px; height: 18px; position: relative; }
-  .view .vx { position: absolute; top: calc(14px + var(--safe-top)); right: 18px; width: 40px; height: 40px; }
-
-  .dock button[aria-pressed="true"] { background: rgba(20,20,22,.07); color: var(--ink); box-shadow: none; }
-  .dock .cam { width: 52px; height: 52px; min-width: 52px; padding: 0; margin: -4px 2px; justify-content: center; background: var(--ink); color: #fff; box-shadow: 0 6px 14px -4px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2); }
-  .dock .cam i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; display: block; }
-  .dock a { text-decoration: none; }
-  @media (prefers-reduced-motion: reduce) { .film { transition: none; } }
+  /* Rolls (redesign plan, 20 Nov): which film is in your camera, the films you can load, and your finished rolls.
+     A finished roll opens with its reel and the shuffle of its prints. */
+  html, body { height: 100%; overflow: hidden; background: var(--room); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: calc(var(--safe-top) + 18px) 0 calc(var(--safe-bottom) + 120px); }
+  .pad { padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+  h2.sec { margin: 26px 0 12px; font: 600 20px/1.2 var(--sans); letter-spacing: -.02em; color: var(--ink); }
+  h2.sec:first-child { margin-top: 6px; }
+  h2.sec small { font: 400 15px/1 var(--sans); color: var(--ink-3); margin-left: 6px; letter-spacing: 0; }
+  /* in your camera */
+  .incam { display: grid; grid-template-columns: 74px 1fr; gap: 16px; align-items: center; padding: 16px; border-radius: 22px; background: #fff; box-shadow: 0 0 0 1px var(--hair), 0 18px 36px -24px rgba(20,20,30,.3); }
+  .can-inner { position: relative; } .can-inner canvas { position: absolute; left: 0; top: -6.5%; width: 100%; height: 106.5%; }
+  .incam .can { width: 74px; filter: drop-shadow(0 8px 8px rgba(0,0,0,.2)); }
+  .incam b { display: block; font: 600 17px/1.2 var(--sans); color: var(--ink); }
+  .incam .meta { display: block; margin-top: 4px; font: 400 14px/1.3 var(--sans); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .incam .bar { margin-top: 10px; height: 4px; border-radius: 4px; background: var(--hair); overflow: hidden; } .incam .bar i { display: block; height: 100%; border-radius: 4px; background: var(--ink); }
+  .incam .acts { grid-column: 1 / -1; display: flex; gap: 8px; }
+  .btn { height: 40px; padding: 0 16px; border-radius: 999px; font: 500 14px/1 var(--sans); color: var(--ink); background: var(--room-2); }
+  .btn.main { background: var(--ink); color: var(--room); }
+  .btn.warn { background: var(--red); color: #fff; }
+  /* films: a calm row of canisters */
+  .films { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; padding: 6px max(20px, env(safe-area-inset-left, 0px)) 10px; scroll-snap-type: x proximity; }
+  .films::-webkit-scrollbar { display: none; }
+  .film { flex: none; width: 84px; background: none; border: 0; padding: 0; text-align: center; scroll-snap-align: start; }
+  .film .can { width: 64px; margin: 0 auto; filter: drop-shadow(0 8px 8px rgba(0,0,0,.18)); transition: transform .3s var(--spring); }
+  .film:active .can { transform: translateY(-4px) scale(.98); }
+  .film b { display: block; margin-top: 10px; font: 500 13px/1.2 var(--sans); color: var(--ink); }
+  .film small { display: block; margin-top: 3px; font: 400 12px/1 var(--sans); color: var(--ink-3); }
+  .film.loaded small { color: var(--red); }
+  /* finished rolls: folders, newest first */
+  .done { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .folder { position: relative; min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+  .folder .f { position: relative; aspect-ratio: 5 / 4; border-radius: 6px 14px 14px 14px; background: #EFEBE3; box-shadow: 0 0 0 1px var(--hair), 0 14px 26px -18px rgba(20,20,30,.35); overflow: hidden; }
+  .folder .f::before { content: ""; position: absolute; left: 0; top: 0; width: 42%; height: 9%; border-radius: 6px 6px 0 0; background: var(--tab); }
+  .folder .f .peek { position: absolute; left: 12%; right: 12%; top: 14%; display: flex; justify-content: center; }
+  .folder .f .peek img { width: 46%; aspect-ratio: 3 / 4; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.18); margin: 0 -9%; }
+  .folder .f .peek img:nth-child(1) { transform: rotate(-8deg) translateY(6%); } .folder .f .peek img:nth-child(3) { transform: rotate(8deg) translateY(6%); } .folder .f .peek img:nth-child(2) { position: relative; z-index: 1; }
+  .folder .f .front { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; z-index: 2; background: linear-gradient(180deg, #F7F4EE, #F1EDE5); border-top: 1px solid rgba(26,25,23,.06); box-shadow: 0 -6px 12px -10px rgba(20,20,30,.3); }   /* the folder's front pocket */
+  .folder .f .front i { position: absolute; left: 10px; bottom: 10px; width: 26px; height: 8px; border-radius: 4px; background: var(--tab); }
+  .folder b { display: block; margin-top: 10px; font: 600 15px/1.2 var(--sans); color: var(--ink); }
+  .folder small { display: block; margin-top: 3px; font: 400 13px/1.2 var(--sans); color: var(--ink-2); }
+  .empty { padding: 22px; border-radius: 18px; border: 1px dashed rgba(26,25,23,.18); text-align: center; font: 400 15px/1.4 var(--sans); color: var(--ink-2); }
+  /* pushed screens: a film's page, a finished roll */
+  .push { position: fixed; inset: 0; z-index: 30; background: var(--room); transform: translateX(100%); transition: transform .38s var(--ease); display: flex; flex-direction: column; }
+  .push.on { transform: none; }
+  .ptop { flex: none; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(var(--safe-top) + 8px) max(14px, env(safe-area-inset-right, 0px)) 6px max(14px, env(safe-area-inset-left, 0px)); }
+  .ptop h1 { margin: 0; text-align: center; font: 600 17px/1.2 var(--sans); color: var(--ink); }
+  .ptop small { display: block; font: 400 12px/1.2 var(--sans); color: var(--ink-3); margin-top: 2px; }
+  .back { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .back svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+  .fbody { flex: 1; overflow-y: auto; padding: 8px max(20px, env(safe-area-inset-left, 0px)) calc(var(--safe-bottom) + 120px); text-align: center; }
+  .fbody .can { width: 92px; margin: 10px auto 0; filter: drop-shadow(0 12px 12px rgba(0,0,0,.2)); }
+  .fbody p { margin: 18px auto 0; max-width: 300px; font: 400 15px/1.45 var(--sans); color: var(--ink-2); }
+  .samples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 22px 0 0; }
+  .samples img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; }
+  .fbody .btn { margin-top: 22px; height: 46px; padding: 0 26px; font-size: 15px; }
+  .roll iframe { flex: 1; width: 100%; border: 0; display: block; background: var(--room); }
+  .toast { position: fixed; z-index: 60; left: 50%; bottom: calc(96px + var(--safe-bottom)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); } .toast span { position: relative; z-index: 1; }
 </style>
-<link rel="stylesheet" href="lib/shell.css">
 </head>
 <body>
 <main class="app">
-  <header class="top">
-    <a class="glass round" style="color:inherit" href="index.html" aria-label="Back to all prototypes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
-  </header>
   <div class="scroll" id="scroll">
-    <div class="pad">
-      <div class="month"><h2>Rolls</h2><span id="rcount"></span></div>
-      <p class="sub" id="rsub"></p>
-
-      <h3 style="margin-top:26px">In the camera <small id="leftlabel"></small></h3>
-      <div class="back" id="back">
-        <div class="chamber" id="chamber"><div class="slot" id="slot"></div><div class="leader" aria-hidden="true"></div><div class="spool" aria-hidden="true"></div><span class="none mono">Empty. Pick a roll off the shelf.</span></div>
-        <div class="meta"><span class="mono"><b id="inname">–</b> · <span id="inshots"></span></span><span class="frames" aria-hidden="true"><i id="bar"></i></span><button type="button" class="glass dark act" id="finish">Finish roll</button></div>
-      </div>
-
-      <h3>The shelf <small>Swipe · drag one up to load</small></h3>
-    </div>
-    <div class="shelfwrap"><div class="shelf" id="shelf" role="listbox" aria-label="Film on the shelf. Swipe along; drag one up into the camera to load it." tabindex="0"><div class="track" id="track"></div></div><div class="ledge" aria-hidden="true"></div></div>
-    <div class="pad">
-      <span class="mono hint2" id="hint2">Drag the front one up into the camera</span>
-      <div class="pick" aria-live="polite">
-        <div><h4 id="pname"></h4><p id="pdesc"></p><span class="mono" id="pspec"></span><button type="button" class="load" id="load"></button></div>
-        <div class="sample"><span class="p" id="psample"><img id="pimg" alt=""></span></div>
-      </div>
-
-      <h3>Finished <small>Tap to look inside</small></h3>
-      <div class="rolls" id="rolls"></div>
-    </div>
+    <div class="pad"><h2 class="sec">In your camera</h2><div id="incam"></div></div>
+    <div class="pad"><h2 class="sec">Films</h2></div>
+    <div class="films" id="films"></div>
+    <div class="pad"><h2 class="sec">Finished rolls <small id="ndone"></small></h2><div class="done" id="done"></div></div>
   </div>
-
-  <section class="dev" id="dev" aria-label="Your finished roll" aria-hidden="true">
-    <div class="head"><span class="mono soft" id="devk"></span><h4 id="devt"></h4><p id="devp"></p></div>
-    <div class="strip" id="strip"><div class="film on-dark" id="film"></div></div>
-    <div class="foot"><p id="devhelp">Developing. Swipe along the strip.</p><button type="button" class="file" id="file">File it in the diary</button></div>
-  </section>
-  <section class="view on-dark" id="view" aria-label="Frame" aria-hidden="true">
-    <img id="vimg" alt="">
-    <button type="button" class="glass dark round vx" id="vx" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <div class="vb"><button type="button" class="glass dark round" id="vp" aria-label="Previous frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><span class="mono" id="vn"></span><button type="button" class="glass dark round" id="vnx" aria-label="Next frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div>
-  </section>
-
-  <nav class="dock glass" aria-label="Poto">
-    <a href="home.html" style="color:inherit;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink-2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16M9 4v5.5"/></svg>Diary</a>
-    <a class="cam" href="camera.html" aria-label="Camera" style="border-radius:999px;display:inline-flex;align-items:center"><i></i></a>
-    <button type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/></svg>Rolls</button>
-  </nav>
+  <section class="push" id="filmpg" aria-hidden="true"><div class="ptop"><button type="button" class="glass back" data-close aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="ftitle"></h1><span></span></div><div class="fbody" id="fbody"></div></section>
+  <section class="push roll" id="rollpg" aria-hidden="true"><div class="ptop"><button type="button" class="glass back" data-close aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="rtitle"></h1><span></span></div><iframe id="rframe" title="The roll"></iframe></section>
+  <div class="toast glass" id="toast" role="status"><span></span></div>
 </main>
 <script src="lib/paper.js"></script>
 <script src="lib/texture.js"></script>
 <script src="lib/canister.js"></script>
 <script>
-PotoTex.install();
-const $ = (id) => document.getElementById(id), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ph = (n) => 'img/photo-' + String(n).padStart(2, '0') + '-s.jpg';
-const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+(function () {
+  const $ = (id) => document.getElementById(id);
+  window.PotoTex && PotoTex.install();
+  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  const toastEl = $('toast'), toast = (t) => { toastEl.firstChild.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
+  const PRICE = { Flashbulb: '$1.99', Silver: '$1.99', Lido: '$2.99' };
+  let owned = store.get('poto.films', ['Sunday', 'Harbour']);
+  let roll = store.get('poto.roll', { look: 'Sunday', shot: 14, n: 4 }); if (!roll.look) roll = { look: 'Sunday', shot: 0, n: 4 };
+  let finished = store.get('poto.done', null) || [
+    { look: 'Harbour', from: '2 Nov', to: '9 Nov', frames: [2, 5, 8, 11, 1, 4, 7, 10, 3, 6, 9, 12] },
+    { look: 'Sunday', from: '18 Oct', to: '29 Oct', frames: [4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10] },
+    { look: 'Silver', from: '30 Sep', to: '12 Oct', frames: [7, 3, 10, 1, 8, 5, 12, 2, 9, 6, 11, 4] },
+  ];
+  const save = () => { store.set('poto.roll', roll); store.set('poto.done', finished); store.set('poto.films', owned); };
+  const ph = (f, s) => typeof f === 'number' ? 'img/photo-' + String(f).padStart(2, '0') + (s || '') + '.jpg' : f.replace('.jpg', (s || '') + '.jpg');
+  const can = (look) => { const w = document.createElement('div'), c = makeCan(byLook(look)); w.className = 'can'; c.classList.add('can-inner'); c.style.width = '100%'; c.style.height = 'auto'; c.style.aspectRatio = '58 / 92'; w.appendChild(c); return w; };
 
-// the looks. Each is a film you can buy: its label colours, a sample (CSS filter as a stand-in for the real look), a line about it.
-const byId = window.byLook;
-// ---- state ----
-let roll = store.get('poto.roll', { look: 'Sunday', shot: 14, n: 4 });
-let finished = store.get('poto.rolls', null) || [
-  { n: 3, look: 'Harbour', when: 'Oct', frames: 27, ps: [7, 11, 5] }, { n: 2, look: 'Sunday', when: 'Sep', frames: 24, ps: [8, 3, 10] },
-  { n: 1, look: 'Flashbulb', when: 'Aug', frames: 27, ps: [2, 12, 6] }];
-const save = () => { store.set('poto.roll', roll); store.set('poto.rolls', finished); };
-
-// ---- the camera back ----
-function renderBack() {
-  const ch = $('chamber'), L = roll.look && byId(roll.look);
-  ch.classList.toggle('empty', !L); $('slot').innerHTML = ''; if (L) $('slot').appendChild(makeCan(L));
-  $('inname').textContent = L ? L.id : 'No film'; $('inshots').textContent = L ? roll.shot + ' / 27' : '';
-  $('bar').style.width = (L ? roll.shot / 27 * 100 : 0) + '%'; $('finish').disabled = !L;
-  $('leftlabel').textContent = L ? (27 - roll.shot) + ' left' : 'Empty';
-  $('rcount').textContent = finished.length + 1; $('rsub').textContent = finished.length + ' finished' + (L ? ', one in the camera.' : '. Nothing in the camera.');
-  renderPick();
-}
-
-// ---- the shelf: own physics. sp = float index of the canister in front. Drag sideways to slide; drag the front one up to pick it up ----
-const shelf = $('shelf'), track = $('track'), its = [], IW = 84, scroller = $('scroll');
-LOOKS.forEach((L) => {
-  const it = document.createElement('div'); it.className = 'it'; it.setAttribute('role', 'option'); it.setAttribute('aria-label', L.id + ', ' + L.desc);
-  it.innerHTML = '<i class="floor"></i>'; it.appendChild(makeCan(L)); track.appendChild(it); its.push({ el: it, can: it.querySelector('.can'), floor: it.querySelector('.floor'), d: null });
-});
-let sp = 0, sv = 0, starget = null, sraf = 0, cur = -1, sW = shelf.clientWidth;
-const NL = LOOKS.length, rubber = (p) => p < 0 ? p * 0.3 : p > NL - 1 ? NL - 1 + (p - NL + 1) * 0.3 : p;
-function shelfFrame() {
-  track.style.transform = 'translate3d(' + (sW / 2 - IW / 2 - sp * IW).toFixed(2) + 'px,0,0)';
-  its.forEach((o, k) => {
-    const d = k - sp, ad = Math.abs(d); if (ad > 2.5 && o.d !== null && Math.abs(o.d) > 2.5) return;      // far ones don't change: skip them
-    o.d = d; const a = Math.max(0, 1 - ad);
-    o.can.style.transform = 'translate3d(0,' + (-14 * a).toFixed(1) + 'px,0) scale(' + (1 + 0.32 * a).toFixed(3) + ')';
-    o.can.draw(Math.max(-1, Math.min(1, d)) * 0.42);
-    o.floor.style.transform = 'scale(' + (1 + 0.25 * a).toFixed(3) + ')'; o.floor.style.opacity = (1 - a * 0.45).toFixed(2);
-  });
-  const best = Math.max(0, Math.min(NL - 1, Math.round(sp)));
-  if (best !== cur) { cur = best; its.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === cur))); renderPick(); }
-}
-function shelfTick(t) {
-  const dt = Math.min(0.032, (t - (shelfTick.t || t)) / 1000) || 0.016; shelfTick.t = t;
-  if (starget != null) { sv += ((starget - sp) * 170 - sv * 26) * dt; sp += sv * dt;                         // a soft spring onto the canister
-    if (Math.abs(starget - sp) < 0.002 && Math.abs(sv) < 0.02) { sp = starget; sv = 0; starget = null; shelfFrame(); sraf = 0; shelfTick.t = 0; return; } }
-  shelfFrame(); sraf = requestAnimationFrame(shelfTick);
-}
-const shelfGo = (k) => { starget = Math.max(0, Math.min(NL - 1, k)); if (reduced) { sp = starget; starget = null; shelfFrame(); return; } if (!sraf) sraf = requestAnimationFrame(shelfTick); };
-let g = null, lift = null;
-shelf.addEventListener('pointerdown', (e) => {
-  if (lift) return; shelf.setPointerCapture(e.pointerId); cancelAnimationFrame(sraf); sraf = 0; shelfTick.t = 0;
-  const r = shelf.getBoundingClientRect(), k = Math.round(sp + (e.clientX - (r.left + sW / 2)) / IW);
-  g = { x: e.clientX, y: e.clientY, sp, st: scroller.scrollTop, mode: null, k, lx: e.clientX, lt: performance.now() }; starget = null; sv = 0;
-});
-shelf.addEventListener('pointermove', (e) => {
-  if (!g) return; const dx = e.clientX - g.x, dy = e.clientY - g.y;
-  if (!g.mode) { if (Math.hypot(dx, dy) < 7) return;
-    g.mode = Math.abs(dx) > Math.abs(dy) ? 'slide' : (dy < 0 && g.k === Math.round(sp) && !reduced) ? 'lift' : 'page';
-    if (g.mode === 'lift') startLift(g.k, e); }
-  if (g.mode === 'slide') { const now = performance.now(), np = rubber(g.sp - dx / IW); sv = sv * 0.5 + ((np - sp) / Math.max(0.008, (now - g.lt) / 1000)) * 0.5; g.lt = now; sp = np; shelfFrame(); }
-  else if (g.mode === 'lift') moveLift(e);
-  else if (g.mode === 'page') scroller.scrollTop = g.st - dy;                                                // vertical drags still scroll the page
-});
-const shelfUp = (e) => {
-  if (!g) return; const m = g.mode, k = g.k; g = null;
-  if (m === 'slide') { sv = Math.max(-18, Math.min(18, sv)); shelfGo(Math.round(sp + sv * 0.16)); }
-  else if (m === 'lift') dropLift(e);
-  else if (!m) { if (k !== Math.round(sp)) shelfGo(k); else nudge(); }
-};
-shelf.addEventListener('pointerup', shelfUp); shelf.addEventListener('pointercancel', (e) => { if (g && g.mode === 'lift') dropLift(null); g = null; shelfGo(Math.round(sp)); });
-shelf.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') shelfGo(cur + 1); else if (e.key === 'ArrowLeft') shelfGo(cur - 1); else if (e.key === 'Enter') $('load').click(); });
-addEventListener('resize', () => { sW = shelf.clientWidth; shelfFrame(); });
-function nudge() {                                                       // tapping the front one: it hops, as if to say "pick me up"
-  const c = its[cur].can; if (reduced || !c.animate) return; c.animate([{ translate: '0 0' }, { translate: '0 -10px' }, { translate: '0 0' }], { duration: 380, easing: 'cubic-bezier(.3,1.4,.5,1)' });
-  $('hint2').textContent = 'Drag it up into the camera, or tap Load';
-}
-function renderPick() {
-  if (cur < 0) return; const L = LOOKS[cur];
-  $('pname').textContent = L.id; $('pdesc').textContent = L.desc; $('pspec').textContent = '27 exp · ISO ' + L.iso;
-  const img = $('pimg'), src = ph(L.sample); if (img.getAttribute('src') !== src) { img.src = src; } img.style.filter = L.filt;
-  $('psample').style.transform = 'rotate(' + (cur % 2 ? -4 : 4) + 'deg)';
-  const b = $('load'), inCam = roll.look === L.id;
-  b.disabled = inCam; b.textContent = inCam ? 'In the camera' : roll.look && roll.shot > 0 ? 'Swap in ' + L.id : 'Load ' + L.id;
-}
-
-// ---- loading: one continuous flight from the shelf (or your finger) into the camera. It reads the chamber's position every frame,
-//      so if the page scrolls at the same time the canister still lands exactly in place; old roll lifts out while the new one comes in ----
-const ch = $('chamber'), slot = $('slot');
-const slotC = () => { const r = slot.getBoundingClientRect(); return { x: r.left + 46, y: r.top + 29 }; };
-const canC = (k) => { const r = its[k].can.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, s: r.width / 58 }; };
-const place = (fl, x, y, rot, s) => { fl.style.transform = 'translate3d(' + (x - 29).toFixed(1) + 'px,' + (y - 46).toFixed(1) + 'px,0) rotate(' + rot.toFixed(1) + 'deg) scale(' + s.toFixed(3) + ')'; };
-function flyer(L) { const fl = document.createElement('div'); fl.className = 'flyer'; fl.appendChild(makeCan(L)); document.body.appendChild(fl); return fl; }
-function flight(fl, from, to, ms, done) {                                // from/to: {x,y,rot,s} or functions returning them
-  const t0 = performance.now(), F = typeof from === 'function' ? from : () => from, T = typeof to === 'function' ? to : () => to;
-  const ease = (t) => { const c1 = 1.25, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };   // ease out with a small settle past the mark
-  const step = (now) => { const t = Math.min(1, (now - t0) / ms), e = ease(t), a = F(), b = T(), arc = Math.sin(Math.PI * Math.min(1, t * 1.1)) * Math.min(60, Math.abs(a.y - b.y) * 0.25);
-    place(fl, a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e - arc, a.rot + (b.rot - a.rot) * Math.min(1, t * 1.15), a.s + (b.s - a.s) * e);
-    if (t < 1) requestAnimationFrame(step); else done(); };
-  requestAnimationFrame(step);
-}
-function loadRoll(L, fl, from) {
-  const swap = roll.look && roll.shot > 0, old = slot.querySelector('.can');
-  if (old && old.animate) old.animate([{ transform: 'rotate(90deg)', opacity: 1 }, { transform: 'translateY(-24px) rotate(80deg)', opacity: 0 }], { duration: 360, easing: 'ease-in', fill: 'forwards' });
-  ch.classList.add('swapping'); ch.classList.remove('hover');                             // the old leader winds in as the new roll arrives
-  const ms = 560;
-  setTimeout(() => ch.classList.remove('swapping', 'empty'), ms * 0.75);                               // and the new leader runs out as it lands
-  flight(fl, from, () => { const c = slotC(); return { x: c.x, y: c.y, rot: 90, s: 1 }; }, ms, () => {
-    fl.remove(); if (swap) { finished.unshift({ n: roll.n, look: roll.look, when: 'Nov', frames: roll.shot, ps: [3, 5, 8], fresh: true }); renderRolls(); }
-    roll = { look: L.id, shot: 0, n: roll.n + (swap ? 1 : 0) }; save(); renderBack(); its.forEach((o) => o.el.classList.remove('lifted'));
-  });
-}
-function startLift(k, e) {
-  const L = LOOKS[k], c = canC(k), fl = flyer(L); its[k].el.classList.add('lifted');
-  lift = { k, L, fl, c0: c, ox: e.clientX - c.x, oy: e.clientY - c.y, x: c.x, y: c.y, rot: 0, s: c.s }; place(fl, c.x, c.y, 0, c.s);
-}
-const overCh = (x, y) => { const r = ch.getBoundingClientRect(); return x > r.left - 20 && x < r.right + 20 && y > r.top - 30 && y < r.bottom + 30; };
-function moveLift(e) {
-  const x = e.clientX - lift.ox, y = e.clientY - lift.oy, sc = slotC(), d0 = Math.hypot(lift.c0.x - sc.x, lift.c0.y - sc.y) || 1, p = Math.max(0, Math.min(1, 1 - Math.hypot(x - sc.x, y - sc.y) / d0));
-  Object.assign(lift, { x, y, rot: 90 * (p * p * (3 - 2 * p)), s: lift.c0.s + (1 - lift.c0.s) * p + 0.06 * Math.sin(Math.PI * p) });   // it turns on its side as it nears the camera
-  place(lift.fl, lift.x, lift.y, lift.rot, lift.s); ch.classList.toggle('hover', overCh(x, y) && roll.look !== lift.L.id);
-}
-function dropLift(e) {
-  const l = lift; lift = null; if (!l) return; ch.classList.remove('hover');
-  if (e && overCh(l.x, l.y) && roll.look !== l.L.id) return loadRoll(l.L, l.fl, { x: l.x, y: l.y, rot: l.rot, s: l.s });
-  flight(l.fl, { x: l.x, y: l.y, rot: l.rot, s: l.s }, () => { const c = canC(l.k); return { x: c.x, y: c.y, rot: 0, s: c.s }; }, 420, () => { l.fl.remove(); its[l.k].el.classList.remove('lifted'); });   // missed: back on the shelf
-}
-$('load').onclick = () => {
-  const L = LOOKS[cur], c = canC(cur), fl = flyer(L); its[cur].el.classList.add('lifted'); place(fl, c.x, c.y, 0, c.s);
-  const r = ch.getBoundingClientRect(); if (r.top < 60) scroller.scrollTo({ top: Math.max(0, scroller.scrollTop + r.top - 120), behavior: reduced ? 'auto' : 'smooth' });   // scroll and flight run together
-  if (reduced) { fl.remove(); its[cur].el.classList.remove('lifted'); roll = { look: L.id, shot: 0, n: roll.n }; save(); renderBack(); return; }
-  loadRoll(L, fl, { x: c.x, y: c.y, rot: 0, s: c.s });
-};
-
-// ---- finish: rewind, then the roll comes out as a big contact strip ----
-$('finish').onclick = () => {
-  if (!roll.look) return; const L = byId(roll.look);
-  roll.shot = 27; renderBack(); ch.classList.add('empty');
-  { const can = slot.querySelector('.can'), t0 = performance.now(); const spin = (t) => { if (!can || t - t0 > 1050) return; can.draw(((t - t0) / 140) % 3 - 1); requestAnimationFrame(spin); }; if (!reduced) requestAnimationFrame(spin); }
-  setTimeout(() => { openStrip(L); }, reduced ? 0 : 1100);
-};
-let frames = [], curL = null;
-function openStrip(L) {
-  const n = roll.n, film = $('film'), dev = $('dev'), ps = []; curL = L; frames = [];
-  $('devk').textContent = 'Roll ' + String(n).padStart(2, '0') + ' · finished'; $('devt').textContent = L.id; $('devp').textContent = '27 frames · 1 to 16 Nov';
-  film.innerHTML = ''; dev.querySelectorAll('.dfold').forEach((f) => f.remove()); $('strip').style.transform = ''; $('strip').style.opacity = '';
-  for (let k = 0; k < 27; k++) {
-    const p = 1 + ((k * 7 + n * 3) % 12); if (k < 3) ps.push(p); frames.push(p);
-    const f = document.createElement('button'); f.type = 'button'; f.className = 'f'; f.setAttribute('aria-label', 'Frame ' + (k + 1) + ', look closer');
-    f.innerHTML = '<i>POTO ' + L.id.toUpperCase() + ' ' + L.iso + '</i><img src="' + ph(p) + '" alt="" loading="lazy" draggable="false"><u>▸ ' + (k + 1) + '  ' + (k + 1) + 'A</u>';
-    f.onclick = () => openView(k); film.appendChild(f);
+  // ---- in your camera ----
+  let finishing = false;
+  function paintCam() {
+    const el = $('incam'); el.innerHTML = '';
+    const card = document.createElement('div'); card.className = 'incam';
+    card.appendChild(can(roll.look));
+    const info = document.createElement('div');
+    info.innerHTML = '<b>' + roll.look + '</b><span class="meta">' + roll.shot + ' of 27 · ' + (27 - roll.shot) + ' left</span><div class="bar"><i style="width:' + (roll.shot / 27 * 100) + '%"></i></div>';
+    card.appendChild(info);
+    const acts = document.createElement('div'); acts.className = 'acts';
+    acts.innerHTML = '<button type="button" class="btn" id="change">Change film</button>' + (roll.shot ? '<button type="button" class="btn' + (finishing ? ' warn' : '') + '" id="finish">' + (finishing ? 'Finish ' + roll.look + '?' : 'Finish roll') + '</button>' : '');
+    card.appendChild(acts); el.appendChild(card);
+    $('change').onclick = () => $('films').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const fin = $('finish'); if (fin) fin.onclick = () => {
+      if (!finishing) { finishing = true; paintCam(); setTimeout(() => { if (finishing) { finishing = false; paintCam(); } }, 3000); return; }
+      finishing = false;
+      const mine = store.get('poto.kept', []).filter((o) => o.look === roll.look).map((o) => o.src).slice(0, 27);
+      const d = new Date(), M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      finished.unshift({ look: roll.look, from: '', to: d.getDate() + ' ' + M[d.getMonth()], frames: mine.length ? mine : [3, 6, 9, 12, 1, 4] });
+      roll = { look: roll.look, shot: 0, n: (roll.n || 4) + 1 }; save(); paintCam(); paintDone(); toast('Rolled up and filed');
+      try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+    };
   }
-  dev.classList.remove('out', 'ready', 'filing'); dev.classList.add('on'); dev.setAttribute('aria-hidden', 'false'); $('strip').scrollLeft = 0;
-  $('devhelp').textContent = 'Developing. Swipe along, tap a frame to look closer.';
-  requestAnimationFrame(() => requestAnimationFrame(() => dev.classList.add('out')));
-  [...film.children].forEach((f, k) => setTimeout(() => f.classList.add('dv'), reduced ? 0 : 500 + Math.min(k, 6) * 160 + Math.max(0, k - 6) * 40));
-  setTimeout(() => { dev.classList.add('ready'); $('devhelp').textContent = 'All 27 came out. Tap one to look closer.'; }, reduced ? 0 : 1800);
-  $('file').onclick = () => fileRoll(n, L, ps);
-}
-// the viewer: one frame big, swipe or arrows for the next
-let vk = 0;
-function openView(k) { vk = k; showView(); const v = $('view'); v.classList.add('on'); v.setAttribute('aria-hidden', 'false'); }
-function showView() { const im = $('vimg'); im.src = 'img/photo-' + String(frames[vk]).padStart(2, '0') + '.jpg';  $('vn').textContent = (vk + 1) + ' / 27'; $('vp').disabled = vk === 0; $('vnx').disabled = vk === 26; }
-const vgo = (d) => { const k = Math.max(0, Math.min(26, vk + d)); if (k === vk) return; vk = k; const im = $('vimg'); im.style.opacity = 0; setTimeout(() => { showView(); im.style.opacity = 1; }, 120); };
-$('vp').onclick = () => vgo(-1); $('vnx').onclick = () => vgo(1);
-$('vx').onclick = () => { const v = $('view'); v.classList.remove('on'); v.setAttribute('aria-hidden', 'true'); };
-{ let vx0 = null; const v = $('view'); v.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; vx0 = e.clientX; });
-  v.addEventListener('pointerup', (e) => { if (vx0 == null) return; const dx = e.clientX - vx0; vx0 = null; if (Math.abs(dx) > 40) vgo(dx < 0 ? 1 : -1); else if (e.target === v) $('vx').click(); });
-  addEventListener('keydown', (e) => { if (!v.classList.contains('on')) return; if (e.key === 'ArrowRight') vgo(1); else if (e.key === 'ArrowLeft') vgo(-1); else if (e.key === 'Escape') $('vx').click(); }); }
-
-// filing: a folder slides up, the strip shrinks and drops into its frosted pocket, the folder closes and goes off to Finished
-function fileRoll(n, L, ps) {
-  const dev = $('dev'), strip = $('strip'); dev.classList.add('filing'); strip.scrollTo({ left: 0, behavior: reduced ? 'auto' : 'smooth' });
-  const sw = 'linear-gradient(90deg,' + L.bg + ' 0 60%,#1b1b1c 60% 65%,' + L.band + ' 65%)';
-  const back = document.createElement('div'), front = document.createElement('div'); back.className = 'dfold back'; front.className = 'dfold front';
-  back.innerHTML = '<div class="folder" style="position:absolute;inset:0"><div class="board"></div></div>';
-  front.innerHTML = '<div class="folder" style="position:absolute;inset:0"><div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + L.id.toUpperCase() + '</i></div>' + CLIP + '<span class="n">ROLL ' + String(n).padStart(2, '0') + '</span></div>';
-  dev.appendChild(back); dev.appendChild(front);
-  const H = dev.clientHeight, fw = back.offsetWidth, fh = fw * 0.86, top = H * 0.5 - fh * 0.2; back.style.top = front.style.top = top + 'px';
-  const up = [{ transform: 'translate(-50%, ' + (H - top + 40) + 'px)' }, { transform: 'translate(-50%, 0)' }], o1 = { duration: reduced ? 1 : 520, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' };
-  back.animate(up, o1); front.animate(up, o1);
-  // the strip: shrink to the folder's width, hang above the pocket, then slide down into it
-  const sr = strip.getBoundingClientRect(), dr = dev.getBoundingClientRect(), s = Math.min((fw * 0.86) / sr.width, (fh * 0.7) / sr.height), cx = dr.width / 2 - (sr.left - dr.left + sr.width / 2);
-  const sh = sr.height * s, y0 = (sr.top - dr.top) + sr.height * (1 - s) / 2, yAbove = (top - sh * 0.55) - y0, yIn = (top + fh - 8 - sh) - y0;   // hang above the folder, then down until it sits on the bottom of the pocket
-  const T = reduced ? 1 : 1150;
-  const a = strip.animate([{ transform: 'none' }, { transform: 'translate(' + cx + 'px,' + yAbove + 'px) scale(' + s + ')', offset: 0.55 }, { transform: 'translate(' + cx + 'px,' + yIn + 'px) scale(' + s + ')' }],
-    { duration: T, delay: reduced ? 0 : 380, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
-  a.onfinish = () => {
-    // the pocket takes it with a small bounce, then the whole folder heads off to Finished
-    front.animate([{ transform: 'translate(-50%,0) scaleY(1)' }, { transform: 'translate(-50%,3px) scaleY(.985)' }, { transform: 'translate(-50%,0) scaleY(1)' }], { duration: 260, easing: 'ease-out' });
-    setTimeout(() => {
-      const away = [{ transform: 'translate(-50%,0) scale(1)', opacity: 1 }, { transform: 'translate(-50%,' + (H * 0.45) + 'px) scale(.45)', opacity: 0 }], o2 = { duration: reduced ? 1 : 520, easing: 'cubic-bezier(.5,0,.6,1)', fill: 'forwards' };
-      back.animate(away, o2); front.animate(away, o2);
-      strip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced ? 1 : 300, fill: 'forwards' });
-      setTimeout(() => {
-        finished.unshift({ n, look: L.id, when: 'Nov', frames: 27, ps, fresh: true }); roll = { look: null, shot: 0, n: n + 1 }; save();
-        dev.classList.remove('on'); dev.setAttribute('aria-hidden', 'true'); renderBack(); renderRolls();
-        setTimeout(() => { $('rolls').firstElementChild.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); strip.getAnimations().forEach((x) => x.cancel()); }, 380);
-      }, reduced ? 0 : 460);
-    }, reduced ? 0 : 320);
-  };
-}
-
-// ---- finished rolls: frosted folders, the look's swatch clipped on ----
-const CLIP = '<svg class="clip" viewBox="0 0 20 46" fill="none" stroke="#9a9aa2" stroke-width="2.4" stroke-linecap="round"><path d="M6 12v22a4 4 0 008 0V9a6 6 0 00-12 0v27a8 8 0 0016 0V14"/></svg>';
-function renderRolls() {
-  const R = $('rolls'); R.innerHTML = '';
-  finished.forEach((r) => {
-    const L = byId(r.look), sw = 'linear-gradient(90deg,' + L.bg + ' 0 60%,#1b1b1c 60% 65%,' + L.band + ' 65%)';
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'roll' + (r.fresh ? ' fresh' : ''); b.setAttribute('aria-expanded', 'false');
-    b.innerHTML = '<div class="folder"><div class="board"></div>' + r.ps.map((p) => '<span class="p"><img src="' + ph(p) + '" alt="" loading="lazy"></span>').join('') + '<div class="pocket"></div><div class="swatch"><u style="background:' + sw + '"></u><i>' + L.id.toUpperCase() + '</i></div>' + CLIP + '<span class="n">ROLL ' + String(r.n).padStart(2, '0') + '</span></div><strong>' + L.id + '</strong><em>' + r.frames + ' frames · ' + r.when + '</em>';
-    b.onclick = () => { const o = !b.classList.contains('open'); R.querySelectorAll('.roll.open').forEach((x) => { x.classList.remove('open'); x.setAttribute('aria-expanded', 'false'); }); b.classList.toggle('open', o); b.setAttribute('aria-expanded', String(o)); };
-    R.appendChild(b); PotoTex.frostFolder(b); delete r.fresh;
-  });
-  save();
-}
-
-renderRolls(); renderBack();
-// start the shelf on the roll that's in the camera (or the first)
-requestAnimationFrame(() => { sW = shelf.clientWidth; sp = Math.max(0, LOOKS.findIndex((l) => l.id === roll.look)); shelfFrame(); });
+  // ---- films ----
+  function paintFilms() {
+    $('films').innerHTML = '';
+    LOOKS.forEach((L) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'film' + (L.id === roll.look ? ' loaded' : '');
+      b.appendChild(can(L.id));
+      b.insertAdjacentHTML('beforeend', '<b>' + L.id + '</b><small>' + (L.id === roll.look ? 'In camera' : owned.includes(L.id) ? 'ISO ' + L.iso : PRICE[L.id] || '$1.99') + '</small>');
+      b.onclick = () => openFilm(L); $('films').appendChild(b);
+    });
+  }
+  function openFilm(L) {
+    $('ftitle').textContent = L.id; const fb = $('fbody'); fb.innerHTML = ''; fb.appendChild(can(L.id));
+    const has = owned.includes(L.id), inCam = L.id === roll.look;
+    fb.insertAdjacentHTML('beforeend', '<p>' + L.desc + '</p><div class="samples">' + [L.sample, (L.sample % 12) + 3, (L.sample % 12) + 6].map((n) => '<img src="' + ph(((n - 1) % 12) + 1, '-s') + '" alt="" style="filter:' + L.filt + '">').join('') + '</div>' +
+      '<button type="button" class="btn main" id="fact">' + (inCam ? 'In your camera' : has ? 'Load ' + L.id : 'Buy for ' + (PRICE[L.id] || '$1.99')) + '</button>');
+    const a = $('fact'); if (inCam) a.disabled = true;
+    a.onclick = () => {
+      if (!has) { owned.push(L.id); save(); paintFilms(); openFilm(L); toast(L.id + ' is yours'); return; }
+      if (roll.shot && !confirmLoad) { confirmLoad = true; a.textContent = 'Swap out ' + roll.look + ' (' + roll.shot + ' shots)?'; return; }
+      confirmLoad = false; roll = { look: L.id, shot: 0, n: (roll.n || 4) + 1 }; save(); paintCam(); paintFilms(); close($('filmpg')); toast(L.id + ' loaded'); try { navigator.vibrate && navigator.vibrate(10); } catch (e) {}
+    };
+    open($('filmpg'));
+  }
+  let confirmLoad = false;
+  // ---- finished rolls ----
+  function paintDone() {
+    $('ndone').textContent = finished.length || '';
+    $('done').innerHTML = finished.length ? '' : '<div class="empty" style="grid-column:1/-1">Finished rolls are filed here.</div>';
+    finished.forEach((r, i) => {
+      const L = byLook(r.look), b = document.createElement('button'); b.type = 'button'; b.className = 'folder'; b.style.setProperty('--tab', L.bg);
+      b.innerHTML = '<div class="f"><div class="peek">' + r.frames.slice(0, 3).map((f) => '<img src="' + ph(f, '-t') + '" alt="">').join('') + '</div><div class="front"><i></i></div></div><b>' + r.look + '</b><small>' + (r.from ? r.from + ' – ' : '') + r.to + ' · ' + r.frames.length + ' frames</small>';
+      b.onclick = () => openRoll(r); $('done').appendChild(b);
+    });
+  }
+  function openRoll(r) {
+    $('rtitle').innerHTML = r.look + '<small>' + (r.from ? r.from + ' – ' : '') + r.to + '</small>';
+    $('rframe').src = 'home.html?' + new URLSearchParams({ roll: r.look, frames: r.frames.join(',') });
+    open($('rollpg'));
+  }
+  // ---- pushed screens: back button, or swipe from the left edge ----
+  const open = (el) => { el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); };
+  const close = (el) => { el.classList.remove('on'); el.setAttribute('aria-hidden', 'true'); confirmLoad = false; };
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => close(b.closest('.push'))));
+  document.querySelectorAll('.push').forEach((el) => { let e0 = null;
+    el.addEventListener('pointerdown', (e) => { if (e.clientX < 28) e0 = e.clientX; });
+    el.addEventListener('pointerup', (e) => { if (e0 != null && e.clientX - e0 > innerWidth * 0.3) close(el); e0 = null; }); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.push.on').forEach(close); });
+  paintCam(); paintFilms(); paintDone();
+})();
 </script>
+<link rel="stylesheet" href="lib/shell.css">
 </body>
 </html>

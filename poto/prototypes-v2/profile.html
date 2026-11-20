@@ -82,10 +82,33 @@
   .scroll > .pad:last-of-type { padding: 0; position: absolute; inset: 0; }
   .desk { position: absolute; inset: 0; margin: 0; width: 100%; max-width: none; height: 100%; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
   .top { position: absolute; z-index: 7; }
-  .drawer .deskctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 14px; flex-wrap: wrap; }
+  .top .right { display: flex; gap: 8px; }
+  .who h1 { pointer-events: auto; cursor: pointer; }
+  /* the desk menu (…): surface and tidy, out of the way */
+  .deskmenu { position: absolute; z-index: 9; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(var(--safe-top) + 66px); padding: 10px; border-radius: 22px; display: grid; gap: 8px; justify-items: end; opacity: 0; pointer-events: none; transform: translateY(-6px) scale(.97); transform-origin: 100% 0; transition: opacity .18s, transform .25s var(--spring); }
+  .deskmenu.on { opacity: 1; pointer-events: auto; transform: none; }
+  .deskmenu > * { position: relative; z-index: 1; }
+  /* the add sheet's tabs */
+  .dtabs { display: flex; gap: 2px; padding: 3px; margin: 4px 0 12px; width: max-content; max-width: 100%; }
+  .dtabs button { height: 32px; padding: 0 13px; border-radius: 999px; font: 500 13px/1 var(--sans); color: var(--ink-2); position: relative; z-index: 1; }
+  .dtabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  /* your profile sheet */
+  .ndim { position: fixed; inset: 0; z-index: 55; background: rgba(250,249,246,.35); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .ndim.on { opacity: 1; pointer-events: auto; }
+  .namesheet { position: fixed; z-index: 60; left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom)); border-radius: 30px; padding: 10px 16px 14px; transform: translateY(115%); transition: transform .38s var(--ease); }
+  .namesheet.on { transform: none; }
+  .namesheet > * { position: relative; z-index: 1; }
+  .namesheet .grip { width: 36px; height: 5px; border-radius: 3px; background: rgba(26,25,23,.15); margin: 0 auto 14px; }
+  .namesheet .me { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; padding: 0 4px 14px; }
+  .namesheet .me img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+  .namesheet .me b { display: block; font: 600 19px/1.2 var(--sans); color: var(--ink); } .namesheet .me span { font: 400 14px/1.3 var(--sans); color: var(--ink-2); }
+  .namesheet .me i img { width: 44px; height: auto; border-radius: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.2)); transform: rotate(5deg); }
+  .namesheet .rows { display: grid; border-radius: 18px; background: rgba(255,255,255,.55); overflow: hidden; }
+  .namesheet .rows button { display: flex; justify-content: space-between; align-items: center; height: 50px; padding: 0 16px; font: 400 16px/1 var(--sans); color: var(--ink); text-align: left; }
+  .namesheet .rows button + button { box-shadow: 0 -.5px 0 var(--hair); } .namesheet .rows small { font: 400 15px/1 var(--sans); color: var(--ink-3); }
   .add { height: 36px; width: 36px; }
   /* the drawer: everything you can put on the desk */
-  .drawer { position: absolute; z-index: 8; left: 0; right: 0; bottom: 0; max-height: 72%; border-radius: 26px 26px 0 0; padding: 12px 16px calc(24px + var(--safe-bottom)); transform: translateY(105%); transition: transform .45s var(--spring); overflow-y: auto; background: rgba(250,250,248,.86); }
+  .drawer { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; max-height: 72%; border-radius: 26px 26px 0 0; padding: 12px 16px calc(24px + var(--safe-bottom)); transform: translateY(105%); transition: transform .45s var(--spring); overflow-y: auto; background: rgba(250,250,248,.86); }
   .drawer.on { transform: none; }
   .drawer .grip { width: 38px; height: 4px; border-radius: 2px; background: var(--hair); margin: 0 auto 12px; }
   .drawer h4 { margin: 14px 2px 8px; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; } .drawer h4 small { font: 400 10px/1 var(--mono); letter-spacing: .08em; color: var(--ink-3); text-transform: uppercase; }
@@ -105,7 +128,7 @@
 <main class="app" id="app">
   <header class="top">
     <a class="glass round" style="color:inherit" href="index.html" aria-label="Back to all prototypes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></a>
-    <button type="button" class="glass round add" id="add" aria-label="Put something on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <div class="right"><button type="button" class="glass round" id="more" aria-label="Desk options" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button><button type="button" class="glass round add" id="add" aria-label="Put something on the desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
   </header>
   <div class="scroll" id="scroll">
     <div class="pad">
@@ -120,12 +143,19 @@
     <p class="dhint mono" id="hint">Drag to move · pinch or the round handle to turn</p>
   </div>
   <div class="selbar glass" id="selbar"><button type="button" id="front">Bring to front</button><button type="button" id="remove">Remove</button><button type="button" class="on" id="done">Done</button></div>
+  <div class="deskmenu glass" id="deskmenu" role="menu" aria-label="Desk options"></div>
+  <div class="ndim" id="ndim"></div>
+  <section class="namesheet glass" id="namesheet" aria-label="Your profile" aria-hidden="true"><div class="grip"></div>
+    <div class="me"><img src="img/photo-04-t.jpg" alt=""><div><b>cody</b><span>@cody</span></div><i id="nstamp"></i></div>
+    <div class="rows"><button type="button" data-row>Friends<small>12</small></button><button type="button" data-row>Invite a friend</button><button type="button" data-row>Poto+</button><button type="button" data-row>Settings</button></div>
+  </section>
   <section class="drawer glass" id="drawer" aria-label="Put on the desk" aria-hidden="true"><div class="grip"></div>
-    <h4>Prints <small>tap to put on the desk</small></h4><div class="tiles" id="tprints"></div>
-    <h4>Postcards</h4><div class="tiles" id="tcards"></div>
-    <h4>Stamps <small id="nstamps"></small></h4><div class="tiles" id="tstamps"></div>
-    <a class="mk" href="stamp.html"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h12v18H6z" stroke-dasharray="2 2.6"/><path d="M9 7h6v7H9z"/></svg>Cut a stamp from a photo</a>
-    <h4>Bits</h4><div class="tiles" id="tbits"></div>
+    <div class="seg glass dtabs" role="tablist" aria-label="What to add"><button type="button" data-sec="prints" aria-pressed="true">Prints</button><button type="button" data-sec="cards" aria-pressed="false">Postcards</button><button type="button" data-sec="stamps" aria-pressed="false">Stamps</button><button type="button" data-sec="things" aria-pressed="false">Things</button></div>
+    <div class="dsec" data-sec="prints"><div class="tiles" id="tprints"></div></div>
+    <div class="dsec" data-sec="cards"><div class="tiles" id="tcards"></div></div>
+    <div class="dsec" data-sec="stamps"><span id="nstamps" hidden></span><a class="mk" href="stamp.html"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3h12v18H6z" stroke-dasharray="2 2.6"/><path d="M9 7h6v7H9z"/></svg>Cut a stamp from a photo</a><div class="tiles" id="tstamps"></div></div>
+
+        <div class="dsec" data-sec="things"><div class="tiles" id="tbits"></div></div>
   </section>
   <nav class="dock glass" aria-label="Poto">
     <a class="tab" href="home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16M9 4v5.5"/></svg>Diary</a>
@@ -293,7 +323,18 @@ function fillDrawer() {
 // a stamp you just cut lands on the desk
 const fresh = new URLSearchParams(location.search).get('stamp');
 // surface and tidy move into the drawer, so nothing sits on the desk but your things (Cody, 19 Nov)
-{ const ctl = document.createElement('div'); ctl.className = 'deskctl'; ctl.append($('surf'), $('tidy')); $('drawer').querySelector('.grip').after(ctl); }
+{ const m = $('deskmenu'); m.append($('surf'), $('tidy'));
+  const toggle = (on) => { m.classList.toggle('on', on); $('more').setAttribute('aria-expanded', String(on)); };
+  $('more').onclick = (e) => { e.stopPropagation(); toggle(!m.classList.contains('on')); };
+  document.addEventListener('pointerdown', (e) => { if (m.classList.contains('on') && !e.target.closest('#deskmenu, #more')) toggle(false); }); }
+// the add sheet's tabs
+document.querySelectorAll('.dtabs button').forEach((b) => (b.onclick = () => { document.querySelectorAll('.dtabs button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  document.querySelectorAll('.dsec').forEach((sec) => (sec.hidden = sec.dataset.sec !== b.dataset.sec)); }));
+document.querySelectorAll('.dsec').forEach((sec) => (sec.hidden = sec.dataset.sec !== 'prints'));
+// your name opens your profile: picture, signature stamp, friends, invite, Poto+, settings
+{ const sheet = $('namesheet'), dim = $('ndim'), openN = () => { const st = stamps[0]; $('nstamp').innerHTML = st ? '<img src="' + st.png + '" alt="Your signature stamp">' : ''; sheet.classList.add('on'); dim.classList.add('on'); sheet.setAttribute('aria-hidden', 'false'); },
+    closeN = () => { sheet.classList.remove('on'); dim.classList.remove('on'); sheet.setAttribute('aria-hidden', 'true'); };
+  document.querySelector('.who h1').onclick = openN; dim.onclick = closeN; sheet.querySelectorAll('[data-row]').forEach((r) => (r.onclick = closeN)); }
 init().then(() => { const idle = window.requestIdleCallback || ((f) => setTimeout(f, 300)); ['linen', 'cork', 'black', 'paper'].forEach((k, i) => idle(async () => { surfURL[k] = surfURL[k] || await PotoTex.url(PotoTex.surface(k)); })); if (fresh && stamps.find((s) => s.id === fresh) && !state.items.find((i) => i.src === fresh)) { const n = { id: 'i' + Math.random().toString(36).slice(2, 8), type: 'stamp', src: fresh, x: 0.5, y: 0.42, r: -5, s: 1.15, z: ++topZ }; state.items.push(n); render(); save(); select(n); paintStats(); } });
 </script>
 </body>

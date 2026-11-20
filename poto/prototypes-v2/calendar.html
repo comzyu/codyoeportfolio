@@ -148,7 +148,7 @@
   <section class="daypg" id="daypg" aria-hidden="true">
     <div class="top"><button type="button" class="glass back" id="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="dtitle"></h1><span></span></div>
     <div class="pager" id="pager"></div><div class="dots" id="dots"></div>
-    <div class="acts" id="acts"><button type="button" class="main" id="asend"><span>Send as postcard</span></button><button type="button" class="glass" id="adesk"><span>Put on desk</span></button><button type="button" class="glass" id="ashare" hidden><span>Share</span></button></div>
+    <div class="acts" id="acts"><button type="button" class="glass" id="adesk"><span>Put on desk</span></button><button type="button" class="glass" id="ashare" hidden><span>Share</span></button></div>
     <div class="recv" id="recv"></div>
   </section>
   <section class="share" id="sharesheet" aria-label="Share the month" aria-hidden="true">
@@ -306,7 +306,6 @@
   const at = () => cur && cur.list[Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))];
   pager.addEventListener('scroll', () => { const i = Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth)); dots.querySelectorAll('i').forEach((x, j) => x.classList.toggle('on', j === i)); });
   $('back').onclick = closeDay;
-  $('asend').onclick = () => { const o = at(); if (o) potoGo('postcard.html?' + new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 })); };
   $('adesk').onclick = () => { const o = at(); if (!o) return; let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {} const m = /photo-(\d\d)\.jpg$/.exec(o.src);
     q.push({ type: 'print', src: m ? +m[1] : o.src }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {} toast('On your desk'); };
   if (navigator.canShare) { $('ashare').hidden = false; $('ashare').onclick = async () => { const o = at(); if (!o) return; try { const b = await (await fetch(o.src)).blob(), f = new File([b], 'poto.jpg', { type: 'image/jpeg' }); if (navigator.canShare({ files: [f] })) await navigator.share({ files: [f] }); } catch (e) {} }; }

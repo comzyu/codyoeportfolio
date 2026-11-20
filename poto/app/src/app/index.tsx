@@ -26,7 +26,7 @@ export default function Shell() {
   const [failed, setFailed] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('home');
   const [opened, setOpened] = useState<Tab[]>(['home']);
-  const [camera, setCamera] = useState(false);
+  const [camera, setCamera] = useState<string | null>(null);   // the camera's query ('' = normal, 'postcard=1&to=…' = a postcard)
   const [sheet, setSheet] = useState<{ page: string; query: string } | null>(null);
   const pages = useRef<Partial<Record<Tab, WebPageHandle | null>>>({});
   const stale = useRef(new Set<Tab>());
@@ -41,13 +41,13 @@ export default function Shell() {
     if (stale.current.delete(t)) pages.current[t]?.reload();
     else pages.current[t]?.shown();   // undo a page's leaving animation (a print opening into the postcard)
   };
-  const closeCamera = (then?: Tab) => { setCamera(false); touched(); show(then ?? tab); };
+  const closeCamera = (then?: Tab) => { setCamera(null); touched(); show(then ?? tab); };
   const closeSheet = (then?: Tab) => { setSheet(null); touched(); show(then ?? tab); };
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (sheet) { closeSheet(); return true; }
-      if (camera) { closeCamera(); return true; }
+      if (camera !== null) { closeCamera(); return true; }
       if (tab !== 'home') { show('home'); return true; }
       return false;
     });
@@ -56,8 +56,8 @@ export default function Shell() {
 
   const navigate = (from: 'tab' | 'camera' | 'sheet', page: string, query: string) => {
     if (page === 'index') { if (from === 'camera') closeCamera(); else if (from === 'sheet') closeSheet(); return; }
-    if (page === 'camera') { setSheet(null); setCamera(true); return; }
-    if (page === 'postcard' || page === 'stamp') { setSheet({ page, query }); return; }
+    if (page === 'camera') { setSheet(null); setCamera(query); return; }
+    if (page === 'postcard' || page === 'stamp') { if (from === 'camera') setCamera(null); setSheet({ page, query }); return; }
     const t = TAB_OF[page];
     if (!t) return;
     if (t === 'desk' && query.includes('stamp')) stale.current.add('desk');   // a stamp you just cut lands on the desk
@@ -72,7 +72,7 @@ export default function Shell() {
 
   const onTabMessage = (m: PageMessage) => {
     if (m.type === 'tab' && TABS.includes(m.name as Tab)) show(m.name as Tab);
-    else if (m.type === 'camera') setCamera(true);
+    else if (m.type === 'camera') setCamera('');
   };
 
   if (!base) {
@@ -86,15 +86,15 @@ export default function Shell() {
   const pad = Platform.OS === 'android' ? { paddingTop: insets.top, paddingBottom: insets.bottom } : null;
   return (
     <View style={[styles.fill, { backgroundColor: ROOM[tab] }]}>
-      <StatusBar style={camera ? 'light' : 'dark'} />
+      <StatusBar style={camera !== null ? 'light' : 'dark'} />
       {opened.map((t) => (
         <View key={t} style={[StyleSheet.absoluteFill, pad, { backgroundColor: ROOM[t] }, t === tab ? styles.front : styles.back]} pointerEvents={t === tab ? 'auto' : 'none'}>
           <WebPage ref={(r) => { pages.current[t] = r; }} base={base} page={PAGE[t]} onMessage={onTabMessage} onNavigate={navTab} />
         </View>
       ))}
-      {camera && (
+      {camera !== null && (
         <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)} style={[StyleSheet.absoluteFill, styles.top]}>
-          <CameraLayer base={base} onNavigate={navCamera} />
+          <CameraLayer base={base} query={camera} onNavigate={navCamera} />
         </Animated.View>
       )}
       {sheet && (

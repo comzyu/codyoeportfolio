@@ -67,15 +67,15 @@
     for (const k in frames) frames[k].classList.toggle('away', k !== t);
   }
   const close = (f, then) => { if (!f) return; f.classList.add('out'); setTimeout(() => f.remove(), 230); show(then || tab); };
-  function openCamera() { closeSheet(); if (!cam) cam = frame('camera', '', 'cam'); }
+  function openCamera(query) { closeSheet(); if (cam) cam.remove(); cam = frame('camera', query || '', 'cam'); }
   function closeCamera(then) { const f = cam; cam = null; close(f, then); }
   function openSheet(page, query) { if (sheet) sheet.remove(); sheet = frame(page, query, 'sheet'); }
   function closeSheet(then) { const f = sheet; sheet = null; if (f) close(f, then); }
 
   function nav(from, page, query) {
     if (page === 'index') { if (from === cam) closeCamera(); else if (from === sheet) closeSheet(); return; }
-    if (page === 'camera') { openCamera(); return; }
-    if (page === 'postcard' || page === 'stamp') { openSheet(page, query); return; }
+    if (page === 'camera') { openCamera(query); return; }
+    if (page === 'postcard' || page === 'stamp') { if (from === cam && cam) { cam.remove(); cam = null; } openSheet(page, query); return; }
     const t = TAB_OF[page]; if (!t) return;
     if (from === cam) closeCamera(t); else if (from === sheet) closeSheet(t); else show(t);
   }
@@ -84,6 +84,8 @@
   // the phone's safe areas, measured once here (frames never get them) and handed to every page
   const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
   document.body.appendChild(probe); const cs = getComputedStyle(probe), INSETS = { top: parseFloat(cs.paddingTop) || 0, bottom: parseFloat(cs.paddingBottom) || 0 }; probe.remove();
+  // some viewers (like an app's in-app page) report no insets even on a phone with a Dynamic Island: keep its height clear anyway
+  if (matchMedia('(pointer: coarse)').matches && innerWidth < 520) { INSETS.top = Math.max(INSETS.top, 54); INSETS.bottom = Math.max(INSETS.bottom, 20); }
   window.PotoShell = {
     insets: () => INSETS,
     shotURL: (path) => { const m = String(path).match(/shots\/\d+(-s|-t)?\.jpg/); return m ? urls[m[0]] || null : null; },

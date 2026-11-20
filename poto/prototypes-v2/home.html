@@ -10,6 +10,8 @@
 <script src="lib/develop.js" defer></script>
 <style>
   /* Gallery white. Type and glass stay quiet; prints and folders are the only things with material. */
+  .rollmode header.top, .rollmode .month, .rollmode .sub, .rollmode .pad:has(#mcal), .rollmode nav.dock, .rollmode h3 { display: none !important; }
+  .rollmode .scroll { padding-top: 8px !important; } .rollmode, .rollmode body { background: transparent; }
   .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(64px + var(--safe-top)) 0 calc(120px + var(--safe-bottom)); }
   .pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
   .month { display: flex; align-items: baseline; gap: 10px; }
@@ -142,7 +144,11 @@ let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const COUNT = Math.max(1, Math.min(200, +new URLSearchParams(location.search).get('n') || 12));   // ?n=5 or ?n=40 to see the diary with fewer or more prints
 const ORDER = [4, 9, 1, 6, 12, 3, 8, 2, 11, 5, 7, 10];
-const items = kept.slice(0, COUNT).concat(Array.from({ length: COUNT }, (_, k) => ({ src: 'img/photo-' + String(ORDER[k % 12]).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, COUNT);
+// roll mode (Cody, 20 Nov): inside a finished roll, only the shuffle stack and the reel, filled with that roll's frames
+const RQ = new URLSearchParams(location.search), ROLLMODE = RQ.get('roll');
+const RFR = ROLLMODE ? (RQ.get('frames') || '').split(',').filter(Boolean).map((f, k) => ({ src: /^\d+$/.test(f) ? 'img/photo-' + f.padStart(2, '0') + '.jpg' : f, zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - k, 12) })) : null;
+if (ROLLMODE) { document.documentElement.classList.add('rollmode'); try { if (window.parent !== window && window.parent.potoGo) window.potoGo = window.parent.potoGo; } catch (e) {} }
+const items = RFR && RFR.length ? RFR : kept.slice(0, COUNT).concat(Array.from({ length: COUNT }, (_, k) => ({ src: 'img/photo-' + String(ORDER[k % 12]).padStart(2, '0') + '.jpg', zoom: 1, ev: 0, t: Date.UTC(2026, 10, 15 - Math.floor(k / 2), 12) }))).slice(0, COUNT);
 const cat = $('cat'), N = items.length, look = (o) => (o.zoom > 1 ? 'transform:scale(' + (o.zoom / 1.35).toFixed(3) + ');' : '') + (o.ev ? 'filter:brightness(' + Math.pow(2, o.ev * 0.75).toFixed(3) + ')' : '');   // no filter unless the exposure was changed: filters on many images are what make phones stutter
 const date = document.createElement('span'); date.className = 'date mono'; cat.appendChild(date);
 cat.tabIndex = 0; cat.setAttribute('role', 'listbox'); cat.setAttribute('aria-label', "This week's prints. Swipe, or use the arrow keys.");
@@ -234,7 +240,7 @@ function drawBase() {
   x.fillStyle = '#2e56a0'; x.textAlign = 'center'; x.textBaseline = 'middle';
   x.font = '500 ' + 7.5 * dpr + 'px "IBM Plex Mono", monospace'; if (x.letterSpacing !== undefined) x.letterSpacing = (1 * dpr) + 'px';
   x.fillText('POTO · REEL', c, c - P * 0.11); x.fillText(N + (N === 1 ? ' FRAME' : ' FRAMES') + ' · NOV 2026', c, c + P * 0.105);
-  if (x.letterSpacing !== undefined) x.letterSpacing = '0px'; x.font = '600 ' + 15 * dpr + 'px Inter, system-ui, sans-serif'; x.fillText('This week', c, c - P * 0.06);
+  if (x.letterSpacing !== undefined) x.letterSpacing = '0px'; x.font = '600 ' + 15 * dpr + 'px Inter, system-ui, sans-serif'; x.fillText(ROLLMODE || 'This week', c, c - P * 0.06);
   x.restore();
   x.save(); x.globalCompositeOperation = 'destination-out'; x.beginPath(); x.arc(c, c, P * 0.035, 0, Math.PI * 2); x.fill(); x.restore();
   x.strokeStyle = 'rgba(0,0,0,.18)'; x.lineWidth = dpr; x.beginPath(); x.arc(c, c, P * 0.035, 0, Math.PI * 2); x.stroke();
@@ -284,7 +290,7 @@ layout();
 // tap the middle print: it comes toward you and opens as a postcard
 function open(o, b) {
   const q = new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 });
-  if (reduced) { potoGo('postcard.html?' + q); return; }
+  if (reduced || ROLLMODE) { potoGo('postcard.html?' + q); return; }
   cancelAnimationFrame(raf); b.style.transition = 'transform .38s cubic-bezier(.5,0,.2,1)'; b.style.zIndex = 200; b.style.transform = 'translateY(-4%) scale(1.35)';
   document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 160, fill: 'forwards' }).onfinish = () => potoGo('postcard.html?' + q);
 }

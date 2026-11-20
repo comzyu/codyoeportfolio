@@ -12,9 +12,9 @@ import { saveShot } from '@/web/shots';
 
 const DARK = '#0A0A0B';   // the camera room (ui.css --dark)
 
-type Props = { base: string; onNavigate: (page: string, query: string) => void };
+type Props = { base: string; query?: string; onNavigate: (page: string, query: string) => void };
 
-export function CameraLayer({ base, onNavigate }: Props) {
+export function CameraLayer({ base, query, onNavigate }: Props) {
   const insets = useSafeAreaInsets();
   const top = Platform.OS === 'android' ? insets.top : 0;   // Android pages sit below the status bar
   const [perm, ask] = useCameraPermissions();
@@ -53,7 +53,7 @@ export function CameraLayer({ base, onNavigate }: Props) {
         </View>
       )}
       <View style={[StyleSheet.absoluteFill, { paddingTop: top, paddingBottom: Platform.OS === 'android' ? insets.bottom : 0 }]}>
-        <WebPage ref={page} base={base} page="camera" transparent onMessage={onMessage} onNavigate={onNavigate} />
+        <WebPage ref={page} base={base} page="camera" query={query} transparent onMessage={onMessage} onNavigate={onNavigate} />
       </View>
       {hole && perm && !perm.granted && (
         <View style={[styles.hole, styles.ask, hole]}>
