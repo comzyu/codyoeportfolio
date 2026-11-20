@@ -27,8 +27,8 @@
 <script>
 (function () {
   const device = document.getElementById('device');
-  const TABS = { home: 'postcards', calendar: 'home', rolls: 'rolls', desk: 'profile' };
-  const TAB_OF = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+  const TABS = { home: 'postcards', calendar: 'calendar', rolls: 'rolls', desk: 'profile' };
+  const TAB_OF = { postcards: 'home', 'home-min': 'home', calendar: 'calendar', home: 'calendar', rolls: 'rolls', profile: 'desk' };
   const KEYS = ['poto.kept', 'poto.pending', 'poto.roll', 'poto.rolls', 'poto.stamps', 'poto.desk', 'poto.deskAdd'];
   const stateNow = () => { try { return KEYS.map((k) => localStorage.getItem(k) || '').join('\u0001'); } catch (e) { return ''; } };
   const frames = {}, seen = {};

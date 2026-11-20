@@ -16,8 +16,8 @@ import { installWeb } from '@/web/install';
 
 type Tab = 'home' | 'calendar' | 'rolls' | 'desk';
 const TABS: Tab[] = ['home', 'calendar', 'rolls', 'desk'];
-const PAGE: Record<Tab, string> = { home: 'postcards', calendar: 'home', rolls: 'rolls', desk: 'profile' };
-const TAB_OF: Record<string, Tab> = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+const PAGE: Record<Tab, string> = { home: 'postcards', calendar: 'calendar', rolls: 'rolls', desk: 'profile' };
+const TAB_OF: Record<string, Tab> = { postcards: 'home', 'home-min': 'home', calendar: 'calendar', home: 'calendar', rolls: 'rolls', profile: 'desk' };
 const ROOM: Record<Tab, string> = { home: '#FAF9F6', calendar: '#FAF9F6', rolls: '#FAF9F6', desk: '#FAF9F6' };
 
 export default function Shell() {

@@ -273,7 +273,7 @@ function shoot() {
 // ---- develop all: every shot in the tray comes up together, a beat apart, like prints in one tray of developer ----
 const devall = $('devall'), grid = $('pgrid'), PW = 180, PH = 240, BLANK = [232, 228, 220], NOISE = new Int8Array(PW * PH * 2).map(() => (Math.random() * 2 - 1) * 127);
 let dev = null;
-tray.onclick = () => { if (!pending.length) { potoGo('home.html'); return; } developAll(); };
+tray.onclick = () => { if (!pending.length) { potoGo('calendar.html'); return; } developAll(); };
 // developing (Cody, 17 Nov): the first 3 shots of a day come up right away; the rest are ready at 7:00 the next morning
 const DEV_FREE = 3, devDay = () => new Date().toDateString();
 const devLeft = () => { try { const d = JSON.parse(localStorage.getItem('poto.devday') || '{}'); return d.day === devDay() ? Math.max(0, DEV_FREE - d.n) : DEV_FREE; } catch (e) { return DEV_FREE; } };

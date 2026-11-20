@@ -66,7 +66,7 @@
   }
 
   // the bar
-  var TABS = { postcards: 'home', 'home-min': 'home', home: 'calendar', rolls: 'rolls', profile: 'desk' };
+  var TABS = { postcards: 'home', 'home-min': 'home', calendar: 'calendar', home: 'calendar', rolls: 'rolls', profile: 'desk' };
   var tab = TABS[page];
   if (!tab) return;
   var I = {

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="lib/shell.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Poto · Calendar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="lib/ui.css">
+<style>
+  /* Calendar (redesign plan, 20 Nov): a full month calendar with your photos on their days, and nothing else.
+     Months scroll; tap a month's name for the year; tap a day to open it. */
+  html, body { height: 100%; overflow: hidden; background: var(--room); }
+  .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding: calc(env(safe-area-inset-top, 0px) + 44px) max(16px, env(safe-area-inset-right, 0px)) calc(120px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  /* the weekday letters stay at the top while months pass under them */
+  .dow { position: fixed; z-index: 4; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 12px) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--room); box-shadow: 0 1px 0 var(--hair); }
+  .dow span { text-align: center; font: 500 12px/1 var(--sans); color: var(--ink-3); }
+  .month { padding: 18px 0 8px; }
+  .mhead { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 12px; }
+  .mhead button.name { font: 600 22px/1.1 var(--sans); letter-spacing: -.02em; color: var(--ink); display: inline-flex; align-items: baseline; gap: 7px; padding: 4px 0; }
+  .mhead button.name span { font-weight: 400; color: var(--ink-3); }
+  .mhead .sharem { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-2); }
+  .mhead .sharem svg { width: 17px; height: 17px; position: relative; z-index: 1; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .day { position: relative; aspect-ratio: 1; border-radius: 7px; display: grid; place-items: center; font: 400 15px/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--ink-2); background: none; border: 0; padding: 0; overflow: hidden; }
+  .day.lead { visibility: hidden; }
+  .day.future { color: var(--ink-3); opacity: .5; }
+  .day img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
+  .day img.in { opacity: 1; }
+  .day.has { cursor: pointer; }
+  .day.has .n { position: absolute; left: 5px; bottom: 4px; z-index: 1; font: 600 11px/1 var(--sans); color: #fff; text-shadow: 0 0 4px rgba(0,0,0,.45); }
+  .day.today { box-shadow: inset 0 0 0 2px var(--red); color: var(--red); font-weight: 600; }
+  .day.today.has::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--red); z-index: 2; }
+  .day .mark { position: absolute; z-index: 2; right: 4px; top: 4px; width: 8px; height: 10px; border-radius: 1px; background: #FBFAF6; border: 1.5px solid var(--red); box-shadow: 0 1px 2px rgba(0,0,0,.25); }   /* a postcard arrived that day */
+  .hint { margin: 18px 4px 0; font: 400 15px/1.4 var(--sans); color: var(--ink-2); text-align: center; }
+  /* the year: twelve small months */
+  .year { position: fixed; inset: 0; z-index: 30; background: var(--room); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(20px, env(safe-area-inset-right, 0px)) 120px max(20px, env(safe-area-inset-left, 0px));
+    opacity: 0; pointer-events: none; transform: scale(1.04); transition: opacity .22s, transform .3s var(--ease); }
+  .year.on { opacity: 1; pointer-events: auto; transform: none; }
+  .year .yh { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 20px; }
+  .year .yh button { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .year .yh svg { width: 18px; height: 18px; position: relative; z-index: 1; }
+  .year h2 { margin: 0; font: 600 28px/1 var(--sans); letter-spacing: -.02em; color: var(--ink); }
+  .ygrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 16px; }
+  .ygrid { align-items: start; }
+  .mini { display: block; align-self: start; background: none; border: 0; padding: 0; text-align: left; }
+  .mini b { display: block; margin-bottom: 6px; font: 600 14px/1 var(--sans); color: var(--ink); }
+  .mini.now b { color: var(--red); }
+  .mini i { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .mini u { aspect-ratio: 1; border-radius: 50%; background: var(--hair); }
+  .mini u.x { visibility: hidden; } .mini u.p { background: var(--ink-2); } .mini u.t { background: var(--red); }
+  /* a day, opened: pushed in from the right like any iPhone screen */
+  .daypg { position: fixed; inset: 0; z-index: 40; background: var(--room); overflow-y: auto; transform: translateX(100%); transition: transform .38s var(--ease); padding-bottom: 120px; }
+  .daypg.on { transform: none; }
+  .daypg .top { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) max(14px, env(safe-area-inset-right, 0px)) 10px max(14px, env(safe-area-inset-left, 0px)); background: linear-gradient(var(--room) 75%, rgba(250,249,246,0)); }
+  .daypg .top h1 { margin: 0; text-align: center; font: 600 17px/1.2 var(--sans); color: var(--ink); }
+  .daypg .back { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .daypg .back svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+  .pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 0; margin-top: 8px; }
+  .pager::-webkit-scrollbar { display: none; }
+  .pager figure { flex: 0 0 100%; margin: 0; scroll-snap-align: center; display: grid; justify-items: center; }
+  .pager img { width: min(84vw, 380px, 40vh); aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; box-shadow: 0 1px 2px rgba(20,20,30,.1), 0 24px 40px -24px rgba(20,20,30,.4); background: var(--room-2); }
+  .dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0 0; min-height: 6px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--hair); } .dots i.on { background: var(--ink-2); }
+  .acts { display: flex; justify-content: center; gap: 8px; margin: 18px 16px 0; flex-wrap: wrap; }
+  .acts button { height: 42px; padding: 0 16px; border-radius: 999px; font: 500 14px/1 var(--sans); color: var(--ink); }
+  .acts button.main { background: var(--ink); color: var(--room); }
+  .acts button span { position: relative; z-index: 1; }
+  .recv { margin: 34px max(20px, env(safe-area-inset-left, 0px)) 0; }
+  .recv h2 { margin: 0 0 12px; font: 600 17px/1.2 var(--sans); color: var(--ink); }
+  .recv .row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; }
+  .recv .row::-webkit-scrollbar { display: none; }
+  .pc { flex: none; width: 112px; background: none; border: 0; padding: 0; text-align: left; }
+  .pc i { display: block; aspect-ratio: 1024 / 1448; background: #FAF9F5; padding: 6px 6px 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(20,20,30,.14), 0 10px 18px -10px rgba(20,20,30,.35); }
+  .pc img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .pc b { display: block; margin-top: 8px; font: 500 13px/1 var(--sans); color: var(--ink); }
+  .toast { position: fixed; z-index: 60; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); padding: 10px 16px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; font: 500 14px/1 var(--sans); color: var(--ink); transition: opacity .2s, transform .3s var(--spring); }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .toast span { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { .daypg, .year { transition: opacity .2s; } }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="dow" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+  <div class="scroll" id="scroll"></div>
+  <section class="year" id="year" aria-label="The year" aria-hidden="true"></section>
+  <section class="daypg" id="daypg" aria-hidden="true">
+    <div class="top"><button type="button" class="glass back" id="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="dtitle"></h1><span></span></div>
+    <div class="pager" id="pager"></div><div class="dots" id="dots"></div>
+    <div class="acts" id="acts"><button type="button" class="main" id="asend"><span>Send as postcard</span></button><button type="button" class="glass" id="adesk"><span>Put on desk</span></button><button type="button" class="glass" id="ashare" hidden><span>Share</span></button></div>
+    <div class="recv" id="recv"></div>
+  </section>
+  <section class="share" id="sharesheet" aria-label="Share the month" aria-hidden="true">
+    <div class="row glass" role="group" aria-label="Format"><button type="button" data-fmt="story" aria-pressed="true">Story 9:16</button><button type="button" data-fmt="post" aria-pressed="false">Post 4:5</button></div>
+    <div class="stage" id="sstage"><div class="frame" id="sframe"><img id="simg" alt="Your month, as an image to share"><i class="zone t" id="zt"></i><i class="zone b" id="zb"></i></div></div>
+    <div class="foot"><button type="button" class="g" id="sguides" aria-pressed="false">Show safe zones</button><p>Press and hold the picture to save it.</p><button type="button" class="x" id="sclose">Done</button></div>
+  </section>
+  <div class="toast glass" id="toast" role="status"><span></span></div>
+</main>
+<script src="lib/paper.js"></script>
+<script src="lib/texture.js"></script>
+<script src="lib/share.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id), scroll = $('scroll');
+  const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const ph = (n, s) => typeof n === 'string' ? n.replace('.jpg', (s || '') + '.jpg') : 'img/photo-' + String(n).padStart(2, '0') + (s || '') + '.jpg';
+  const key = (d) => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  const NEW = /[?&]new/.test(location.search), now = new Date(), today = key(now);
+  const toastEl = $('toast'), toast = (t) => { toastEl.firstChild.textContent = t; toastEl.classList.add('on'); clearTimeout(toastEl.t); toastEl.t = setTimeout(() => toastEl.classList.remove('on'), 1600); };
+  window.PotoTex && PotoTex.install();
+
+  // ---- what's on each day: your kept prints, plus (until accounts) a few months of sample days ----
+  const days = new Map();   // key -> [{src, zoom, ev}]
+  const put = (d, o) => { const k = key(d); if (!days.has(k)) days.set(k, []); days.get(k).push(o); };
+  let kept = []; try { kept = JSON.parse(localStorage.getItem('poto.kept') || '[]'); } catch (e) {}
+  kept.forEach((o) => o.t && put(new Date(o.t), { src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 }));
+  if (!NEW) { let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    for (let b = 1; b <= 130; b++) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - b); if (r() < 0.42) { const n = 1 + Math.floor(r() * 3); for (let j = 0; j < n; j++) put(d, { src: 'img/photo-' + String(1 + Math.floor(r() * 12)).padStart(2, '0') + '.jpg', zoom: 1, ev: 0 }); } } }
+  // postcards you received (the samples Home shows)
+  const RECV = NEW ? [] : [
+    { photo: 3, name: 'alva', at: '2026-11-17T21:04', city: 'New York', msg: 'the market at 9pm. everything lit up at once.' }, { photo: 9, name: 'bubu', at: '2026-11-17T17:48', city: 'Copenhagen', msg: 'look at this sky. i stopped walking for it.' },
+    { photo: 6, name: 'pupu', at: '2026-11-17T13:22', city: 'Shanghai', msg: 'lunch, finally. we queued an hour. worth it.' }, { photo: 2, name: 'vava', at: '2026-11-17T11:05', city: 'Paris', msg: 'made it to the top. legs gone, view not.' },
+    { photo: 5, name: 'alal', at: '2026-11-17T09:31', city: 'Berlin', msg: 'sunday reset. coffee, laundry, nowhere to be.' }, { photo: 12, name: 'alva', at: '2026-11-16T20:12', city: 'New York', msg: 'found the good noodle place again.' },
+    { photo: 10, name: 'bubu', at: '2026-11-16T15:40', city: 'Copenhagen', msg: 'rain all day. stayed in. no regrets.' }, { photo: 8, name: 'pupu', at: '2026-11-15T08:17', city: 'Shanghai', msg: 'first frost on the window.' },
+  ];
+  const recvOn = new Map(); RECV.forEach((p) => { const k = key(new Date(p.at)); if (!recvOn.has(k)) recvOn.set(k, []); recvOn.get(k).push(p); });
+
+  // ---- the months: from your first photo (or a year back) to this month, newest at the bottom ----
+  let first = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  for (const k of days.keys()) { const [y, m] = k.split('-').map(Number); const d = new Date(y, m - 1, 1); if (d < first) first = d; }
+  const months = []; for (let d = new Date(first); d <= now; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) months.push(new Date(d));
+  const lead = (d) => (new Date(d.getFullYear(), d.getMonth(), 1).getDay() + 6) % 7, count = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; const im = e.target; im.src = im.dataset.src; io.unobserve(im); }), { root: scroll, rootMargin: '600px 0px' });
+  scroll.innerHTML = months.map((m, mi) => {
+    const y = m.getFullYear(), mo = m.getMonth(), cells = [];
+    for (let k = 0; k < lead(m); k++) cells.push('<span class="day lead"></span>');
+    for (let d = 1; d <= count(m); d++) {
+      const dt = new Date(y, mo, d), k = key(dt), list = days.get(k), got = recvOn.get(k), fut = dt > now && k !== today;
+      const cls = 'day' + (list ? ' has' : '') + (k === today ? ' today' : '') + (fut ? ' future' : '') + (got && !list ? ' has' : '');
+      cells.push('<button type="button" class="' + cls + '" data-k="' + k + '"' + (list || got ? '' : ' tabindex="-1"') + ' aria-label="' + DAYN[dt.getDay()] + ' ' + d + ' ' + MONTH[mo] + (list ? ', ' + list.length + (list.length > 1 ? ' photos' : ' photo') : '') + (got ? ', postcards' : '') + '">' +
+        (list ? '<img data-src="' + ph(list[0].src, '-t') + '" alt="" draggable="false"><span class="n">' + d + '</span>' : d) + (got ? '<i class="mark" aria-hidden="true"></i>' : '') + '</button>');
+    }
+    return '<section class="month" id="m' + mi + '"><div class="mhead"><button type="button" class="name" data-mi="' + mi + '">' + MONTH[mo] + ' <span>' + y + '</span></button>' +
+      '<button type="button" class="glass sharem" data-share="' + mi + '" aria-label="Share ' + MONTH[mo] + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></button></div>' +
+      '<div class="grid">' + cells.join('') + '</div></section>';
+  }).join('') + (days.size ? '' : '<p class="hint">Your photos will fill in your days.</p>');
+  scroll.querySelectorAll('img[data-src]').forEach((im) => { im.onload = () => im.classList.add('in'); io.observe(im); });
+  scroll.scrollTop = scroll.scrollHeight;   // open on this month
+  // tapping the Calendar tab again: back to this month
+  if (window.PotoNative) PotoNative.onShown = () => {};
+
+  // ---- the year ----
+  const year = $('year');
+  function openYear(y) {
+    const ms = months.filter((m) => m.getFullYear() === y);
+    year.innerHTML = '<div class="yh"><h2>' + y + '</h2><button type="button" class="glass" id="yclose" aria-label="Back to the months"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="ygrid">' + ms.map((m) => { const mi = months.indexOf(m), u = [];
+      for (let k = 0; k < lead(m); k++) u.push('<u class="x"></u>');
+      for (let d = 1; d <= count(m); d++) { const k = key(new Date(m.getFullYear(), m.getMonth(), d)); u.push('<u class="' + (k === today ? 't' : days.has(k) ? 'p' : '') + '"></u>'); }
+      return '<button type="button" class="mini' + (m.getMonth() === now.getMonth() && y === now.getFullYear() ? ' now' : '') + '" data-mi="' + mi + '"><b>' + MONTH[m.getMonth()].slice(0, 3) + '</b><i>' + u.join('') + '</i></button>'; }).join('') + '</div>';
+    year.classList.add('on'); year.setAttribute('aria-hidden', 'false'); $('yclose').onclick = closeYear;
+    year.querySelectorAll('.mini').forEach((b) => (b.onclick = () => { closeYear(); $('m' + b.dataset.mi).scrollIntoView({ block: 'start' }); scroll.scrollTop -= 34; }));
+  }
+  const closeYear = () => { year.classList.remove('on'); year.setAttribute('aria-hidden', 'true'); };
+  scroll.addEventListener('click', (e) => {
+    const n = e.target.closest('.name'); if (n) { openYear(months[+n.dataset.mi].getFullYear()); return; }
+    const s = e.target.closest('[data-share]'); if (s) { openShare(+s.dataset.share); return; }
+    const d = e.target.closest('.day.has'); if (d) openDay(d.dataset.k);
+  });
+
+  // ---- a day ----
+  const daypg = $('daypg'), pager = $('pager'), dots = $('dots');
+  let cur = null;
+  function openDay(k) {
+    const [y, m, d] = k.split('-').map(Number), dt = new Date(y, m - 1, d), list = days.get(k) || [], got = recvOn.get(k) || [];
+    cur = { k, list };
+    $('dtitle').textContent = DAYN[dt.getDay()] + ' ' + d + ' ' + MONTH[m - 1];
+    pager.innerHTML = list.map((o) => '<figure><img src="' + ph(o.src, '-s') + '" alt="" draggable="false"></figure>').join('');
+    pager.scrollLeft = 0; pager.hidden = !list.length; $('acts').hidden = !list.length;
+    dots.innerHTML = list.length > 1 ? list.map((_, i) => '<i' + (i ? '' : ' class="on"') + '></i>').join('') : '';
+    $('recv').innerHTML = got.length ? '<h2>Postcards you received</h2><div class="row">' + got.map((p, i) => '<button type="button" class="pc" data-i="' + i + '"><i><img src="' + ph(p.photo, '-s') + '" alt=""></i><b>@' + p.name + '</b></button>').join('') + '</div>' : '';
+    $('recv').querySelectorAll('.pc').forEach((b) => (b.onclick = () => { const p = got[+b.dataset.i]; potoGo('postcard.html?' + new URLSearchParams({ src: ph(p.photo), from: p.name, msg: p.msg, where: p.city })); }));
+    daypg.classList.add('on'); daypg.setAttribute('aria-hidden', 'false');
+  }
+  const closeDay = () => { daypg.classList.remove('on'); daypg.setAttribute('aria-hidden', 'true'); };
+  const at = () => cur && cur.list[Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))];
+  pager.addEventListener('scroll', () => { const i = Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth)); dots.querySelectorAll('i').forEach((x, j) => x.classList.toggle('on', j === i)); });
+  $('back').onclick = closeDay;
+  $('asend').onclick = () => { const o = at(); if (o) potoGo('postcard.html?' + new URLSearchParams({ src: o.src, zoom: o.zoom || 1, ev: o.ev || 0 })); };
+  $('adesk').onclick = () => { const o = at(); if (!o) return; let q = []; try { q = JSON.parse(localStorage.getItem('poto.deskAdd') || '[]'); } catch (e) {} const m = /photo-(\d\d)\.jpg$/.exec(o.src);
+    q.push({ type: 'print', src: m ? +m[1] : o.src }); try { localStorage.setItem('poto.deskAdd', JSON.stringify(q)); } catch (e) {} toast('On your desk'); };
+  if (navigator.canShare) { $('ashare').hidden = false; $('ashare').onclick = async () => { const o = at(); if (!o) return; try { const b = await (await fetch(o.src)).blob(), f = new File([b], 'poto.jpg', { type: 'image/jpeg' }); if (navigator.canShare({ files: [f] })) await navigator.share({ files: [f] }); } catch (e) {} }; }
+  // swipe back from the left edge, like any pushed iPhone screen
+  let edge = null;
+  daypg.addEventListener('pointerdown', (e) => { if (e.clientX < 28) edge = { x: e.clientX, id: e.pointerId }; });
+  daypg.addEventListener('pointermove', (e) => { if (!edge || e.pointerId !== edge.id) return; const dx = Math.max(0, e.clientX - edge.x); daypg.style.transition = 'none'; daypg.style.transform = 'translateX(' + dx + 'px)'; });
+  daypg.addEventListener('pointerup', (e) => { if (!edge) return; const dx = e.clientX - edge.x; edge = null; daypg.style.transition = ''; daypg.style.transform = ''; if (dx > innerWidth * 0.3) closeDay(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (sheet.classList.contains('on')) $('sclose').click(); else if (daypg.classList.contains('on')) closeDay(); else closeYear(); } });
+
+  // ---- share the month: the calendar as a Story or Post ----
+  const sheet = $('sharesheet'), sh = { fmt: 'story', mi: 0 }, load = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+  async function renderShare() {
+    const m = months[sh.mi], y = m.getFullYear(), mo = m.getMonth(), cells = {}; let photos = [];
+    await Promise.all(Array.from({ length: count(m) }, (_, i) => i + 1).map(async (d) => { const l = days.get(key(new Date(y, mo, d))); if (l) { photos.push(l[0].src); cells[d] = await load(ph(l[0].src, '-t')); } }));
+    const hero = await load(ph(photos[photos.length - 1] || 'img/photo-03.jpg')), back = await load(ph(photos[0] || photos[photos.length - 1] || 'img/photo-03.jpg', '-s'));
+    await document.fonts.ready;
+    const isNow = y === now.getFullYear() && mo === now.getMonth();
+    const c = PotoShare.month({ format: sh.fmt, photo: hero, backdrop: back, month: MONTH[mo], year: y, lead: lead(m), days: count(m), cells, today: isNow ? now.getDate() : 0, left: photos.length + ' days', right: MONTH[mo].slice(0, 3) + ' ' + y, handle: '@cody', mark: 'poto.app' });
+    $('simg').src = c.toDataURL('image/jpeg', 0.94);
+    const F = PotoShare.formats[sh.fmt], st = $('sstage'), fr = $('sframe'), k = Math.min(st.clientWidth / F.w, (st.clientHeight - 20) / F.h);
+    fr.style.width = F.w * k + 'px'; fr.style.height = F.h * k + 'px';
+    $('zt').style.height = (sh.fmt === 'story' ? F.safeTop * k : 0) + 'px'; $('zb').style.height = (sh.fmt === 'story' ? F.safeBottom * k : 0) + 'px'; $('sguides').hidden = sh.fmt !== 'story';
+  }
+  function openShare(mi) { sh.mi = mi; sheet.classList.add('on'); sheet.setAttribute('aria-hidden', 'false'); requestAnimationFrame(renderShare); }
+  $('sclose').onclick = () => { sheet.classList.remove('on'); sheet.setAttribute('aria-hidden', 'true'); };
+  $('sguides').onclick = () => { const on = sheet.classList.toggle('guides'); $('sguides').setAttribute('aria-pressed', String(on)); };
+  sheet.querySelectorAll('[data-fmt]').forEach((b) => (b.onclick = () => { sh.fmt = b.dataset.fmt; sheet.querySelectorAll('[data-fmt]').forEach((o) => o.setAttribute('aria-pressed', String(o === b))); renderShare(); }));
+})();
+</script>
+<link rel="stylesheet" href="lib/shell.css">
+</body>
+</html>

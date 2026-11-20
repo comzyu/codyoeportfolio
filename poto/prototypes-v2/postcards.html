@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Poto · Postcards</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Special+Elite&family=La+Belle+Aurore&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@600&family=IBM+Plex+Mono:wght@500&family=Special+Elite&family=La+Belle+Aurore&display=swap">
 <link rel="stylesheet" href="lib/ui.css">
 <style>
   /* Home (redesign plan, 20 Nov): the live postcard, straight away. One friend at a time; the date and time it was posted above it.
@@ -75,7 +75,7 @@
   const STRIP = { us: ['#B22234', '#F4F1EA', '#3C3B6E'], cn: ['#DE2910', '#FFDE00', '#DE2910'], dk: ['#C8102E', '#F4F1EA', '#C8102E'], fr: ['#0055A4', '#F4F1EA', '#EF4135'], de: ['#1B1B1B', '#DD0000', '#FFCE00'] };
   const loadImg = (src) => new Promise((r) => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
   const wrap = (t, w) => { const out = []; let line = ''; for (const word of t.split(/\s+/)) { if ((line + ' ' + word).trim().length > w) { out.push(line); line = word; } else line = (line + ' ' + word).trim(); } if (line) out.push(line); return out; };
-  const fontsIn = Promise.race([Promise.all(['37px "Special Elite"', '24px "Special Elite"', '56px "La Belle Aurore"', '500 19px "IBM Plex Mono"'].map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
+  const fontsIn = Promise.race([Promise.all(['37px "Special Elite"', '24px "Special Elite"', '56px "La Belle Aurore"', '500 19px "IBM Plex Mono"', '600 38px Inter'].map((f) => document.fonts.load(f))).catch(() => {}), new Promise((r) => setTimeout(r, 2500))]);
 
   // their signature stamp, clipped to the front: drawn into the card's lit layer so it keeps its true colour
   function clipStamp(t, img) {
@@ -92,6 +92,19 @@
       g.beginPath(); g.moveTo(12, 30); g.lineTo(12, 84); g.arc(22, 84, 10, Math.PI, 0, true); g.lineTo(32, 22); g.arc(17, 22, 15, 0, Math.PI, true); g.lineTo(2, 92); g.arc(22, 92, 20, Math.PI, 0, true); g.lineTo(42, 36); g.stroke(); g.restore();
     }
   }
+  // who sent it (Cody, 20 Nov): their picture and @name in a clean modern sans, set against the old-paper card, bottom left
+  function byline(t, img, name) {
+    const r = 33, cx = 43 + 4 + r, cy = 1448 - (1448 - 43 - Math.round((1024 - 86) * 4 / 3)) / 2;
+    for (const c of [t.col, t.map3d]) {
+      const g = c.getContext('2d'); g.save();
+      g.save(); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.clip();
+      if (img) { const s = Math.max(2 * r / img.width, 2 * r / img.height); g.drawImage(img, cx - img.width * s / 2, cy - img.height * s / 2, img.width * s, img.height * s); } else { g.fillStyle = '#d8d4cc'; g.fill(); }
+      g.restore(); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.strokeStyle = 'rgba(26,25,23,.12)'; g.lineWidth = 1.5; g.stroke();
+      g.font = '600 38px Inter, -apple-system, system-ui, sans-serif'; if (g.letterSpacing !== undefined) g.letterSpacing = '-0.3px';
+      g.textBaseline = 'middle'; g.fillStyle = '#1A1917'; g.fillText('@' + name, cx + r + 18, cy + 2);
+      g.restore();
+    }
+  }
   const drawn = new Map();
   function faces(k) {
     if (!F[k]) return Promise.resolve(null);
@@ -100,7 +113,7 @@
       const [photo, stamp, design, seal] = await Promise.all([loadImg(ph(f.photo)), loadImg(ph(f.stamp, '-s')), loadImg('img/backs/' + f.c + '.jpg'), loadImg('img/backs/seal-' + f.c + '.png')]);
       if (!photo) return null;
       await new Promise((r) => setTimeout(r, 0));
-      const front = PotoPaper.front(photo, f.name, 'matte'); if (stamp) clipStamp(front, stamp);
+      const front = PotoPaper.front(photo, '', 'matte'); if (stamp) clipStamp(front, stamp); byline(front, stamp, f.name);
       await new Promise((r) => setTimeout(r, 0));
       const back = PotoPaper.back(photo, { message: wrap(f.msg, 25).slice(0, 6), note: ['for cody,', f.name], noteLabel: 'NOTE', caption: 'Shot on ' + DAYN[d.getDay()] + ' · ' + f.city,
         city: f.city, look: 'Sunday', date: [d.getDate() + ' ' + MON[d.getMonth()].toUpperCase(), String(d.getFullYear())], stamp: !!stamp, stampPhoto: stamp || photo, design, seal, strip: STRIP[f.c] });
@@ -123,7 +136,7 @@
     end.className = 'end on' + (empty ? ' empty' : '');
     end.innerHTML = empty
       ? '<div class="page"><h2>No postcards yet</h2><p>Your friends’ postcards land here.</p><div class="acts"><button type="button" class="main glass" data-go="invite">Invite a friend</button></div></div>'
-      : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html">Send yours</button><button type="button" class="glass" data-go="home.html">Earlier days</button></div></div>';
+      : '<div class="page"><h2>You’re all caught up</h2><p>That’s everyone’s postcards for today.</p><div class="acts"><button type="button" class="main" data-go="camera.html">Send yours</button><button type="button" class="glass" data-go="calendar.html">Earlier days</button></div></div>';
     end.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => { if (b.dataset.go !== 'invite') potoGo(b.dataset.go); }));
   }
   function hideEnd() { atEnd = false; end.className = 'end'; stage.style.pointerEvents = ''; }

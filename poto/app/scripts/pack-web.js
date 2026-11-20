@@ -15,7 +15,7 @@ const EXTRA = path.join(APP, 'web-app');
 const ASSETS = path.join(APP, 'assets', 'web');
 const OUT = path.join(APP, 'src', 'web', 'pack.generated.ts');
 
-const PAGES = ['postcards', 'home-min', 'home', 'camera', 'rolls', 'profile', 'stamp', 'postcard'];
+const PAGES = ['postcards', 'calendar', 'home-min', 'home', 'camera', 'rolls', 'profile', 'stamp', 'postcard'];
 const FONTS = [
   ['inter', 'Inter', '400Regular'], ['inter', 'Inter', '500Medium'], ['inter', 'Inter', '600SemiBold'],
   ['ibm-plex-mono', 'IBMPlexMono', '400Regular'], ['ibm-plex-mono', 'IBMPlexMono', '500Medium'], ['ibm-plex-mono', 'IBMPlexMono', '600SemiBold'], ['ibm-plex-mono', 'IBMPlexMono', '700Bold'],
