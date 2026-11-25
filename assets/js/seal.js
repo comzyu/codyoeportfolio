@@ -9,11 +9,11 @@
 
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  let parts = [], W, H, pad, dpr, raf = 0;
+  let parts = [], W, H, pad, dpr, raf = 0, dot = 2;
 
   function sample(){
     const r = box.getBoundingClientRect();
-    W = r.width; H = r.height; pad = Math.round(Math.max(W, H) * .9); dpr = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; pad = Math.round(Math.max(W, H) * (W < 80 ? 1.6 : .9)); dpr = Math.min(devicePixelRatio || 1, 2);
     Object.assign(cv.style, {left: -pad + 'px', top: -pad + 'px', width: W + pad * 2 + 'px', height: H + pad * 2 + 'px'});
     cv.width = (W + pad * 2) * dpr; cv.height = (H + pad * 2) * dpr;
     const o = document.createElement('canvas'), sw = Math.round(W), sh = Math.round(H);
@@ -22,8 +22,9 @@
     g.drawImage(img, 0, 0, sw, sh);
     const d = g.getImageData(0, 0, sw, sh).data;
     parts = []; seed = 7;
+    dot = W < 80 ? 1 : 2; // finer grain when the seal is small
     const cx = pad + W / 2, cy = pad + H / 2;
-    for (let y = 0; y < sh; y += 2) for (let x = 0; x < sw; x += 2) {
+    for (let y = 0; y < sh; y += dot) for (let x = 0; x < sw; x += dot) {
       if (d[(y * sw + x) * 4 + 3] < 128) continue;
       const a = rnd() * Math.PI * 2, rad = pad * (.45 + rnd() * .5);
       parts.push({tx: pad + x, ty: pad + y, sx: cx + Math.cos(a) * rad, sy: cy + Math.sin(a) * rad * .8, delay: rnd() * .45});
@@ -45,7 +46,7 @@
         const t = Math.min(Math.max((el - p.delay) / 1.1, 0), 1);
         const e = 1 - Math.pow(2, -10 * t); // expo out: fast travel, soft landing
         ctx.globalAlpha = .15 + .85 * e;
-        ctx.fillRect(p.sx + (p.tx - p.sx) * e, p.sy + (p.ty - p.sy) * e, 2, 2);
+        ctx.fillRect(p.sx + (p.tx - p.sx) * e, p.sy + (p.ty - p.sy) * e, dot, dot);
       }
       if (!shown && el > 1.35) { shown = true; box.classList.add('done'); }
       if (el < 2.3) raf = requestAnimationFrame(frame);
@@ -54,7 +55,7 @@
     raf = requestAnimationFrame(frame);
   }
 
-  const start = () => setTimeout(play, 150);
+  const start = () => setTimeout(play, 450);
   img.complete ? start() : img.addEventListener('load', start, {once: true});
   box.addEventListener('click', play);
   addEventListener('resize', () => { parts = []; });

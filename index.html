@@ -14,6 +14,7 @@
 <style>
 @font-face{font-family:'Estrella';src:url(assets/fonts/estrella-early.otf) format('opentype');font-display:swap}
 .hello,.meta h2,.list h2{padding-left:.08em}
+.fig{font-size:.56em;margin:0 .03em}
 :root{
   --script:'Estrella','Yellowtail',cursive;
   --bg:#F8F8F8;
@@ -64,21 +65,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :root{--ease:cubic-bezier(.22,1,.36,1)}
 .hero{display:grid;align-content:center}
 .hero-in{grid-column:4/10}
-.seal{position:relative;display:block;width:clamp(96px,8.5vw,132px);aspect-ratio:400/383;margin-bottom:44px;padding:0;cursor:pointer;will-change:transform}
+.hello-wrap{position:relative;display:inline-block;margin-bottom:28px}
+.seal{position:absolute;top:.1em;left:100%;margin-left:6px;display:block;width:clamp(30px,2.7vw,44px);aspect-ratio:400/383;padding:0;cursor:pointer;will-change:transform}
 .seal img{width:100%;height:auto;transition:opacity .8s var(--ease)}
 .seal canvas{position:absolute;pointer-events:none;transition:opacity .7s var(--ease)}
 .js .seal:not(.done) img{opacity:0}
 .seal.done canvas{opacity:0}
 .statement{font-weight:400;font-size:clamp(24px,2.4vw,34px);line-height:1.25;letter-spacing:-.015em;max-width:30ch}
-.hello{font-family:var(--script);font-weight:400;font-size:clamp(88px,9.5vw,156px);line-height:.95;letter-spacing:0;margin-bottom:16px}
+.hello{font-family:var(--script);font-weight:400;font-size:clamp(88px,9.5vw,156px);line-height:.95;letter-spacing:0}
 
 /* Reveal once, never again: content stays put after it arrives */
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .js .top > *{animation:rise .9s var(--ease) both}
 .js .hero-in > *{animation:rise 1.1s var(--ease) both}
-.js .hero-in > .hello{animation-delay:.85s}
-.js .hero-in > .statement{animation-delay:1s}
-.js .hero-in > .seal{animation:none}
+.js .hero-in > .hello-wrap{animation-delay:.15s}
+.js .hero-in > .statement{animation-delay:.35s}
 .js .rv{opacity:0;transform:translateY(22px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
 .js .rv.in,.rv-all .rv{opacity:1;transform:none}
 .js .rail > .rv{transform:none}
@@ -214,6 +215,7 @@ dialog video{background:var(--ink)}
   .screen{min-height:auto;padding-block:96px 48px}
   .hero{min-height:86vh}
   .hello{font-size:clamp(64px,19vw,88px);padding-left:.16em}
+  .seal{width:28px;margin-left:4px}
   .hero-in,.meta,.media,.list,.portrait,.bio,.lists h3,.lists ul{grid-column:1/-1}
   .meta{margin-bottom:28px;padding:0}
   .media{margin-top:24px}
@@ -269,8 +271,10 @@ dialog video{background:var(--ink)}
 <main>
   <section class="screen hero frame" id="hero">
     <div class="hero-in">
-      <button class="seal" type="button" aria-label="Cody Oe’s horse seal. Click to replay"><canvas aria-hidden="true"></canvas><img src="assets/img/seal.webp" alt="" width="400" height="383"></button>
-      <h1 class="hello" aria-label="Hi, I’m Cody">Hi Im Cody</h1>
+      <div class="hello-wrap">
+        <h1 class="hello" aria-label="Hi, I’m Cody">Hi Im Cody</h1>
+        <button class="seal" type="button" aria-label="Cody Oe’s horse seal. Click to replay"><canvas aria-hidden="true"></canvas><img src="assets/img/seal.webp" alt="" width="400" height="383"></button>
+      </div>
       <p class="statement">I’m a content creator in Singapore who shoots, edits and designs: video from quick reels to long-form, photography and graphics, taken from the first idea to the final post.</p>
     </div>
   </section>
@@ -305,7 +309,7 @@ dialog video{background:var(--ink)}
 
   <section class="screen project frame" id="six5">
     <div class="meta">
-      <h2>six5.crew reels</h2>
+      <h2 aria-label="six5.crew reels">six<span class="fig">5</span>.crew reels</h2>
       <!-- DRAFT COPY -->
       <p>Short-form content for a Singapore dance crew. Shot, cut and posted from practice, backstage and everything in between.</p>
       <dl class="facts">
@@ -336,7 +340,7 @@ dialog video{background:var(--ink)}
 
   <section class="screen project frame" id="identity">
     <div class="meta">
-      <h2>six5.crew identity</h2>
+      <h2 aria-label="six5.crew identity">six<span class="fig">5</span>.crew identity</h2>
       <!-- DRAFT COPY -->
       <p>The crew’s logo system and first merch drop: marks, tees, caps, patches and the tech packs behind them.</p>
       <dl class="facts">
