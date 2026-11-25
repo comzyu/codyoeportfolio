@@ -52,11 +52,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .name img{width:40px;height:auto}
 .links{grid-column:5/-1;justify-self:end;display:flex;gap:36px;font-size:18px}
 .top a:hover{color:var(--muted)}
-.top{transition:color .4s var(--ease,ease)}
-.top::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(#C41E15 60%,transparent);opacity:0;transition:opacity .4s ease}
-.top.on-red{color:#FFF1DE}
-.top.on-red::before{opacity:1}
-.top.on-red a:hover{color:#FFF1DE;opacity:.75}
 
 /* Screens */
 .screen{min-height:100vh;min-height:100dvh;padding-block:calc(var(--bar) + 32px)}
@@ -161,36 +156,26 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .lists a{border-bottom:1px solid var(--line)}
 .lists a:hover{border-color:var(--ink)}
 
-/* Footer: warrior on the cliff at sunset */
-.foot{position:relative;display:grid;grid-template-rows:1fr auto;height:520px;background:var(--sun-red);color:var(--cream);overflow:hidden;--sun-red:#C41E15;--cream:#FFF1DE;--deep:#8A140E;--night:#16110F}
-.foot-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right bottom;pointer-events:none}
-.foot-bg > svg{display:block;width:100%;height:100%}
-.foot-main,.foot-base{position:relative;z-index:1}
-.foot-main{padding-top:64px;align-content:start}
-.foot-copy{grid-column:1/7}
-.foot-kicker{opacity:.85}
-.foot-title{font-weight:500;font-size:clamp(34px,3.9vw,60px);line-height:1;letter-spacing:-.035em;margin-top:16px;text-transform:uppercase;max-width:16ch}
-.foot-links{list-style:none;display:grid;grid-template-columns:repeat(2,max-content);gap:20px 48px;margin-top:40px;font-size:18px}
-.foot-links span{display:block;font-size:14px;opacity:.75}
+/* Footer: Cody's artwork. White sky up top (dark text), red field below (light text).
+   Multiply turns the art's pure white into the page colour, so the footer rises out of the page. */
+.foot{position:relative;isolation:isolate;display:grid;grid-template-rows:1fr auto auto;height:520px;background:var(--bg);color:var(--ink);overflow:hidden;--cream:#FFF4EC}
+.foot-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right bottom;mix-blend-mode:multiply;pointer-events:none;z-index:-1}
+.foot-main{padding-top:56px;align-content:start}
+.foot-copy{grid-column:1/8}
+.foot-kicker{color:var(--muted)}
+.foot-title{font-weight:500;font-size:clamp(34px,3.9vw,60px);line-height:1;letter-spacing:-.035em;margin-top:14px;text-transform:uppercase;max-width:20ch}
+.foot-low{color:var(--cream);padding-bottom:4px}
+.foot-links{grid-column:1/-1;list-style:none;display:flex;flex-wrap:wrap;gap:12px 48px;font-size:18px}
+.foot-links span{display:block;font-size:14px;opacity:.8}
 .foot-links a{border-bottom:1.5px solid currentColor}
 .foot-links a:hover{opacity:.75}
-.sky-3{fill:#CF2A17}.sky-2{fill:#DB3E1B}.sky-1{fill:#E6561F}
-.sun circle{fill:var(--cream)}
-.sea{fill:var(--deep)}
-.glint rect{fill:var(--cream);opacity:.55}
-.cliff,.rider{fill:var(--night)}
-.foot-base{align-items:center;height:72px;font-size:14px}
+.foot-base{align-items:center;height:72px;font-size:14px;color:var(--cream)}
 .foot-base span{grid-column:1/7}
 .foot-base a{grid-column:7/-1;justify-self:end}
 .foot-base a:hover{opacity:.75}
-/* Sun rises once when the footer arrives */
-.js .foot .sun{transform:translateY(240px);transition:transform 2.6s var(--ease)}
-.js .foot.in .sun,.rv-all .foot .sun{transform:none}
-.js .foot .glint{opacity:0;transition:opacity 1.6s 1.2s var(--ease)}
-.js .foot.in .glint,.rv-all .foot .glint{opacity:1}
-@keyframes shimmer{50%{opacity:.25}}
-.foot.in .glint rect{animation:shimmer 4s ease-in-out infinite}
-.foot.in .glint rect:nth-child(2){animation-delay:-1s}.foot.in .glint rect:nth-child(3){animation-delay:-2s}.foot.in .glint rect:nth-child(4){animation-delay:-3s}
+/* The artwork drifts up into place once, when the footer first arrives */
+.js .foot .foot-bg{opacity:0;transform:translateY(32px);transition:opacity 1.4s var(--ease),transform 1.8s var(--ease)}
+.js .foot.in .foot-bg,.rv-all .foot .foot-bg{opacity:1;transform:none}
 
 /* Section dots */
 .dots{position:fixed;right:calc(var(--pad) - 8px);top:50%;transform:translateY(-50%);z-index:10;display:grid;gap:10px}
@@ -229,12 +214,13 @@ dialog video{background:var(--ink)}
   .name img{width:30px}
   .links{grid-column:6/-1;gap:18px;font-size:16px}
   .about{row-gap:40px}
-  .foot{height:auto;grid-template-rows:auto auto auto}
+  .foot{height:auto;grid-template-rows:auto auto auto auto}
   .foot-copy{grid-column:1/-1}
   .foot-main{padding-top:96px}
-  .foot-bg{position:relative;inset:auto;height:240px;grid-row:2;margin-top:40px}
-  .foot-base{grid-row:3}
-  .foot-links{grid-template-columns:minmax(0,1fr);gap:16px}
+  .foot-low{color:var(--ink);margin-top:32px}
+  .foot-links{flex-direction:column;gap:16px}
+  .foot-bg{position:relative;inset:auto;height:220px;grid-row:3;margin-top:40px;z-index:0}
+  .foot-base{grid-row:4;color:var(--ink)}
   .foot-base span{grid-column:1/8}
   .foot-base a{grid-column:8/-1}
   .step{top:auto;bottom:20px;transform:none}
@@ -424,45 +410,20 @@ dialog video{background:var(--ink)}
 </main>
 
 <footer class="foot" id="contact">
-  <!-- Footer artwork: full width x 520px band. Replace this placeholder scene with
-       <img class="foot-bg" src="assets/img/footer-art.webp" alt="" width="3840" height="1040"> -->
-  <div class="foot-bg">
-    <svg class="foot-scene" viewBox="0 300 1600 600" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
-        <defs>
-          <mask id="sun-cut" maskUnits="userSpaceOnUse" x="0" y="300" width="1600" height="600">
-            <rect y="300" width="1600" height="600" fill="#fff"/>
-            <rect y="636" width="1600" height="5" fill="#000"/>
-            <rect y="660" width="1600" height="8" fill="#000"/>
-            <rect y="684" width="1600" height="12" fill="#000"/>
-            <rect y="704" width="1600" height="16" fill="#000"/>
-          </mask>
-        </defs>
-        <rect class="sky-3" y="520" width="1600" height="200"/>
-        <rect class="sky-2" y="600" width="1600" height="120"/>
-        <rect class="sky-1" y="666" width="1600" height="54"/>
-        <g class="sun"><circle cx="1180" cy="720" r="230" mask="url(#sun-cut)"/></g>
-        <rect class="sea" y="720" width="1600" height="180"/>
-        <g class="glint">
-          <rect x="940" y="742" width="300" height="4"/><rect x="990" y="768" width="200" height="4"/>
-          <rect x="1030" y="796" width="120" height="4"/><rect x="1060" y="826" width="60" height="4"/>
-        </g>
-        <g transform="translate(1600 0) scale(-1 1)">
-          <path class="cliff" d="M0 900V646l60-14 60-16 50-12 60-12 70-4 250 0 48 10 42 24 32 40 22 62 40 76 32 96z"/>
-          <image class="rider" href="assets/img/seal-lg.webp" x="320" y="349" width="250" height="239"/>
-        </g>
-      </svg>
-  </div>
+  <img class="foot-bg" src="assets/img/footer-art.webp" alt="" width="2000" height="542" loading="lazy">
   <div class="foot-main frame">
     <div class="foot-copy">
       <p class="caps foot-kicker">Contact</p>
       <h2 class="foot-title">Let’s make something people stop for.</h2>
-      <ul class="foot-links">
-        <li><a href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a><span>Email</span></li>
-        <li><a href="https://wa.me/6596633428" target="_blank" rel="noopener">+65 9663 3428 ↗</a><span>WhatsApp</span></li>
-        <li><a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a><span>Instagram</span></li>
-        <li><a href="CODY_CV.pdf" download>Download CV</a><span>PDF</span></li>
-      </ul>
     </div>
+  </div>
+  <div class="foot-low frame">
+    <ul class="foot-links">
+      <li><a href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a><span>Email</span></li>
+      <li><a href="https://wa.me/6596633428" target="_blank" rel="noopener">+65 9663 3428 ↗</a><span>WhatsApp</span></li>
+      <li><a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a><span>Instagram</span></li>
+      <li><a href="CODY_CV.pdf" download>Download CV</a><span>PDF</span></li>
+    </ul>
   </div>
   <div class="foot-base frame"><span>© 2026 Cody Oe, Singapore</span><a href="#top">Back to top ↑</a></div>
 </footer>
@@ -606,9 +567,6 @@ const dio = new IntersectionObserver(es => es.forEach(e => {
   if (e.isIntersecting) dots.forEach(d => d.classList.toggle('on', d.getAttribute('href') === '#' + e.target.id));
 }), {threshold:.5});
 document.querySelectorAll('main > section, #contact').forEach(s => dio.observe(s));
-// Header turns red while it sits over the footer
-const hdr = document.querySelector('.top');
-new IntersectionObserver(([e]) => hdr.classList.toggle('on-red', e.isIntersecting), {rootMargin: '0px 0px -92% 0px'}).observe(document.getElementById('contact'));
 </script>
 <script src="assets/js/motion.js"></script>
 <script src="assets/js/seal.js"></script>
