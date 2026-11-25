@@ -1,88 +1,65 @@
-// Scroll motion: word reveals, staggered rails, count-ups, text fill, parallax drift.
-// Everything starts visible in the HTML; GSAP only animates from hidden, so no JS means no blank page.
+// Lightweight scroll motion: CSS transitions, triggered once by IntersectionObserver.
+// Content fades up the first time it enters view and then stays put. No scroll-linked work.
 (() => {
-  if (!window.gsap || !window.ScrollTrigger) return;
-  gsap.registerPlugin(ScrollTrigger);
+  window.__motion = 1;
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Reading progress line under the header
-  gsap.to('.progress', {scaleX: 1, ease: 'none', scrollTrigger: {start: 0, end: 'max', scrub: .3}});
-  if (RM) return;
+  // Tag what should reveal. --i staggers siblings (capped so late items don't wait).
+  const groups = [
+    '.meta > *', '.list > *', '.rail-nav', '.bio > p', '.portrait',
+    '.lists h3', '.lists li'
+  ];
+  groups.forEach(sel => {
+    const byParent = new Map();
+    document.querySelectorAll(sel).forEach(el => {
+      const k = el.parentElement, n = byParent.get(k) || 0;
+      byParent.set(k, n + 1);
+      el.classList.add('rv');
+      el.style.setProperty('--i', Math.min(n, 5));
+    });
+  });
+  // Rail items: stagger the first few; items further along the row just appear
+  document.querySelectorAll('.rail').forEach(r => [...r.children].forEach((el, n) => {
+    el.classList.add('rv');
+    el.style.setProperty('--i', n < 4 ? n + 1 : 0);
+  }));
 
-  const EASE = 'expo.out';
-  const esc = t => t.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  // Wrap each word in a mask so it can rise into view
-  const split = el => {
-    el.setAttribute('aria-label', el.textContent.trim());
-    el.innerHTML = el.textContent.trim().split(/\s+/).map(w => `<span class="w" aria-hidden="true"><span class="wi">${esc(w)}</span></span>`).join(' ');
-    return el.querySelectorAll('.wi');
-  };
-  // Enter plays, leaving reverses (both directions), so scrolling always moves something
-  const st = (trigger, extra = {}) => ({trigger, start: 'top 72%', end: 'bottom 28%', toggleActions: 'play reverse play reverse', ...extra});
-
-  // Hero intro
-  const heroWords = split(document.querySelector('#hero .statement'));
-  gsap.timeline({defaults: {ease: EASE}, onComplete: heroOut})
-    .from('.top > *', {y: -24, opacity: 0, duration: 1, stagger: .08})
-    .from(heroWords, {yPercent: 115, rotate: 4, duration: 1.4, stagger: .08}, .1)
-    .from('#hero .lead', {y: 40, opacity: 0, duration: 1.2}, .45)
-    .from('#hero .intro', {y: 30, opacity: 0, duration: 1.2}, .6);
-
-  // Hero drifts up and fades as you leave it (set up after the intro so the two never fight)
-  function heroOut(){
-  gsap.to('#hero .statement', {yPercent: -40, opacity: 0, ease: 'none', scrollTrigger: {trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true}});
-  gsap.to('#hero .lead, #hero .intro', {y: -80, opacity: 0, ease: 'none', scrollTrigger: {trigger: '#hero', start: '20% top', end: '90% top', scrub: true}});
-  }
-
-  // Rail items slide in from the right, their pictures settle from a slight zoom
-  const railIn = (items, trigger) => {
-    items = [...items];
-    const inner = items.map(i => i.querySelector('img, video, .ig-frame')).filter(Boolean);
-    const opts = trigger ? {scrollTrigger: st(trigger)} : {};
-    gsap.from(items, {x: 140, opacity: 0, duration: 1.3, stagger: .09, ease: EASE, ...opts});
-    if (inner.length) gsap.from(inner, {scale: 1.18, duration: 1.6, stagger: .09, ease: EASE, ...(trigger ? {scrollTrigger: st(trigger)} : {})});
-  };
-  window.railIn = items => railIn(items);
-
-  // Numbers count up from zero
+  // Count numbers up once, the first time they are seen
   const countUp = el => {
     const m = el.textContent.match(/^([\d.]+)(.*)$/);
-    if (!m) return;
-    const end = parseFloat(m[1]), suffix = m[2], o = {v: 0};
-    gsap.to(o, {v: end, duration: 1.6, ease: 'power3.out', scrollTrigger: st(el, {start: 'top 85%'}),
-      onUpdate: () => { el.textContent = Math.round(o.v) + suffix; }});
+    if (!m || RM) return;
+    const end = parseFloat(m[1]), suffix = m[2], t0 = performance.now(), dur = 1400;
+    const tick = now => {
+      const t = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(end * e) + suffix;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    el.textContent = '0' + suffix;
+    requestAnimationFrame(tick);
   };
 
-  document.querySelectorAll('.project').forEach(sec => {
-    const h = sec.querySelector('.meta h2, .list h2');
-    if (h) gsap.from(split(h), {yPercent: 115, duration: 1.1, stagger: .06, ease: EASE, scrollTrigger: st(sec)});
-    const bits = sec.querySelectorAll('.meta > p, .meta .stat li, .facts > div, .list .item');
-    gsap.from(bits, {y: 28, opacity: 0, duration: 1, stagger: .06, ease: EASE, delay: .15, scrollTrigger: st(sec)});
-    sec.querySelectorAll('.stat b').forEach(countUp);
-    const rail = sec.querySelector('.rail');
-    if (rail) railIn(rail.children, sec);
-    gsap.from(sec.querySelector('.rail-nav'), {opacity: 0, y: 16, duration: .8, delay: .5, ease: EASE, scrollTrigger: st(sec)});
-    // The work drifts sideways as the page scrolls past it
-    const media = sec.querySelector('.media');
-    if (media) gsap.fromTo(media, {x: 60}, {x: -40, ease: 'none', scrollTrigger: {trigger: sec, start: 'top bottom', end: 'bottom top', scrub: .6}});
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in');
+    if (e.target.matches('.stat b, .big')) countUp(e.target);
+    io.unobserve(e.target);
+  }), {rootMargin: '0px 0px -8% 0px', threshold: .08});
+  document.querySelectorAll('.rv, .stat b, .big, .foot').forEach(el => io.observe(el));
+
+  // New design sets ease in when the list switches them
+  window.railIn = items => [...items].forEach((el, n) => {
+    el.classList.add('fresh');
+    el.style.animationDelay = `${Math.min(n, 4) * 60}ms`;
   });
 
-  // About: the bio fills in word by word as you read down
-  const about = document.getElementById('about');
-  const bioWords = [...about.querySelectorAll('.bio p')].flatMap(p => [...split(p)]);
-  gsap.fromTo(bioWords, {opacity: .12}, {opacity: 1, ease: 'none', stagger: .04,
-    scrollTrigger: {trigger: '.bio', start: 'top 82%', end: 'bottom 48%', scrub: .5}});
-  gsap.from('.portrait img', {scale: .6, rotate: -12, opacity: 0, duration: 1.4, ease: EASE, scrollTrigger: st('.portrait', {start: 'top 85%'})});
-  about.querySelectorAll('.lists').forEach(l => {
-    gsap.from(l.querySelector('h3'), {y: 20, opacity: 0, duration: .9, ease: EASE, scrollTrigger: st(l, {start: 'top 85%', end: 'bottom 10%'})});
-    gsap.from(l.querySelectorAll('li'), {y: 28, opacity: 0, duration: 1, stagger: .06, ease: EASE, scrollTrigger: st(l, {start: 'top 85%', end: 'bottom 10%'})});
-    l.querySelectorAll('.big').forEach(countUp);
-  });
-
-  // Viewer content rises in
-  window.viewerIn = el => gsap.from(el.firstElementChild, {y: 30, scale: .96, opacity: 0, duration: .7, ease: EASE});
-
-  // Layout settles once fonts and images are in
-  document.fonts?.ready.then(() => ScrollTrigger.refresh());
-  addEventListener('load', () => ScrollTrigger.refresh());
+  // Reading progress line: one transform per frame at most
+  const bar = document.querySelector('.progress');
+  let queued = false;
+  const paint = () => {
+    queued = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+  };
+  addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(paint); } }, {passive: true});
+  paint();
 })();
