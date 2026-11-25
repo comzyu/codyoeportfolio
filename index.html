@@ -3,372 +3,446 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cody Oe — Video, social and design</title>
-<meta name="description" content="Cody Oe is a Singapore-based video editor, social content creator and graphic designer, open to full-time creative roles.">
+<title>Cody Oe</title>
+<meta name="description" content="Cody Oe is a Singapore-based content creator, video editor and designer, open to full-time creative roles.">
 <link rel="icon" type="image/png" href="images/logo_horse_fav.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#F3F1EC;
-  --paper-2:#E9E6DF;
-  --ink:#141312;
-  --ink-2:#5E5B56;
-  --line:#D6D2C9;
-  --seal:#D2281E;
-  --display:'Bricolage Grotesque',system-ui,sans-serif;
-  --text:'Geist',system-ui,sans-serif;
-  --mono:'Geist Mono',ui-monospace,monospace;
-  --gutter:clamp(16px,4vw,48px);
-  --max:1440px;
-  --r:6px;
+  --bg:#F8F8F8;
+  --card:#FFFFFF;
+  --ink:rgba(0,0,0,.86);
+  --muted:rgba(0,0,0,.48);
+  --line:rgba(0,0,0,.1);
+  --scrim:rgba(0,0,0,.45);
+  --font:'Geist',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  --pad:24px;
+  --bar:76px;
+  --r:16px;
+  --rail-h:min(62vh,640px);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:clip}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--text);-webkit-font-smoothing:antialiased}
+@media(min-width:1024px){html{scroll-snap-type:y proximity}}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 img,video{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid var(--seal);outline-offset:3px;border-radius:2px}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--paper);padding:8px 12px;z-index:100}
-.skip:focus{left:8px}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
-.mono{font:500 12px/1.4 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+:focus-visible{outline:1.5px solid var(--ink);outline-offset:3px;border-radius:2px}
+::selection{background:var(--ink);color:var(--bg)}
+.caps{text-transform:uppercase;font-size:14px;letter-spacing:.02em}
+.muted{color:var(--muted)}
 
-/* Header */
-.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:border-color .2s}
-.top.scrolled{border-color:var(--line)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font:700 18px/1 var(--display);letter-spacing:-.02em}
-.brand img{width:28px;height:auto}
-.nav{display:flex;gap:clamp(16px,3vw,32px);font-size:15px}
-.nav a{color:var(--ink-2);transition:color .15s}
-.nav a:hover{color:var(--ink)}
+/* 12-column frame shared by the bars and every screen */
+.frame{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--pad);padding-inline:var(--pad)}
+
+/* Fixed bars */
+.top,.bottom{position:fixed;left:0;right:0;z-index:10;align-items:center;height:var(--bar);pointer-events:none}
+.top{top:0;background:linear-gradient(var(--bg) 60%,transparent)}
+.bottom{bottom:0}
+.top > *,.bottom > *{pointer-events:auto}
+.name{grid-column:1/4;display:flex;align-items:center;gap:12px;white-space:nowrap;font-size:18px;font-weight:500;letter-spacing:.01em}
+.name img{width:32px;height:auto}
+.links{grid-column:4/10;display:flex;gap:28px;font-size:16px}
+.contact-link{grid-column:10/-1;justify-self:end;font-size:16px}
+.top a:hover,.bottom a:hover{color:var(--muted)}
+.bottom span:last-child{grid-column:10/-1;justify-self:end}
+.bottom span:first-child{grid-column:1/4}
+
+/* Screens */
+.screen{min-height:100vh;min-height:100dvh;scroll-snap-align:start;padding-block:calc(var(--bar) + 32px)}
 
 /* Hero */
-.hero{padding:clamp(48px,9vw,120px) 0 clamp(56px,8vw,112px)}
-.hero .wrap{display:grid;grid-template-columns:1fr;gap:48px;align-items:end}
-@media(min-width:900px){.hero .wrap{grid-template-columns:minmax(0,1fr) 300px;gap:64px}}
-.hero h1{font:800 clamp(3rem,8.4vw,7.6rem)/.92 var(--display);letter-spacing:-.045em;margin:20px 0 28px;max-width:13ch}
-.dot{color:var(--seal)}
-.hero-lede{font-size:clamp(17px,1.5vw,20px);max-width:46ch;color:var(--ink-2)}
-.hero-lede strong{color:var(--ink);font-weight:500}
-.hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:36px}
-.btn{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 22px;border-radius:999px;font-weight:500;font-size:15px;transition:background .15s,color .15s,border-color .15s}
-.btn-solid{background:var(--ink);color:var(--paper)}
-.btn-solid:hover{background:var(--seal)}
-.btn-line{border:1px solid var(--ink)}
-.btn-line:hover{background:var(--ink);color:var(--paper)}
-.status{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
-.status::before{content:"";width:8px;height:8px;border-radius:50%;background:#2E9B57;box-shadow:0 0 0 4px rgba(46,155,87,.15)}
-.hero-reel{position:relative;max-width:300px}
-.frame{position:relative;aspect-ratio:9/16;border-radius:var(--r);overflow:hidden;background:var(--ink)}
-.frame video{width:100%;height:100%;object-fit:cover}
-.cap{display:flex;justify-content:space-between;gap:12px;margin-top:10px}
+.hero{display:grid;align-content:center;row-gap:56px}
+.statement{grid-column:3/12;font-weight:400;font-size:clamp(34px,4.4vw,68px);line-height:1.08;letter-spacing:-.025em}
+.stats{grid-column:3/12;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--pad);border-top:1px solid var(--line);padding-top:20px;list-style:none}
+.stats b{display:block;font-weight:400;font-size:clamp(28px,2.6vw,40px);letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.stats span{display:block;color:var(--muted);margin-top:4px;max-width:26ch}
 
-/* Sections */
-section{scroll-margin-top:72px}
-.sec{padding:clamp(64px,9vw,128px) 0;border-top:1px solid var(--line)}
-.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:clamp(32px,5vw,56px)}
-.sec-head h2{font:700 clamp(2rem,4.4vw,3.5rem)/1 var(--display);letter-spacing:-.035em}
+/* Project screens */
+.project{display:grid;align-content:center}
+.meta{grid-column:1/4;align-self:center;display:grid;gap:16px;padding-right:12px}
+.meta h2{font-weight:500;font-size:clamp(22px,1.9vw,28px);letter-spacing:-.015em;line-height:1.15}
+.meta p{max-width:36ch}
+.facts{margin-top:12px;border-top:1px solid var(--line)}
+.facts div{display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.facts dt{color:var(--muted)}
+.facts a{border-bottom:1px solid var(--line)}
+.facts a:hover{border-color:var(--ink)}
 
-/* Case studies */
-.case{display:grid;grid-template-columns:1fr;gap:24px;padding:clamp(32px,4vw,48px) 0;border-top:1px solid var(--line)}
-.case:first-of-type{border-top:0;padding-top:0}
-@media(min-width:900px){.case{grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:48px}}
-.case-meta{display:flex;flex-direction:column;gap:16px}
-@media(min-width:900px){.case-meta{position:sticky;top:96px;align-self:start}}
-.case h3{font:700 clamp(1.75rem,3vw,2.5rem)/1.02 var(--display);letter-spacing:-.03em}
-.case p{color:var(--ink-2);max-width:40ch}
-.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tags li{list-style:none;font:500 12px/1 var(--mono);padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2)}
-.link{display:inline-flex;gap:8px;font-weight:500;border-bottom:1px solid currentColor;padding-bottom:2px;align-self:flex-start}
-.link:hover{color:var(--seal)}
-.media{display:grid;gap:12px}
-.media-3{grid-template-columns:repeat(2,1fr)}
-.media-3 > :first-child{grid-column:1/-1}
-.media figure{border-radius:var(--r);overflow:hidden;background:var(--paper-2)}
-.media img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
-.media figure:hover img{transform:scale(1.02)}
-.r-wide{aspect-ratio:16/10}
-.r-sq{aspect-ratio:1}
-.placeholder{aspect-ratio:16/10;border-radius:var(--r);border:1px dashed var(--ink-2);display:grid;place-items:center;text-align:center;padding:24px;color:var(--ink-2);background:var(--paper-2)}
+/* Rails: horizontal strips that hold as much work as needed */
+.media{grid-column:4/-1;min-width:0;display:grid;gap:16px}
+.rail{position:relative;display:flex;gap:16px;height:var(--rail-h);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding-inline:0;scrollbar-width:none;padding-right:var(--pad)}
+.rail::-webkit-scrollbar{display:none}
+.rail > *{flex:none;height:100%;scroll-snap-align:start;border-radius:var(--r);overflow:hidden;background:var(--card);position:relative}
+.rail img{height:100%;width:auto;object-fit:contain}
+.rail .tall{aspect-ratio:9/16}
+.rail video{width:100%;height:100%;object-fit:cover}
+.rail-nav{display:flex;align-items:center;gap:12px;font-size:15px}
+.rail-nav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;transition:border-color .15s,opacity .15s}
+.rail-nav button:hover{border-color:var(--ink)}
+.rail-nav button:active{transform:scale(.96)}
+.rail-nav button:disabled{opacity:.3;cursor:default;border-color:var(--line)}
+.rail-nav .count{font-variant-numeric:tabular-nums;color:var(--muted);min-width:5ch}
+.rail-nav .hint{margin-left:auto;color:var(--muted)}
+.slot{display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);aspect-ratio:9/16}
+.reel{padding:0;cursor:pointer}
+.reel .dur{position:absolute;left:12px;bottom:12px;padding:4px 8px;border-radius:8px;background:var(--scrim);color:#fff;font-size:12px;font-variant-numeric:tabular-nums;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pic{padding:0;cursor:zoom-in}
+.pic img{transition:opacity .2s}
+.pic:hover img{opacity:.9}
 
-/* Reels */
-.reels{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
-.reel{scroll-snap-align:start;text-align:left}
-.reel .frame{transition:transform .3s cubic-bezier(.2,.7,.2,1)}
-.reel:hover .frame{transform:translateY(-4px)}
-.reel-title{font-weight:500;margin-top:10px;line-height:1.3}
-.play{position:absolute;right:10px;bottom:10px;width:36px;height:36px;border-radius:50%;background:var(--paper);display:grid;place-items:center;opacity:.92}
-.play svg{width:12px;height:12px;margin-left:2px}
-
-/* Art grid */
-.grid{columns:2 220px;column-gap:12px}
-@media(min-width:900px){.grid{columns:4}}
-.piece{break-inside:avoid;margin-bottom:12px;display:block;width:100%;text-align:left}
-.piece img{width:100%;height:auto;border-radius:var(--r);background:var(--paper-2);transition:opacity .2s}
-.piece:hover img{opacity:.88}
-.piece span{display:block;margin-top:8px}
+/* Design list on the left drives the rail on the right */
+.list{grid-column:1/4;align-self:center}
+.list h2 + .item{border-top:1px solid var(--line)}
+.list h2{font-weight:500;font-size:clamp(22px,1.9vw,28px);letter-spacing:-.015em;padding:0 0 20px}
+.item{border-bottom:1px solid var(--line)}
+.item > button{display:flex;justify-content:space-between;width:100%;text-align:left;padding:14px 0;font-size:16px;color:var(--muted);transition:color .15s}
+.item > button span{font-variant-numeric:tabular-nums}
+.item > button:hover,.item.open > button{color:var(--ink)}
+.item p{display:none;padding:0 0 16px;max-width:36ch}
+.item.open p{display:block}
+#design .rail{--rail-h:min(46vh,480px)}
 
 /* About */
-.about{display:grid;grid-template-columns:1fr;gap:48px}
-@media(min-width:900px){.about{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:64px}}
-.about-bio p{font-size:clamp(18px,1.6vw,22px);line-height:1.5;margin-bottom:1em}
-.about-bio p + p{color:var(--ink-2);font-size:17px}
-.xp{list-style:none;border-top:1px solid var(--line)}
-.xp li{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
-.xp b{display:block;font-weight:500}
-.xp em{font-style:normal;color:var(--ink-2)}
+.about{display:grid;align-content:center;row-gap:72px}
+.portrait{grid-column:1/3;align-self:start}
+.portrait img{width:100%;max-width:180px;height:auto}
+.bio{grid-column:4/12;display:grid;gap:.8em;font-size:clamp(24px,2.6vw,38px);line-height:1.18;letter-spacing:-.015em}
+.lists{grid-column:1/-1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--pad)}
+.lists h3{grid-column:1/4;font-weight:500}
+.lists ul{grid-column:4/-1;list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px var(--pad)}
+.lists li span{display:block}
+.lists + .lists{margin-top:40px}
+.lists a{border-bottom:1px solid var(--line)}
+.lists a:hover{border-color:var(--ink)}
 
-/* Contact */
-.contact .big{display:inline-block;margin-top:16px;font:800 clamp(2rem,7.4vw,7rem)/.95 var(--display);letter-spacing:-.045em;overflow-wrap:anywhere;transition:color .15s}
-.contact .big:hover{color:var(--seal)}
-.contact-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:40px}
-.foot{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:32px 0 40px;border-top:1px solid var(--line);margin-top:clamp(64px,8vw,112px)}
+/* Section dots */
+.dots{position:fixed;right:calc(var(--pad) - 8px);top:50%;transform:translateY(-50%);z-index:10;display:grid;gap:10px}
+.dots a{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots a.on{background:var(--ink)}
 
 /* Viewer */
-dialog{border:0;padding:0;background:transparent;max-width:min(92vw,1100px);max-height:92vh;margin:auto;overflow:visible}
-dialog::backdrop{background:rgba(20,19,18,.9)}
-dialog video,dialog img{max-height:84vh;max-width:92vw;width:auto;border-radius:var(--r);background:#000}
-.dlg-close{position:fixed;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:22px;line-height:1}
-.dlg-cap{color:#CFCBC3;margin-top:12px}
+dialog{border:0;padding:0;background:transparent;margin:auto;max-width:92vw;max-height:92vh;overflow:visible}
+dialog::backdrop{background:rgba(248,248,248,.97)}
+dialog video,dialog img{max-height:84vh;max-width:84vw;width:auto;border-radius:var(--r)}
+dialog video{background:var(--ink)}
+.close{position:fixed;top:24px;right:var(--pad)}
+.step{position:fixed;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:18px}
+.step:hover{border-color:var(--ink)}
+.step.prev{left:var(--pad)}
+.step.next{right:var(--pad)}
+.step[hidden]{display:none}
+.dlg-cap{position:fixed;left:var(--pad);bottom:24px;color:var(--muted)}
 
-/* Reveal */
-.rv{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
-.rv.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  .rv{opacity:1;transform:none;transition:none}
-  .media img,.reel .frame{transition:none}
+@media(max-width:1023px){
+  :root{--pad:16px;--bar:64px;--rail-h:min(56vh,480px)}
+  .screen{min-height:auto;padding-block:96px 48px}
+  .hero{min-height:88vh;row-gap:40px}
+  .statement,.stats,.meta,.media,.list,.portrait,.bio,.lists h3,.lists ul{grid-column:1/-1}
+  .stats{grid-template-columns:minmax(0,1fr)}
+  .meta{margin-bottom:28px;padding:0}
+  .media{margin-top:24px}
+  .rail{margin-right:calc(var(--pad) * -1)}
+  #design .rail{--rail-h:min(44vh,380px)}
+  .rail-nav .hint{display:none}
+  .lists ul{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+  .bottom,.dots{display:none}
+  .top{background:var(--bg)}
+  .name{grid-column:1/7;font-size:16px}
+  .name img{width:26px}
+  .links{grid-column:7/11;justify-content:flex-end;gap:16px;font-size:15px}
+  .contact-link{grid-column:11/-1;font-size:15px}
+  .about{row-gap:40px}
+  .step{top:auto;bottom:20px;transform:none}
+  .dlg-cap{display:none}
 }
-@media(max-width:560px){
-  .nav{gap:16px;font-size:14px}
-  .hero-reel{max-width:220px}
-  .xp li{grid-template-columns:1fr;gap:4px}
+@media(max-width:480px){
+  .links a:last-child{display:none}
+  .links{grid-column:7/10}
+  .contact-link{grid-column:10/-1}
 }
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;scroll-snap-type:none}.rail{scroll-behavior:auto}}
 </style>
 </head>
-<body>
-<a class="skip" href="#main">Skip to content</a>
+<body id="top">
 
-<header class="top" id="top">
-  <div class="wrap">
-    <a href="./" class="brand" aria-label="Cody Oe, home"><img src="assets/img/seal.webp" alt="" width="28" height="27">Cody Oe</a>
-    <nav class="nav" aria-label="Main">
-      <a href="#work">Work</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-    </nav>
-  </div>
+<header class="top frame">
+  <a class="name" href="#top"><img src="assets/img/seal.webp" alt="" width="32" height="31">Cody Oe</a>
+  <nav class="links" aria-label="Main"><a href="#work">Work</a><a href="#about">About</a></nav>
+  <a class="contact-link" href="#contact">Contact</a>
 </header>
+<footer class="bottom frame caps muted"><span>Singapore</span><span>©2026</span></footer>
 
-<main id="main">
+<nav class="dots" aria-label="Sections">
+  <a href="#hero" aria-label="Intro"></a>
+  <a href="#work" aria-label="LEGO"></a>
+  <a href="#six5" aria-label="six5.crew reels"></a>
+  <a href="#identity" aria-label="six5.crew identity"></a>
+  <a href="#design" aria-label="Posters and illustration"></a>
+  <a href="#about" aria-label="About"></a>
+</nav>
 
-  <section class="hero">
-    <div class="wrap">
-      <div>
-        <p class="mono">Video editor · Social content · Graphic design — Singapore</p>
-        <h1>I make content people stop scrolling for<span class="dot">.</span></h1>
-        <!-- DRAFT COPY: rewrite in your own words -->
-        <p class="hero-lede">Most recently making social content at <strong>LEGO</strong>. Before that: a dance crew's identity and channel, and daily social for three restaurant brands.</p>
-        <div class="hero-actions">
-          <a class="btn btn-solid" href="#work">See the work</a>
-          <a class="btn btn-line" href="mailto:codyuuer@gmail.com">Email me</a>
-          <span class="status">Open to full-time roles</span>
-        </div>
+<main>
+  <section class="screen hero frame" id="hero">
+    <h1 class="statement">Content Creator at LEGO, turning ideas into content people actually want to watch</h1>
+    <ul class="stats">
+      <li><b>214K</b><span>followers on @legobuilds, the LEGO account I create for</span></li>
+      <li><b>50K+</b><span>likes on a LEGO post built on my concept and copy</span></li>
+      <li><b>140K+</b><span>followers on my own Instagram and TikTok</span></li>
+    </ul>
+  </section>
+
+  <section class="screen project frame" id="work">
+    <div class="meta">
+      <h2>LEGO Builds</h2>
+      <p>I own the full content workflow for LEGO’s @legobuilds Instagram: ideation, storyboarding, shoot planning, filming, post-production and upload. My concept and copy drove a 50K+ like post.</p>
+      <dl class="facts">
+        <div><dt>When</dt><dd>Jul 2026 to Jan 2027</dd></div>
+        <div><dt>Role</dt><dd>Content Creation Intern, LEGO Agency Asia</dd></div>
+        <div><dt>Scope</dt><dd>Concept, storyboard, product shoots, editing, carousels, graphics</dd></div>
+        <div><dt>Reach</dt><dd>@legobuilds, 214K followers</dd></div>
+      </dl>
+    </div>
+    <div class="media">
+      <div class="rail" tabindex="0" aria-label="LEGO work">
+        <div class="slot">LEGO reel</div>
+        <div class="slot">LEGO reel</div>
+        <div class="slot">LEGO reel</div>
+        <div class="slot">LEGO carousel</div>
       </div>
-      <figure class="hero-reel">
-        <div class="frame">
-          <video src="vid/hero.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto aria-label="Showreel clip"></video>
-        </div>
-        <figcaption class="cap mono"><span>Reel 00</span><span data-dur>--:--</span></figcaption>
-      </figure>
+      <div class="rail-nav"><button type="button" class="prev" aria-label="Previous">←</button><button type="button" class="next" aria-label="Next">→</button><span class="count"></span><span class="hint">Scroll sideways for more</span></div>
     </div>
   </section>
 
-  <section class="sec" id="work" aria-labelledby="work-h">
-    <div class="wrap">
-      <div class="sec-head"><h2 id="work-h">Selected work</h2><span class="mono">03 projects</span></div>
-
-      <article class="case rv">
-        <div class="case-meta">
-          <span class="mono">01 · 2026</span>
-          <h3>LEGO</h3>
-          <ul class="tags"><li>Social content</li><li>Video editing</li></ul>
-          <p>One line on the brief and what you made goes here.</p>
-        </div>
-        <div class="placeholder"><div><b>LEGO work goes here</b><br><span class="mono">Put the files in assets/lego</span></div></div>
-      </article>
-
-      <article class="case rv">
-        <div class="case-meta">
-          <span class="mono">02 · 2025</span>
-          <h3>six5.crew</h3>
-          <ul class="tags"><li>Brand identity</li><li>Merch</li><li>Social content</li></ul>
-          <!-- DRAFT COPY: check this matches what you actually did -->
-          <p>A dance crew that needed a look. I designed the logo system and the merch, and make the reels that run the channel.</p>
-          <a class="link" href="#social">Watch the reels <span aria-hidden="true">↓</span></a>
-        </div>
-        <div class="media media-3">
-          <figure class="r-wide"><img src="assets/img/six5-logos.webp" alt="six5 logo system: primary, text, icon and mini marks" loading="lazy"></figure>
-          <figure class="r-sq"><img src="assets/img/six5-patch.webp" alt="six5 leather patch on denim" loading="lazy"></figure>
-          <figure class="r-sq"><img src="assets/img/six5-tee.webp" alt="six5 crew tee worn in a lift" loading="lazy"></figure>
-        </div>
-      </article>
-
-      <article class="case rv">
-        <div class="case-meta">
-          <span class="mono">03 · 2024–25</span>
-          <h3>Posters &amp; covers</h3>
-          <ul class="tags"><li>Graphic design</li><li>Typography</li></ul>
-          <p>Event posters and editorial covers. Loud colour, found textures, type that does the work.</p>
-          <a class="link" href="#design">See more design <span aria-hidden="true">↓</span></a>
-        </div>
-        <div class="media media-3">
-          <figure class="r-wide"><img src="assets/img/over-the.webp" alt="Over + The event poster with cassette and smiley" loading="lazy" style="object-position:center 30%"></figure>
-          <figure class="r-sq"><img src="assets/img/code-cover.webp" alt="code. editorial cover" loading="lazy"></figure>
-          <figure class="r-sq"><img src="assets/img/pager.webp" alt="Pager-themed event poster on red" loading="lazy"></figure>
-        </div>
-      </article>
+  <section class="screen project frame" id="six5">
+    <div class="meta">
+      <h2>six5.crew reels</h2>
+      <!-- DRAFT COPY -->
+      <p>Short-form content for a Singapore dance crew. Shot, cut and posted from practice, backstage and everything in between.</p>
+      <dl class="facts">
+        <div><dt>When</dt><dd>2025</dd></div>
+        <div><dt>Role</dt><dd>Content lead, editor</dd></div>
+        <div><dt>Scope</dt><dd>Concept, filming, editing</dd></div>
+        <div><dt>Link</dt><dd><a href="https://instagram.com/six5.crew" target="_blank" rel="noopener">@six5.crew ↗</a></dd></div>
+      </dl>
+    </div>
+    <div class="media">
+      <!-- Reorder freely: the rail shows them in this order -->
+      <div class="rail" tabindex="0" aria-label="six5.crew reels">
+        <button class="tall reel" type="button" data-src="vid/challenge.mp4" aria-label="Play Seek In Xtra Challenge"><video src="vid/challenge.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v2.mp4" aria-label="Play Headphones Call Challenge"><video src="vid/six5_v2.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/halloween.mp4" aria-label="Play Still Creepin’"><video src="vid/halloween.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v5.mp4" aria-label="Play Wild Wild West"><video src="vid/six5_v5.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v4.mp4" aria-label="Play Headphones Call Challenge part 2"><video src="vid/six5_v4.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/rule1.mp4" aria-label="Play Rule #1"><video src="vid/rule1.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/aura.mp4" aria-label="Play Unlimited Aura"><video src="vid/aura.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v3.mp4" aria-label="Play Fashion by Cortis"><video src="vid/six5_v3.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v6.mp4" aria-label="Play Training Montage"><video src="vid/six5_v6.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v7.mp4" aria-label="Play Essentials after practice"><video src="vid/six5_v7.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+        <button class="tall reel" type="button" data-src="vid/six5_v1.mp4" aria-label="Play six5 reel"><video src="vid/six5_v1.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="dur" data-dur></span></button>
+      </div>
+      <div class="rail-nav"><button type="button" class="prev" aria-label="Previous">←</button><button type="button" class="next" aria-label="Next">→</button><span class="count"></span><span class="hint">Tap a reel to watch with sound</span></div>
     </div>
   </section>
 
-  <section class="sec" id="social" aria-labelledby="social-h">
-    <div class="wrap">
-      <div class="sec-head"><h2 id="social-h">Social</h2><a class="mono link" href="https://instagram.com/six5.crew" target="_blank" rel="noopener">@six5.crew ↗</a></div>
-      <div class="reels">
-        <button class="reel" type="button" data-src="vid/aura.mp4" data-title="Unlimited Aura">
-          <span class="frame"><video src="vid/aura.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg></span></span>
-          <span class="reel-title">Unlimited Aura</span><span class="mono" data-dur>--:--</span>
-        </button>
-        <button class="reel" type="button" data-src="vid/rule1.mp4" data-title="Rule #1">
-          <span class="frame"><video src="vid/rule1.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg></span></span>
-          <span class="reel-title">Rule #1</span><span class="mono" data-dur>--:--</span>
-        </button>
-        <button class="reel" type="button" data-src="vid/six5_v3.mp4" data-title="Watch us fail Fashion by Cortis">
-          <span class="frame"><video src="vid/six5_v3.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg></span></span>
-          <span class="reel-title">Watch us fail Fashion by Cortis</span><span class="mono" data-dur>--:--</span>
-        </button>
-        <button class="reel" type="button" data-src="vid/six5_v6.mp4" data-title="Training Montage">
-          <span class="frame"><video src="vid/six5_v6.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg></span></span>
-          <span class="reel-title">Training Montage</span><span class="mono" data-dur>--:--</span>
-        </button>
-        <button class="reel" type="button" data-src="vid/six5_v7.mp4" data-title="Essentials after practice">
-          <span class="frame"><video src="vid/six5_v7.mp4#t=0.1" muted loop playsinline preload="metadata" data-auto></video><span class="play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg></span></span>
-          <span class="reel-title">Essentials after practice</span><span class="mono" data-dur>--:--</span>
-        </button>
+  <section class="screen project frame" id="identity">
+    <div class="meta">
+      <h2>six5.crew identity</h2>
+      <!-- DRAFT COPY -->
+      <p>The crew’s logo system and first merch drop: marks, tees, caps, patches and the tech packs behind them.</p>
+      <dl class="facts">
+        <div><dt>When</dt><dd>2025</dd></div>
+        <div><dt>Role</dt><dd>Designer</dd></div>
+        <div><dt>Scope</dt><dd>Logo system, merch, print, tech packs</dd></div>
+      </dl>
+    </div>
+    <div class="media">
+      <div class="rail" tabindex="0" aria-label="six5.crew identity">
+        <button class="pic" type="button"><img src="assets/img/six5-logos.webp" alt="six5 logo system" width="1600" height="1200" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-tee.webp" alt="six5 crew tee, worn" width="1069" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-patch.webp" alt="six5 leather patch on denim" width="1000" height="1334" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-cap.webp" alt="six5 cap and tee" width="1069" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-label.webp" alt="six5 neck label" width="1600" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-pants.webp" alt="six5 pants with gothic wordmark" width="1200" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-card.webp" alt="six5 business card" width="1200" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-tee-flat.webp" alt="six5 tee, flat lay" width="900" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-mark.webp" alt="six5 primary mark" width="1600" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-halftone.webp" alt="six5 halftone logo" width="958" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-crew.webp" alt="Crew members in six5 merch" width="1600" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-crew-2.webp" alt="Crew members in six5 merch at night" width="1600" height="1600" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-techpack.webp" alt="six5 pants tech pack, colourways" width="1600" height="1236" loading="lazy"></button>
+        <button class="pic" type="button"><img src="assets/img/six5-techpack-2.webp" alt="six5 pants tech pack, details" width="1600" height="1236" loading="lazy"></button>
       </div>
+      <div class="rail-nav"><button type="button" class="prev" aria-label="Previous">←</button><button type="button" class="next" aria-label="Next">→</button><span class="count"></span><span class="hint">Tap to enlarge</span></div>
     </div>
   </section>
 
-  <section class="sec" id="design" aria-labelledby="design-h">
-    <div class="wrap">
-      <div class="sec-head"><h2 id="design-h">Design &amp; illustration</h2><span class="mono">08 pieces</span></div>
-      <div class="grid">
-        <button class="piece" type="button" data-img="assets/img/horizon.webp" data-title="Horizon — poster"><img src="assets/img/horizon.webp" alt="Horizon event poster" loading="lazy" width="870" height="1600"><span class="mono">Horizon — poster</span></button>
-        <button class="piece" type="button" data-img="assets/img/king.webp" data-title="King — portrait series"><img src="assets/img/king.webp" alt="Pencil portrait with gold crown" loading="lazy" width="1280" height="1600"><span class="mono">King — portrait series</span></button>
-        <button class="piece" type="button" data-img="assets/img/seek-in-xtra.webp" data-title="Seek In Xtra — poster"><img src="assets/img/seek-in-xtra.webp" alt="Seek In Xtra poster, red colourway" loading="lazy" width="1200" height="1600"><span class="mono">Seek In Xtra — poster</span></button>
-        <button class="piece" type="button" data-img="assets/img/chaos.webp" data-title="Chaos — digital painting"><img src="assets/img/chaos.webp" alt="Mixed media digital painting in purple" loading="lazy" width="1600" height="1280"><span class="mono">Chaos — digital</span></button>
-        <button class="piece" type="button" data-img="assets/img/devil.webp" data-title="Devil — portrait series"><img src="assets/img/devil.webp" alt="Portrait with red horns" loading="lazy" width="1280" height="1600"><span class="mono">Devil — portrait series</span></button>
-        <button class="piece" type="button" data-img="assets/img/six5-card.webp" data-title="six5 — business card"><img src="assets/img/six5-card.webp" alt="six5 business card" loading="lazy" width="1200" height="1600"><span class="mono">six5 — business card</span></button>
-        <button class="piece" type="button" data-img="assets/img/saint.webp" data-title="Saint — portrait series"><img src="assets/img/saint.webp" alt="Ink portrait with gold halo" loading="lazy" width="1280" height="1600"><span class="mono">Saint — portrait series</span></button>
-        <button class="piece" type="button" data-img="assets/img/six5-techpack.webp" data-title="six5 — merch tech pack"><img src="assets/img/six5-techpack.webp" alt="six5 pants tech pack with colourways" loading="lazy" width="1600" height="1236"><span class="mono">six5 — tech pack</span></button>
-      </div>
+  <section class="screen project frame" id="design">
+    <div class="list" id="list">
+      <h2>Posters &amp; illustration</h2>
+      <div class="item open"><button type="button" data-set="portraits">Portrait series <span>05</span></button><p>Angel, King, Devil, Saint and a study. Pencil and ink portraits, each with one colour accent.</p></div>
+      <div class="item"><button type="button" data-set="code">code. <span>01</span></button><p>Editorial cover, collage and type.</p></div>
+      <div class="item"><button type="button" data-set="overthe">Over + The <span>02</span></button><p>Event posters. Cassettes, pagers, smileys and spray paint.</p></div>
+      <div class="item"><button type="button" data-set="seek">Seek In Xtra <span>02</span></button><p>Posters for the crew’s challenge, red and mono colourways.</p></div>
+      <div class="item"><button type="button" data-set="movers">Are You Ready Movers? <span>01</span></button><p>Halftone character poster.</p></div>
+    </div>
+    <div class="media">
+      <div class="rail" id="design-rail" tabindex="0" aria-label="Posters and illustration" aria-live="polite"></div>
+      <div class="rail-nav"><button type="button" class="prev" aria-label="Previous">←</button><button type="button" class="next" aria-label="Next">→</button><span class="count"></span><span class="hint">Tap to enlarge</span></div>
     </div>
   </section>
 
-  <section class="sec" id="about" aria-labelledby="about-h">
-    <div class="wrap">
-      <div class="sec-head"><h2 id="about-h">About</h2></div>
-      <div class="about">
-        <div class="about-bio">
-          <!-- DRAFT COPY: rewrite in your own words -->
-          <p>I'm Cody, a video editor and designer in Singapore. I shoot, cut and design social content that feels like it came from a person, not a brand deck.</p>
-          <p>Arts Management at NAFA taught me how creative work gets made inside organisations. Restaurants, studios, a dance crew and LEGO taught me how to make it land.</p>
-        </div>
-        <ol class="xp">
-          <li><span class="mono">2026</span><div><b>Social content intern</b><em>LEGO</em></div></li>
-          <li><span class="mono">2023–24</span><div><b>Social media marketing</b><em>Foragers: Carrotsticks, Miznon, North Miznon</em></div></li>
-          <li><span class="mono">2022–24</span><div><b>Studio operations coordinator</b><em>One Click Studios</em></div></li>
-          <li><span class="mono">2023</span><div><b>Operations &amp; marketing intern</b><em>Visual Arts Centre</em></div></li>
-          <li><span class="mono">2020–23</span><div><b>Diploma in Arts Management</b><em>NAFA</em></div></li>
-        </ol>
-      </div>
+  <section class="screen about frame" id="about">
+    <div class="portrait"><img src="assets/img/seal.webp" alt="Cody Oe’s horse seal"></div>
+    <!-- swap the seal for a cut-out photo of you -->
+    <div class="bio">
+      <p>I’m Cody, a creative marketer who loves turning ideas into content people actually want to watch.</p>
+      <p>I’m drawn to ideas with a bit of personality, and always curious about why some content connects and some doesn’t. That curiosity keeps me close to both the creative side and the data.</p>
+      <p class="muted">Open to full-time roles at creative agencies, social and content teams, and brands that enjoy a bit of fun. Freelance welcome too.</p>
     </div>
-  </section>
-
-  <section class="sec contact" id="contact" aria-labelledby="contact-h">
-    <div class="wrap">
-      <h2 class="mono" id="contact-h">Hiring for a creative role? Say hi.</h2>
-      <a class="big" href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a>
-      <div class="contact-row">
-        <button class="btn btn-line" id="copy" type="button">Copy email</button>
-        <a class="btn btn-line" href="CODY_CV.pdf" download>Download CV</a>
-        <a class="btn btn-line" href="https://instagram.com/codyoe" target="_blank" rel="noopener">Instagram ↗</a>
-        <a class="btn btn-line" href="https://wa.me/6596633428" target="_blank" rel="noopener">WhatsApp ↗</a>
-      </div>
-      <footer class="foot">
-        <span class="mono">© 2026 Cody Oe · Singapore</span>
-        <a href="#top" class="mono">Back to top ↑</a>
-      </footer>
+    <div class="lists">
+      <h3 class="caps">Experience</h3>
+      <ul>
+        <li>Content Creation Intern<span class="muted">Jul 2026 to Jan 2027 / LEGO Agency Asia</span></li>
+        <li>Content Creator and Community Builder<span class="muted">2020 to now / Personal, 140K+ followers</span></li>
+        <li>Assistant Social Media Manager<span class="muted">2023 to 2024 / Foragers Group</span></li>
+        <li>Studio Operations Coordinator and Content Lead<span class="muted">2022 to 2024 / One Click Studios</span></li>
+        <li>Operations and Marketing Intern<span class="muted">2023 / Visual Arts Centre</span></li>
+        <li>Diploma in Arts Management<span class="muted">2020 to 2023 / NAFA</span></li>
+      </ul>
+    </div>
+    <div class="lists">
+      <h3 class="caps">Skills</h3>
+      <ul>
+        <li>Content strategy<span class="muted">Instagram and TikTok analytics, audience insights</span></li>
+        <li>Short-form video<span class="muted">Storyboard, shoot, edit</span></li>
+        <li>Photography<span class="muted">Product shoots, custom lighting</span></li>
+        <li>Graphic design<span class="muted">Carousels, posters, brand identity</span></li>
+        <li>Copywriting<span class="muted">Captions, scripts, campaign planning</span></li>
+        <li>Tools<span class="muted">Premiere Pro, Photoshop, Canva, Meta Business Suite, Claude</span></li>
+      </ul>
+    </div>
+    <div class="lists" id="contact">
+      <h3 class="caps">Contact</h3>
+      <ul>
+        <li><a href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a><span class="muted">Email</span></li>
+        <li><a href="https://wa.me/6596633428" target="_blank" rel="noopener">+65 9663 3428 ↗</a><span class="muted">WhatsApp</span></li>
+        <li><a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a><span class="muted">Instagram</span></li>
+        <li><a href="CODY_CV.pdf" download>Download CV</a><span class="muted">PDF</span></li>
+      </ul>
     </div>
   </section>
 </main>
 
-<dialog id="dlg" aria-label="Media viewer">
-  <button class="dlg-close" type="button" aria-label="Close">×</button>
+<dialog id="dlg" aria-label="Viewer">
+  <button class="close caps" type="button">Close</button>
+  <button class="step prev" type="button" aria-label="Previous">←</button>
+  <button class="step next" type="button" aria-label="Next">→</button>
   <div id="dlg-body"></div>
-  <p class="dlg-cap mono" id="dlg-cap"></p>
+  <p class="dlg-cap" id="dlg-cap"></p>
 </dialog>
 
 <script>
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Header border once scrolled
-const hdr = document.getElementById('top');
-addEventListener('scroll', () => hdr.classList.toggle('scrolled', scrollY > 8), {passive:true});
+// Design sets: the list on the left loads one of these into the rail
+const SETS = {
+  portraits: [['angel','Angel',1280,1600],['king','King',1280,1600],['devil','Devil',1280,1600],['saint','Saint',1280,1600],['study','Portrait study',1280,1600]],
+  code: [['code-cover','code. cover',1600,1600]],
+  overthe: [['over-the','Over + The',1600,1594],['pager','Over + The Horizon',1600,1600]],
+  seek: [['seek-in-xtra','Seek In Xtra, red',1200,1600],['seek-in-xtra-mono','Seek In Xtra, mono',1200,1600]],
+  movers: [['movers','Are You Ready Movers?',1600,1600]]
+};
+const designRail = document.getElementById('design-rail');
+function loadSet(key){
+  designRail.replaceChildren(...SETS[key].map(([f,alt,w,h]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pic';
+    b.append(Object.assign(document.createElement('img'), {src:`assets/img/${f}.webp`, alt, width:w, height:h}));
+    return b;
+  }));
+  designRail.scrollLeft = 0;
+  designRail.dispatchEvent(new Event('scroll'));
+}
+loadSet('portraits');
+document.querySelectorAll('#list .item > button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#list .item').forEach(i => i.classList.toggle('open', i === b.parentElement));
+  loadSet(b.dataset.set);
+}));
 
-// Reveal on scroll
-const rvIO = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) { e.target.classList.add('in'); rvIO.unobserve(e.target); }
-}), {threshold:0, rootMargin:'0px 0px -10% 0px'});
-document.querySelectorAll('.rv').forEach(el => rvIO.observe(el));
+// Rail controls: arrows, counter, keyboard
+document.querySelectorAll('.media').forEach(m => {
+  const rail = m.querySelector('.rail'), prev = m.querySelector('.rail-nav .prev'), next = m.querySelector('.rail-nav .next'), count = m.querySelector('.count');
+  const update = () => {
+    const items = [...rail.children];
+    const max = rail.scrollWidth - rail.clientWidth - 2;
+    prev.disabled = rail.scrollLeft <= 2;
+    next.disabled = rail.scrollLeft >= max;
+    const i = items.findIndex(el => el.offsetLeft >= rail.scrollLeft - 2);
+    count.textContent = items.length ? `${Math.max(i,0) + 1} / ${items.length}` : '';
+  };
+  const step = dir => {
+    const first = rail.children[0];
+    const w = first ? first.getBoundingClientRect().width + 16 : rail.clientWidth;
+    rail.scrollBy({left: dir * w, behavior: RM ? 'auto' : 'smooth'});
+  };
+  prev.addEventListener('click', () => step(-1));
+  next.addEventListener('click', () => step(1));
+  rail.addEventListener('scroll', update, {passive:true});
+  rail.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } });
+  addEventListener('resize', update);
+  rail.querySelectorAll('img').forEach(img => img.complete || img.addEventListener('load', update, {once:true}));
+  new MutationObserver(update).observe(rail, {childList:true});
+  update();
+});
 
-// Muted previews play only while on screen; show real durations
-const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.round(s%60)).padStart(2,'0')}`;
-const vIO = new IntersectionObserver(es => es.forEach(e => {
-  if (RM) return;
-  e.isIntersecting ? e.target.play().catch(()=>{}) : e.target.pause();
-}), {threshold:.4});
+// Muted reels play while on screen; real durations
+const fmt = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && !RM ? e.target.play().catch(()=>{}) : e.target.pause()), {threshold:.5});
 document.querySelectorAll('video[data-auto]').forEach(v => {
-  vIO.observe(v);
-  const label = v.closest('.reel, .hero-reel').querySelector('[data-dur]');
-  const setDur = () => { if (isFinite(v.duration)) label.textContent = fmt(v.duration); };
-  v.readyState >= 1 ? setDur() : v.addEventListener('loadedmetadata', setDur, {once:true});
+  io.observe(v);
+  const d = v.parentElement.querySelector('[data-dur]');
+  const set = () => { if (isFinite(v.duration)) d.textContent = fmt(v.duration); };
+  v.readyState >= 1 ? set() : v.addEventListener('loadedmetadata', set, {once:true});
 });
 
-// Viewer
+// Viewer: reels play with sound, pictures enlarge, arrows step through the same rail
 const dlg = document.getElementById('dlg'), body = document.getElementById('dlg-body'), cap = document.getElementById('dlg-cap');
-function openViewer(el, title){ body.replaceChildren(el); cap.textContent = title; dlg.showModal(); }
+const dPrev = dlg.querySelector('.step.prev'), dNext = dlg.querySelector('.step.next');
+let group = [], idx = 0;
+function render(){
+  const el = group[idx];
+  if (el.classList.contains('reel')) {
+    body.replaceChildren(Object.assign(document.createElement('video'), {src:el.dataset.src, controls:true, autoplay:true, playsInline:true}));
+    cap.textContent = el.getAttribute('aria-label').replace(/^Play /,'');
+  } else {
+    const img = el.querySelector('img');
+    body.replaceChildren(Object.assign(document.createElement('img'), {src:img.src, alt:img.alt}));
+    cap.textContent = img.alt;
+  }
+  dPrev.hidden = dNext.hidden = group.length < 2;
+}
+function openFrom(el){
+  group = [...el.parentElement.children].filter(c => c.matches('.reel,.pic'));
+  idx = group.indexOf(el); render(); dlg.showModal();
+}
+const go = d => { idx = (idx + d + group.length) % group.length; render(); };
+document.addEventListener('click', e => { const t = e.target.closest('.rail .reel, .rail .pic'); if (t) openFrom(t); });
+dPrev.addEventListener('click', () => go(-1));
+dNext.addEventListener('click', () => go(1));
+dlg.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); });
 dlg.addEventListener('close', () => body.replaceChildren());
-dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('.dlg-close')) dlg.close(); });
-document.querySelectorAll('.reel').forEach(b => b.addEventListener('click', () => {
-  const v = Object.assign(document.createElement('video'), {src:b.dataset.src, controls:true, autoplay:true, playsInline:true});
-  openViewer(v, b.dataset.title);
-}));
-document.querySelectorAll('.piece').forEach(b => b.addEventListener('click', () => {
-  openViewer(Object.assign(document.createElement('img'), {src:b.dataset.img, alt:b.dataset.title}), b.dataset.title);
-}));
+dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('.close')) dlg.close(); });
 
-// Copy email
-document.getElementById('copy').addEventListener('click', async e => {
-  const btn = e.currentTarget;
-  try { await navigator.clipboard.writeText('codyuuer@gmail.com'); btn.textContent = 'Copied'; }
-  catch { btn.textContent = 'codyuuer@gmail.com'; }
-  setTimeout(() => btn.textContent = 'Copy email', 1800);
-});
+// Dots follow the screen in view
+const dots = [...document.querySelectorAll('.dots a')];
+const dio = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) dots.forEach(d => d.classList.toggle('on', d.getAttribute('href') === '#' + e.target.id));
+}), {threshold:.5});
+document.querySelectorAll('main > section').forEach(s => dio.observe(s));
 </script>
 </body>
 </html>
