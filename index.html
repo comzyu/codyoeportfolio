@@ -155,8 +155,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .lists a:hover{border-color:var(--ink)}
 
 /* Footer: warrior on the cliff at sunset */
-.foot{position:relative;background:var(--sun-red);color:var(--cream);overflow:hidden;--sun-red:#C41E15;--cream:#FFF1DE;--deep:#8A140E;--night:#16110F}
-.foot-main{padding-top:clamp(72px,9vw,128px);align-items:center;row-gap:40px}
+.foot{position:relative;display:grid;grid-template-rows:1fr auto;height:520px;background:var(--sun-red);color:var(--cream);overflow:hidden;--sun-red:#C41E15;--cream:#FFF1DE;--deep:#8A140E;--night:#16110F}
+.foot-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right bottom;pointer-events:none}
+.foot-bg > svg{display:block;width:100%;height:100%}
+.foot-main,.foot-base{position:relative;z-index:1}
+.foot-main{padding-top:64px;align-content:start}
 .foot-copy{grid-column:1/7}
 .foot-kicker{opacity:.85}
 .foot-title{font-weight:500;font-size:clamp(34px,3.9vw,60px);line-height:1;letter-spacing:-.035em;margin-top:16px;text-transform:uppercase;max-width:16ch}
@@ -164,14 +167,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .foot-links span{display:block;font-size:14px;opacity:.75}
 .foot-links a{border-bottom:1.5px solid currentColor}
 .foot-links a:hover{opacity:.75}
-.foot-art{grid-column:7/-1;aspect-ratio:3/2;border-radius:var(--r);overflow:hidden;background:#CF2A17}
-.foot-art > *{display:block;width:100%;height:100%;object-fit:cover}
 .sky-3{fill:#CF2A17}.sky-2{fill:#DB3E1B}.sky-1{fill:#E6561F}
 .sun circle{fill:var(--cream)}
 .sea{fill:var(--deep)}
 .glint rect{fill:var(--cream);opacity:.55}
 .cliff,.rider{fill:var(--night)}
-.foot-base{align-items:center;height:88px;margin-top:clamp(40px,5vw,72px);border-top:1px solid rgba(255,241,222,.25);font-size:14px}
+.foot-base{align-items:center;height:72px;font-size:14px}
 .foot-base span{grid-column:1/7}
 .foot-base a{grid-column:7/-1;justify-self:end}
 .foot-base a:hover{opacity:.75}
@@ -219,7 +220,11 @@ dialog video{background:var(--ink)}
   .name img{width:30px}
   .links{grid-column:6/-1;gap:18px;font-size:16px}
   .about{row-gap:40px}
-  .foot-copy,.foot-art{grid-column:1/-1}
+  .foot{height:auto;grid-template-rows:auto auto auto}
+  .foot-copy{grid-column:1/-1}
+  .foot-main{padding-top:96px}
+  .foot-bg{position:relative;inset:auto;height:240px;grid-row:2;margin-top:40px}
+  .foot-base{grid-row:3}
   .foot-links{grid-template-columns:minmax(0,1fr);gap:16px}
   .foot-base span{grid-column:1/8}
   .foot-base a{grid-column:8/-1}
@@ -407,20 +412,10 @@ dialog video{background:var(--ink)}
 </main>
 
 <footer class="foot" id="contact">
-  <div class="foot-main frame">
-    <div class="foot-copy">
-      <p class="caps foot-kicker">Contact</p>
-      <h2 class="foot-title">Let’s make something people stop for.</h2>
-      <ul class="foot-links">
-        <li><a href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a><span>Email</span></li>
-        <li><a href="https://wa.me/6596633428" target="_blank" rel="noopener">+65 9663 3428 ↗</a><span>WhatsApp</span></li>
-        <li><a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a><span>Instagram</span></li>
-        <li><a href="CODY_CV.pdf" download>Download CV</a><span>PDF</span></li>
-      </ul>
-    </div>
-    <!-- Artwork frame: 3:2. Swap the placeholder scene for <img src="assets/img/footer-art.webp" alt="" width="1800" height="1200"> -->
-    <figure class="foot-art">
-      <svg class="foot-scene" viewBox="290 300 900 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <!-- Footer artwork: full width x 520px band. Replace this placeholder scene with
+       <img class="foot-bg" src="assets/img/footer-art.webp" alt="" width="3840" height="1040"> -->
+  <div class="foot-bg">
+    <svg class="foot-scene" viewBox="0 300 1600 600" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
         <defs>
           <mask id="sun-cut" maskUnits="userSpaceOnUse" x="0" y="300" width="1600" height="600">
             <rect y="300" width="1600" height="600" fill="#fff"/>
@@ -433,16 +428,29 @@ dialog video{background:var(--ink)}
         <rect class="sky-3" y="520" width="1600" height="200"/>
         <rect class="sky-2" y="600" width="1600" height="120"/>
         <rect class="sky-1" y="666" width="1600" height="54"/>
-        <g class="sun"><circle cx="1090" cy="720" r="230" mask="url(#sun-cut)"/></g>
+        <g class="sun"><circle cx="1180" cy="720" r="230" mask="url(#sun-cut)"/></g>
         <rect class="sea" y="720" width="1600" height="180"/>
         <g class="glint">
           <rect x="940" y="742" width="300" height="4"/><rect x="990" y="768" width="200" height="4"/>
           <rect x="1030" y="796" width="120" height="4"/><rect x="1060" y="826" width="60" height="4"/>
         </g>
-        <path class="cliff" d="M0 900V646l60-14 60-16 50-12 60-12 70-4 250 0 48 10 42 24 32 40 22 62 40 76 32 96z"/>
-        <image class="rider" href="assets/img/seal-lg.webp" x="320" y="349" width="250" height="239"/>
+        <g transform="translate(1600 0) scale(-1 1)">
+          <path class="cliff" d="M0 900V646l60-14 60-16 50-12 60-12 70-4 250 0 48 10 42 24 32 40 22 62 40 76 32 96z"/>
+          <image class="rider" href="assets/img/seal-lg.webp" x="320" y="349" width="250" height="239"/>
+        </g>
       </svg>
-    </figure>
+  </div>
+  <div class="foot-main frame">
+    <div class="foot-copy">
+      <p class="caps foot-kicker">Contact</p>
+      <h2 class="foot-title">Let’s make something people stop for.</h2>
+      <ul class="foot-links">
+        <li><a href="mailto:codyuuer@gmail.com">codyuuer@gmail.com</a><span>Email</span></li>
+        <li><a href="https://wa.me/6596633428" target="_blank" rel="noopener">+65 9663 3428 ↗</a><span>WhatsApp</span></li>
+        <li><a href="https://instagram.com/codyoe" target="_blank" rel="noopener">@codyoe ↗</a><span>Instagram</span></li>
+        <li><a href="CODY_CV.pdf" download>Download CV</a><span>PDF</span></li>
+      </ul>
+    </div>
   </div>
   <div class="foot-base frame"><span>© 2026 Cody Oe, Singapore</span><a href="#top">Back to top ↑</a></div>
 </footer>
