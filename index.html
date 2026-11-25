@@ -10,11 +10,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yellowtail&text=5.&display=swap" rel="stylesheet">
 <style>
 @font-face{font-family:'Estrella';src:url(assets/fonts/estrella-early.otf) format('opentype');font-display:swap}
-.hello,.meta h2,.list h2,.foot-title{padding-left:.08em}
+.hello,.meta h2,.list h2{padding-left:.08em}
 :root{
-  --script:'Estrella',var(--font);
+  --script:'Estrella','Yellowtail',cursive;
   --bg:#F8F8F8;
   --card:#FFFFFF;
   --ink:rgba(0,0,0,.86);
@@ -69,7 +70,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .js .seal:not(.done) img{opacity:0}
 .seal.done canvas{opacity:0}
 .statement{font-weight:400;font-size:clamp(24px,2.4vw,34px);line-height:1.25;letter-spacing:-.015em;max-width:30ch}
-.hello{font-family:var(--script);font-weight:400;font-size:clamp(60px,6vw,96px);line-height:1;letter-spacing:0;margin-bottom:12px}
+.hello{font-family:var(--script);font-weight:400;font-size:clamp(88px,9.5vw,156px);line-height:.95;letter-spacing:0;margin-bottom:16px}
 
 /* Reveal once, never again: content stays put after it arrives */
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -94,7 +95,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* Project screens */
 .project{display:grid;align-content:center;align-items:start}
 .meta{grid-column:1/4;align-self:start;display:grid;gap:16px;padding-right:12px}
-.meta h2,.list h2{font-family:var(--script);font-weight:400;font-size:clamp(42px,3.6vw,56px);letter-spacing:0;line-height:1.05}
+.meta h2,.list h2{font-family:var(--script);font-weight:400;font-size:clamp(56px,5vw,80px);letter-spacing:0;line-height:1}
 .meta p{max-width:36ch}
 .facts{margin-top:12px;border-top:1px solid var(--line)}
 .facts div{display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -167,7 +168,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .foot-main{padding-top:64px;align-content:start}
 .foot-copy{grid-column:1/7}
 .foot-kicker{opacity:.85}
-.foot-title{font-family:var(--script);font-weight:400;font-size:clamp(52px,5.4vw,84px);line-height:1;letter-spacing:0;margin-top:8px;max-width:14ch}
+.foot-title{font-weight:500;font-size:clamp(34px,3.9vw,60px);line-height:1;letter-spacing:-.035em;margin-top:16px;text-transform:uppercase;max-width:16ch}
 .foot-links{list-style:none;display:grid;grid-template-columns:repeat(2,max-content);gap:20px 48px;margin-top:40px;font-size:18px}
 .foot-links span{display:block;font-size:14px;opacity:.75}
 .foot-links a{border-bottom:1.5px solid currentColor}
@@ -212,6 +213,7 @@ dialog video{background:var(--ink)}
   :root{--pad:16px;--bar:64px;--rail-h:min(56vh,480px)}
   .screen{min-height:auto;padding-block:96px 48px}
   .hero{min-height:86vh}
+  .hello{font-size:clamp(64px,19vw,88px);padding-left:.16em}
   .hero-in,.meta,.media,.list,.portrait,.bio,.lists h3,.lists ul{grid-column:1/-1}
   .meta{margin-bottom:28px;padding:0}
   .media{margin-top:24px}
@@ -268,14 +270,14 @@ dialog video{background:var(--ink)}
   <section class="screen hero frame" id="hero">
     <div class="hero-in">
       <button class="seal" type="button" aria-label="Cody Oe’s horse seal. Click to replay"><canvas aria-hidden="true"></canvas><img src="assets/img/seal.webp" alt="" width="400" height="383"></button>
-      <h1 class="hello">Hi, I’m Cody</h1>
+      <h1 class="hello" aria-label="Hi, I’m Cody">Hi Im Cody</h1>
       <p class="statement">I’m a content creator in Singapore who shoots, edits and designs: video from quick reels to long-form, photography and graphics, taken from the first idea to the final post.</p>
     </div>
   </section>
 
   <section class="screen project frame" id="work">
     <div class="meta">
-      <h2>LEGO Builds</h2>
+      <h2 aria-label="LEGO Builds">Lego builds</h2>
       <p>I own the full content workflow for LEGO’s @legobuilds Instagram: ideation, storyboarding, shoot planning, filming, post-production and upload. My concept and copy drove a 50K+ like post. This is a first selection: a lot more is still in production.</p>
       <ul class="stat"><li><b>220K</b><span>followers on @legobuilds</span></li><li><b>50K+</b><span>likes on a post I conceived and wrote</span></li></ul>
       <dl class="facts">
@@ -364,7 +366,7 @@ dialog video{background:var(--ink)}
 
   <section class="screen project frame" id="design">
     <div class="list" id="list">
-      <h2>Posters &amp; illustration</h2>
+      <h2>Posters and illustration</h2>
       <div class="item open"><button type="button" data-set="portraits">Portrait series <span>05</span></button><p>Angel, King, Devil, Saint and a study. Pencil and ink portraits, each with one colour accent.</p></div>
       <div class="item"><button type="button" data-set="code">code. <span>01</span></button><p>Editorial cover, collage and type.</p></div>
       <div class="item"><button type="button" data-set="overthe">Over + The <span>02</span></button><p>Event posters. Cassettes, pagers, smileys and spray paint.</p></div>
